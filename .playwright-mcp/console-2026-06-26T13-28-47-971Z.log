@@ -1,0 +1,128 @@
+[   37012ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[   37076ms] [LOG] [HMR] connected @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[   37201ms] [WARNING] [OMNOM] NEXT_PUBLIC_WC_PROJECT_ID is not set — WalletConnect will not work until configured. @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[   37263ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3001/favicon.ico:0
+[   37566ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/notifications/unread-count:0
+[   37581ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/me:0
+[   37877ms] [WARNING] Lit is in dev mode. Not recommended for production! See https://lit.dev/msg/dev-mode for more information. @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[   37884ms] [ERROR] Connecting to 'https://api.web3modal.org/appkit/v1/project-limits?projectId=omnom-dev-placeholder-project-id&st=appkit&sv=html-core-1.8.19' violates the following Content Security Policy directive: "connect-src 'self' https://*.walletconnect.org wss://*.walletconnect.org https://relay.walletconnect.com https://wc-url.vercel.app https://registry.walletconnect.com https://explorer-api.walletconnect.com". The action has been blocked. @ http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit-controllers_dist_esm_src_0rpd5xb._.js:1550
+[   37884ms] [ERROR] Fetch API cannot load https://api.web3modal.org/appkit/v1/project-limits?projectId=omnom-dev-placeholder-project-id&st=appkit&sv=html-core-1.8.19. Refused to connect because it violates the document's Content Security Policy. @ http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit-controllers_dist_esm_src_0rpd5xb._.js:1550
+[   37884ms] [WARNING] Failed to fetch usage TypeError: Failed to fetch
+    at fetchData (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit-controllers_dist_esm_src_0rpd5xb._.js:1551:28)
+    at FetchUtil.get (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit-controllers_dist_esm_src_0rpd5xb._.js:1568:32)
+    at Object.fetchUsage (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit-controllers_dist_esm_src_0rpd5xb._.js:3504:40)
+    at AppKit.initialize (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit_dist_esm_0_xj-ov._.js:808:234) @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[   47994ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://pulse.walletconnect.org/batch?projectId=omnom-dev-placeholder-project-id&st=appkit&sv=html-core-1.8.19:0
+[   67338ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/notifications/unread-count:0
+[   97337ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/notifications/unread-count:0
+[  127335ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/notifications/unread-count:0
+[  157335ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/notifications/unread-count:0
+[  187334ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/notifications/unread-count:0
+[  214972ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  215288ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/__nextjs_font/geist-latin.woff2:0
+[  216047ms] [ERROR] WebSocket connection to 'ws://localhost:3001/_next/webpack-hmr?id=xsEH1_frZ5CRLtCwZ2BRk' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_client_0r5nbpw._.js:13422
+[  217049ms] [ERROR] WebSocket connection to 'ws://localhost:3001/_next/webpack-hmr?id=xsEH1_frZ5CRLtCwZ2BRk' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_client_0r5nbpw._.js:13422
+[  217331ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/api/v1/notifications/unread-count:0
+[  218050ms] [ERROR] WebSocket connection to 'ws://localhost:3001/_next/webpack-hmr?id=xsEH1_frZ5CRLtCwZ2BRk' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_client_0r5nbpw._.js:13422
+[  219051ms] [ERROR] WebSocket connection to 'ws://localhost:3001/_next/webpack-hmr?id=xsEH1_frZ5CRLtCwZ2BRk' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_client_0r5nbpw._.js:13422
+[  226628ms] [LOG] [HMR] connected @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  247890ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/notifications/unread-count:0
+[  260199ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  260251ms] [LOG] [HMR] connected @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  260336ms] [WARNING] [OMNOM] NEXT_PUBLIC_WC_PROJECT_ID is not set — WalletConnect will not work until configured. @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  260473ms] ReferenceError: useRef is not defined
+    at ConnectWalletDialog (http://localhost:3001/_next/static/chunks/src_1yu7r69._.js:1539:24)
+    at Object.react_stack_bottom_frame (http://localhost:3001/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:15037:24)
+    at renderWithHooks (http://localhost:3001/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3001/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:6081:21)
+    at beginWork (http://localhost:3001/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3001/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:965:74)
+    at performUnitOfWork (http://localhost:3001/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9555:97)
+    at workLoopSync (http://localhost:3001/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9449:40)
+    at renderRootSync (http://localhost:3001/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3001/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3001/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3001/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10179:316)
+    at processRootScheduleInMicrotask (http://localhost:3001/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10200:106)
+    at http://localhost:3001/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js:10274:158
+[  260479ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  260636ms] [WARNING] Lit is in dev mode. Not recommended for production! See https://lit.dev/msg/dev-mode for more information. @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  260912ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://api.web3modal.org/appkit/v1/project-limits?projectId=omnom-dev-placeholder-project-id&st=appkit&sv=html-core-1.8.19:0
+[  260912ms] [WARNING] Failed to fetch usage Error: HTTP status code: 403
+    at fetchData (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit-controllers_dist_esm_src_0rpd5xb._.js:1554:21)
+    at async FetchUtil.get (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit-controllers_dist_esm_src_0rpd5xb._.js:1568:26)
+    at async Object.fetchUsage (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit-controllers_dist_esm_src_0rpd5xb._.js:3504:30)
+    at async AppKit.initialize (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit_dist_esm_0_xj-ov._.js:808:9) @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  261056ms] [LOG] [Fast Refresh] done in 707ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  261572ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  261841ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  261857ms] [LOG] [Fast Refresh] done in 369ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  261961ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  261982ms] [LOG] [HMR] connected @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  262046ms] [WARNING] [OMNOM] NEXT_PUBLIC_WC_PROJECT_ID is not set — WalletConnect will not work until configured. @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  262116ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/notifications/unread-count:0
+[  262127ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/me:0
+[  262200ms] [WARNING] Lit is in dev mode. Not recommended for production! See https://lit.dev/msg/dev-mode for more information. @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  262204ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://api.web3modal.org/appkit/v1/project-limits?projectId=omnom-dev-placeholder-project-id&st=appkit&sv=html-core-1.8.19:0
+[  262204ms] [WARNING] Failed to fetch usage Error: HTTP status code: 403
+    at fetchData (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit-controllers_dist_esm_src_0rpd5xb._.js:1554:21)
+    at async FetchUtil.get (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit-controllers_dist_esm_src_0rpd5xb._.js:1568:26)
+    at async Object.fetchUsage (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit-controllers_dist_esm_src_0rpd5xb._.js:3504:30)
+    at async AppKit.initialize (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit_dist_esm_0_xj-ov._.js:808:9) @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  262241ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  264578ms] [LOG] [Fast Refresh] done in 2438ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  272234ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://pulse.walletconnect.org/batch?projectId=omnom-dev-placeholder-project-id&st=appkit&sv=html-core-1.8.19:0
+[  292103ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/notifications/unread-count:0
+[  298938ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  299029ms] [LOG] [Fast Refresh] done in 173ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  322102ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/notifications/unread-count:0
+[  352103ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/notifications/unread-count:0
+[  382100ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/notifications/unread-count:0
+[  383611ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  383690ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/notifications/unread-count:0
+[  383695ms] [LOG] [Fast Refresh] done in 165ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  398827ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  399154ms] [LOG] [Fast Refresh] done in 410ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  399202ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/me:0
+[  427361ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  427484ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/me:0
+[  427495ms] [LOG] [Fast Refresh] done in 214ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  444035ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  444080ms] [LOG] [Fast Refresh] done in 121ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  444087ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/me:0
+[  456679ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  456713ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/me:0
+[  456713ms] [LOG] [Fast Refresh] done in 101ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  499650ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  499950ms] [LOG] [Fast Refresh] done in 161ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  513560ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524173ms] [LOG] [Fast Refresh] done in 10168ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524209ms] [WARNING] [OMNOM] NEXT_PUBLIC_WC_PROJECT_ID is not set — WalletConnect will not work until configured. @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524227ms] [WARNING] Unexpected import of module [project]/node_modules/next/dist/next-devtools/userspace/app/segment-explorer-node.js [app-client] (ecmascript) from module [project]/node_modules/next/dist/client/components/layout-router.js [app-client] (ecmascript), which was deleted by an HMR update @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524228ms] [WARNING] Unexpected import of module [project]/node_modules/next/dist/next-devtools/userspace/app/segment-explorer-node.js [app-client] (ecmascript) from module [project]/node_modules/next/dist/client/components/layout-router.js [app-client] (ecmascript), which was deleted by an HMR update @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524228ms] [WARNING] Unexpected import of module [project]/node_modules/next/dist/next-devtools/userspace/app/segment-explorer-node.js [app-client] (ecmascript) from module [project]/node_modules/next/dist/client/components/layout-router.js [app-client] (ecmascript), which was deleted by an HMR update @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524228ms] [WARNING] Unexpected import of module [project]/node_modules/next/dist/next-devtools/userspace/app/segment-explorer-node.js [app-client] (ecmascript) from module [project]/node_modules/next/dist/client/components/layout-router.js [app-client] (ecmascript), which was deleted by an HMR update @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524229ms] [WARNING] Unexpected import of module [project]/node_modules/next/dist/client/components/navigation-devtools.js [app-client] (ecmascript) from module [project]/node_modules/next/dist/client/components/layout-router.js [app-client] (ecmascript), which was deleted by an HMR update @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524230ms] [WARNING] Unexpected import of module [project]/node_modules/next/dist/client/components/navigation-devtools.js [app-client] (ecmascript) from module [project]/node_modules/next/dist/client/components/layout-router.js [app-client] (ecmascript), which was deleted by an HMR update @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524230ms] [WARNING] Unexpected import of module [project]/node_modules/next/dist/client/request/search-params.browser.js [app-client] (ecmascript) from module [project]/node_modules/next/dist/client/components/client-page.js [app-client] (ecmascript), which was deleted by an HMR update @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524231ms] [WARNING] Unexpected import of module [project]/node_modules/next/dist/client/request/params.browser.js [app-client] (ecmascript) from module [project]/node_modules/next/dist/client/components/client-page.js [app-client] (ecmascript), which was deleted by an HMR update @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524231ms] [WARNING] Unexpected import of module [project]/node_modules/next/dist/client/request/search-params.browser.js [app-client] (ecmascript) from module [project]/node_modules/next/dist/client/components/client-page.js [app-client] (ecmascript), which was deleted by an HMR update @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524231ms] [WARNING] Unexpected import of module [project]/node_modules/next/dist/client/request/params.browser.js [app-client] (ecmascript) from module [project]/node_modules/next/dist/client/components/client-page.js [app-client] (ecmascript), which was deleted by an HMR update @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524446ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524482ms] [LOG] [HMR] connected @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524594ms] [WARNING] [OMNOM] NEXT_PUBLIC_WC_PROJECT_ID is not set — WalletConnect will not work until configured. @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  524696ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:3001/api/v1/me:0
+[  524718ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  525179ms] [LOG] [Fast Refresh] done in 562ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  525318ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  528584ms] [LOG] [Fast Refresh] done in 3367ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  528841ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  529016ms] [WARNING] Lit is in dev mode. Not recommended for production! See https://lit.dev/msg/dev-mode for more information. @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  529023ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://api.web3modal.org/appkit/v1/project-limits?projectId=omnom-dev-placeholder-project-id&st=appkit&sv=html-core-1.8.19:0
+[  529023ms] [WARNING] Failed to fetch usage Error: HTTP status code: 403
+    at fetchData (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit-controllers_dist_esm_src_0rpd5xb._.js:1554:21)
+    at async FetchUtil.get (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit-controllers_dist_esm_src_0rpd5xb._.js:1568:26)
+    at async Object.fetchUsage (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit-controllers_dist_esm_src_0rpd5xb._.js:3504:30)
+    at async AppKit.initialize (http://localhost:3001/_next/static/chunks/node_modules_%40reown_appkit_dist_esm_0_xj-ov._.js:808:9) @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  529231ms] [LOG] [Fast Refresh] done in 490ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_1ybzpk2._.js:2477
+[  539047ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://pulse.walletconnect.org/batch?projectId=omnom-dev-placeholder-project-id&st=appkit&sv=html-core-1.8.19:0

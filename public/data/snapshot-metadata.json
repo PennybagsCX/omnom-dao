@@ -1,0 +1,24 @@
+{
+  "blockNumber": 59922100,
+  "timestamp": "2026-06-07T23:59:58.000Z",
+  "snapshotType": "ever-held",
+  "totalHolders": 25686,
+  "totalSupply": "1000000000000000000000000000000000",
+  "burnedSupply": "689000001688160097721124495552325",
+  "contractAddress": "0xe3fcA919883950c5cD468156392a6477Ff5d18de",
+  "distribution": {
+    "whales": 4,
+    "dolphins": 356,
+    "fish": 25326
+  },
+  "source": "DBOT-DC/omnom-token (ever-held master list, 11 snapshots merged)",
+  "csvHash": "1f64a663549ca717c6b612dc71a5cf673ab58badee58f876474c0fc6e551c128",
+  "sourceCommit": "33df90601bd73217c57bc4d93e221c102a3eebce",
+  "sourceRepository": "DBOT-DC/omnom-token",
+  "sourceFile": "omnom-snapshot-ever-held.csv",
+  "sourceFileSha256": "1f64a663549ca717c6b612dc71a5cf673ab58badee58f876474c0fc6e551c128",
+  "electionEligibility": "ever-held-master-list",
+  "latestSnapshotDate": "2026-08-08",
+  "latestSnapshotHolders": 25542,
+  "enriched": true
+}

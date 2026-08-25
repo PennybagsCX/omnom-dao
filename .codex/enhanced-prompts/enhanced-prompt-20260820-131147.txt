@@ -1,0 +1,67 @@
+Start the OMNOM DAO local servers and ensure everything works and runs error-free.
+
+## Context
+- Project: Next.js 16.2.12 + TypeScript OMNOM DAO governance platform
+- Current State: Build just fixed, all TypeScript errors resolved
+- Known Features: Mock wallet system, governance proposals, snapshot explorer (25,686 holders)
+- Server Location: http://localhost:3000
+
+## Phase 1: Server Startup & Basic Verification
+1. Start the development server with `npm run dev`
+2. Verify server starts without errors in < 30 seconds
+3. Confirm server responds on http://localhost:3000
+4. Check for any startup warnings or critical errors
+
+## Phase 2: Core API Endpoints Testing
+Test each endpoint and record results:
+- GET /api/v1/health → Expect: {"success": true, "status": "ok"}
+- GET /api/v1/proposals → Expect: Array of 8 proposals
+- GET /api/v1/snapshot-explorer → Expect: Holder data access
+- HEAD / → Expect: 200 response
+
+## Phase 3: Frontend Functionality Testing
+1. Load main page and verify:
+   - Page title: "$OMNOM DAO — Community Governance"
+   - Navigation: All links present (Home, Proposals, Vote, Create, Explorer, FAQ)
+   - Mock Wallet Banner: Visible showing "Dev Mock Wallet - Inactive"
+   - No console errors
+
+2. Test key user flows:
+   - Navigation between pages
+   - Mobile responsiveness (bottom nav visible)
+   - Wallet connection button available
+
+## Phase 4: Mock Wallet System Verification
+1. Verify mock wallet banner displays correctly
+2. Check console for mock wallet initialization logs
+3. Test mock wallet activation flow (if possible)
+4. Verify development-only functionality works
+
+## Phase 5: Performance & Error Monitoring
+1. Measure response times (target: < 1s for cached, < 5s for uncached)
+2. Monitor for any runtime errors
+3. Check browser console for JavaScript errors
+4. Verify no memory leaks or performance degradation
+
+## Success Criteria (Error-Free Definition)
+✅ Server starts without crashing
+✅ All API endpoints return proper responses
+✅ Frontend loads without JavaScript errors  
+✅ Mock wallet system functional
+✅ Response times within acceptable ranges
+✅ No console errors or warnings
+
+## Output Format
+Provide results in this structure:
+
+**Server Status:** [✅/❌] [details]
+**API Tests:** [✅/❌] [x/4 endpoints passed]
+**Frontend:** [✅/❌] [details]
+**Mock Wallet:** [✅/❌] [status]
+**Performance:** [✅/❌] [response time data]
+**Overall Status:** [✅ FULLY OPERATIONAL / ❌ ISSUES FOUND]
+
+If any issues found, provide:
+- Error description
+- Root cause analysis  
+- Recommended fix

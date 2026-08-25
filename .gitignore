@@ -1,0 +1,68 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+/coverage
+/playwright-report
+/test-results
+/blob-report
+/playwright/.cache
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+Thumbs.db
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# local env files
+.env
+.env*.local
+.env.local
+
+# turbo
+.turbo
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# data source (large CSVs, never committed)
+/data/
+/scripts/data/snapshot.csv
+/scripts/data/*.local.csv
+# …but DO track the sample fixture:
+!scripts/data/snapshot.sample.csv
+
+# editor
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# Backup files
+*.bak
+*-backup*
+*-backup.json
+
+# Large data files (snapshots are pulled from DBOT-DC/omnom-token at build time)
+public/data/holders-backup.json
+public/data/holders.json
+
+# Keep snapshot-metadata.json and csv-hash.txt tracked (small, needed for verification)

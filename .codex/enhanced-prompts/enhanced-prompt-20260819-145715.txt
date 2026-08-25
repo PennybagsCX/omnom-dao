@@ -1,0 +1,103 @@
+# Enhanced Project Server Startup
+
+## Role
+As a senior devops engineer with Next.js and full-stack experience, start the local development environment for the OMNOM DAO project methodically.
+
+## Context Analysis
+- **Project Type**: Next.js 16.2.9 application with React 19, TypeScript, and Tailwind CSS 4.0
+- **Database**: LibSQL/Turso (@libsql/client)
+- **Web3**: RainbowKit, Wagmi, Viem for wallet connectivity
+- **State Management**: TanStack Query, Valtio
+- **Testing**: Vitest, Playwright E2E, Testing Library
+- **Key Dependencies**: TipTap editor, Radix UI components, Framer Motion
+
+## Prerequisites Checklist
+1. Node.js version >= 22.0.0 installed
+2. Environment variables configured (.env.local exists)
+3. Dependencies installed (node_modules present)
+4. Database migration status verified
+5. No conflicting processes on required ports
+
+## Task Decomposition
+
+### Phase 1: Environment Validation
+1. Check Node.js version meets requirement (>=22.0.0)
+2. Verify required environment files exist
+3. Check if dependencies are installed
+4. Verify database migration status
+5. Check for processes on ports 3000 and 3001
+
+### Phase 2: Server Startup
+1. Start primary Next.js dev server (port 3000)
+2. Monitor startup logs for errors
+3. Verify server health and accessibility
+4. Start any secondary services if needed (API, database, etc.)
+
+### Phase 3: Startup Verification
+1. Check Next.js server responds on localhost:3000
+2. Verify no critical errors in startup logs
+3. Confirm Web3 dependencies load properly
+4. Validate database connectivity
+5. Test hot module replacement is working
+
+### Phase 4: Context Integration
+1. Review referenced chat thread (codex://threads/01a015e6-b17d-7923-82ab-f27b74616a12)
+2. Identify any specific server configurations or issues from history
+3. Apply any project-specific startup requirements
+4. Note any expected warnings vs. critical errors
+
+## Expected Output Format
+Provide a startup report in this format:
+
+```markdown
+## Server Startup Report
+
+### Environment Status
+- Node.js: [version] ✓/✗
+- Dependencies: [installed/partial/missing] ✓/✗
+- Environment: [configured/missing] ✓/✗
+- Database: [migrated/seeds required] ✓/✗
+
+### Services Status
+- Next.js Dev Server: [running/port/status] ✓/✗
+- [Additional services]: [status] ✓/✗
+
+### Startup Issues Detected
+[Critical errors, warnings, or recommendations]
+
+### Access Information
+- Local URL: http://localhost:3000
+- Network URL: [if applicable]
+- Exposed ports: [list]
+
+### Next Steps
+[Recommended actions, if any]
+```
+
+## Constraint Specification
+1. Must preserve existing .env.local configuration
+2. Must not modify database schema without explicit instruction
+3. Must use the project's existing npm scripts (dev, dev:clean, dev:safe)
+4. If port 3000 is occupied, offer to kill conflicting process or use alternative port
+5. Must check for common Web3/WebSocket issues with RainbowKit
+
+## Quality Criteria
+- **Complete**: All services properly started and verified
+- **Safe**: No data loss or configuration corruption
+- **Transparent**: Clear logging of all startup actions
+- **Context-aware**: Incorporates any specific issues from chat history
+- **Verifiable**: Each service status explicitly confirmed
+
+## Critical Error Handling
+If any of these occur, stop and report:
+- Node.js version mismatch
+- Missing critical environment variables
+- Dependency installation failures
+- Database connection failures
+- Port conflicts that can't be resolved
+
+## Special Considerations for This Project
+- Next.js 16 uses Turbopack by default; use `dev:safe` if Turbopack issues occur
+- LibSQL may need local database file initialization
+- RainbowKit may have WebSocket/Wallet connection requirements
+- TipTap editor needs proper SSR handling verification

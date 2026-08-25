@@ -1,0 +1,91 @@
+# Enhanced Debug Investigation: Dev Wallet Modal Select Bug
+
+## Role
+As a senior React/Web3 frontend developer with expertise in debugging UI components, wallet connection flows, and form select elements, investigate and fix the critical dev wallet modal bug.
+
+## Context Analysis
+- **Project**: OMNOM DAO - Next.js 16.2.9, React 19, Tailwind CSS 4.0, Web3 integration
+- **Impact**: Critical - user cannot test the site without dev wallet functionality
+- **Component**: Dev wallet modal with account type selection
+- **Symptom**: Select dropdown options are not displaying, preventing account selection
+
+## Task Decomposition
+
+### Phase 1: Symptom Analysis & Context Gathering
+1. Locate the dev wallet modal component in the codebase
+2. Identify the select component implementation (Radix UI Select, native select, or custom)
+3. Examine the account type options data source
+4. Check for console errors, CSS issues, or JavaScript errors affecting the select
+5. Verify if this is a z-index, visibility, or data population issue
+
+### Phase 2: Root Cause Investigation  
+1. Inspect the select component's props and state management
+2. Check if options are being passed correctly to the select component
+3. Verify CSS classes and Tailwind utilities aren't hiding options
+4. Test for React 19 compatibility issues with the select component
+5. Check for portal/rendering issues with modal overlay
+
+### Phase 3: Hypothesis Testing
+**Hypothesis A**: Options data is empty or undefined
+- **Test**: Log options array and check data source
+- **Evidence**: Console logs showing options array contents
+
+**Hypothesis B**: CSS z-index or visibility conflict
+- **Test**: Inspect rendered DOM in browser DevTools
+- **Evidence**: Element visibility, z-index stacking context
+
+**Hypothesis C**: Radix UI Select component configuration issue
+- **Test**: Check Radix Select props and trigger/button configuration
+- **Evidence**: Component props and render state
+
+**Hypothesis D**: Modal interaction or event propagation issue
+- **Test**: Click handlers and event bubbling in modal context
+- **Evidence**: Event listeners and modal state
+
+### Phase 4: Fix Implementation & Verification
+1. Implement the identified fix (data fix, CSS fix, or component config)
+2. Test the select dropdown interaction in the modal
+3. Verify all account type options are visible and selectable
+4. Test the complete dev wallet connection flow
+5. Ensure the fix doesn't break other modal or select components
+
+## Expected Output Format
+```markdown
+## Investigation Results
+
+### Root Cause Identified
+- **Issue**: [specific problem found]
+- **Evidence**: [what led to this conclusion]
+- **Impact**: [why this causes the select options to not show]
+
+### Fix Applied
+- **File**: [component file modified]
+- **Changes**: [specific code changes made]
+- **Technique**: [why this fix works]
+
+### Verification Steps Completed
+- [ ] Select dropdown opens and shows options
+- [ ] All account types are visible in the dropdown
+- [ ] Can successfully select an account type
+- [ ] Complete dev wallet flow works end-to-end
+- [ ] No console errors or UI glitches
+
+### Additional Findings
+[Any other issues discovered during investigation]
+```
+
+## Quality Criteria
+- **Thorough**: Systematic investigation with multiple hypotheses tested
+- **Evidence-based**: Root cause backed by specific code examination or testing
+- **Minimal fix**: Address only the select options issue, no unnecessary changes
+- **Verified**: Fix tested and working before completion
+- **Documented**: Clear explanation of problem and solution
+
+## Constraints
+- Must preserve existing dev wallet functionality
+- Cannot break other select components or modals
+- Fix should be compatible with React 19 and Next.js 16.2.9
+- Test the fix before marking as complete
+
+## Success Definition
+The dev wallet modal select dropdown shows all available account type options, allows selection, and enables complete testing of the OMNOM DAO application.

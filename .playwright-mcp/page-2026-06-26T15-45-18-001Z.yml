@@ -1,0 +1,229 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - generic [ref=e4]:
+      - banner [ref=e5]:
+        - generic [ref=e6]:
+          - link "$OMNOM DAO" [ref=e7] [cursor=pointer]:
+            - /url: /
+            - img [ref=e8]
+            - generic [ref=e12]: $OMNOM DAO
+          - navigation [ref=e13]:
+            - link "Home" [active] [ref=e14] [cursor=pointer]:
+              - /url: /
+              - img [ref=e15]
+              - text: Home
+            - link "Proposals" [ref=e18] [cursor=pointer]:
+              - /url: /proposals
+              - img [ref=e19]
+              - text: Proposals
+            - link "Create" [ref=e22] [cursor=pointer]:
+              - /url: /proposals/create
+              - img [ref=e23]
+              - text: Create
+            - link "Dashboard" [ref=e24] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e25]
+              - text: Dashboard
+          - button "Connect Wallet" [ref=e129]
+      - main [ref=e28]:
+        - generic [ref=e491]:
+          - generic [ref=e492]:
+            - generic [ref=e493]:
+              - img [ref=e494]
+              - text: Off-chain · Snapshot-based · No gas fees
+            - img [ref=e498]
+            - heading "Govern the future of $OMNOM" [level=1] [ref=e502]
+            - paragraph [ref=e503]: Community governance for $OMNOM token holders. Verify your snapshot holdings, vote on proposals, and steer the protocol forward — all off-chain, no gas required.
+            - generic [ref=e504]:
+              - button "Connect Wallet" [ref=e505]:
+                - img
+                - text: Connect Wallet
+              - link "View Proposals" [ref=e506] [cursor=pointer]:
+                - /url: /proposals
+                - img
+                - text: View Proposals
+            - paragraph [ref=e507]:
+              - generic [ref=e508]:
+                - img [ref=e509]
+                - text: Read-only
+              - generic [ref=e512]: ·
+              - generic [ref=e513]: Any EVM wallet
+              - generic [ref=e514]: ·
+              - generic [ref=e515]: 1 token = 1 vote
+          - generic [ref=e518]:
+            - generic [ref=e519]:
+              - img [ref=e520]
+              - generic [ref=e525]:
+                - generic [ref=e526]: 25,431
+                - generic [ref=e527]: Holders
+            - generic [ref=e528]:
+              - img [ref=e530]
+              - generic [ref=e532]:
+                - generic [ref=e533]: Jun 7, 2026
+                - generic [ref=e534]: Snapshot
+            - generic [ref=e535]:
+              - img [ref=e537]
+              - generic [ref=e541]:
+                - generic [ref=e542]: 59,922,100
+                - generic [ref=e543]: Block
+            - generic [ref=e544]:
+              - img [ref=e546]
+              - generic [ref=e551]:
+                - generic [ref=e552]: ~100.0%
+                - generic [ref=e553]: Supply Left
+          - generic [ref=e554]:
+            - generic [ref=e555]:
+              - paragraph [ref=e556]: How it works
+              - heading "Govern in three simple steps" [level=2] [ref=e557]
+            - generic [ref=e558]:
+              - generic [ref=e559]:
+                - generic [ref=e560]:
+                  - img [ref=e562]
+                  - generic [ref=e565]: "1"
+                - heading "Connect & Verify" [level=3] [ref=e566]
+                - paragraph [ref=e567]: Connect any EVM wallet and sign a free, gas-less message to prove your holdings.
+              - generic [ref=e568]:
+                - generic [ref=e569]:
+                  - img [ref=e571]
+                  - generic [ref=e574]: "2"
+                - heading "View Proposals" [level=3] [ref=e575]
+                - paragraph [ref=e576]: Browse active and past governance proposals, read the details, and join the discussion.
+              - generic [ref=e577]:
+                - generic [ref=e578]:
+                  - img [ref=e580]
+                  - generic [ref=e583]: "3"
+                - heading "Vote & Govern" [level=3] [ref=e584]
+                - paragraph [ref=e585]: Cast your vote — weighted by your snapshot balance — and shape the future of $OMNOM.
+          - generic [ref=e586]:
+            - generic [ref=e587]:
+              - generic [ref=e588]:
+                - paragraph [ref=e589]: Live now
+                - heading "Active Proposals" [level=2] [ref=e590]:
+                  - img [ref=e591]
+                  - text: Active Proposals
+              - link "View all" [ref=e594] [cursor=pointer]:
+                - /url: /proposals
+                - text: View all
+                - img
+            - generic [ref=e595]:
+              - 'link "Open proposal: Adopt a 1% Deflationary Transaction Burn" [ref=e596] [cursor=pointer]':
+                - /url: /proposals/prop-active-tokenomics-burn
+                - generic [ref=e598]:
+                  - generic [ref=e599]:
+                    - generic [ref=e600]:
+                      - img [ref=e601]
+                      - text: Active
+                    - generic "Supply changes, burns, emissions." [ref=e604]:
+                      - img [ref=e605]
+                      - text: Tokenomics Change
+                  - heading "Adopt a 1% Deflationary Transaction Burn" [level=3] [ref=e610]
+                  - paragraph [ref=e611]: Change Introduce a 1% burn on every $OMNOM transfer, sent to a verifiable dead address. Motivation Deflationary pressure rewards long-term holders and aligns with the Hybrid tokenomics model (Option B + E). Expected Impact Predictable, on-chain supply reduction Transparent dead address verifiable by anyone Adjustable down (e.g. 0.5%) in a later governance vote Closes in under 24 hours — vote now.
+                  - generic [ref=e612]:
+                    - img "For 100.0%, Against 0.0%, Abstain 0.0%" [ref=e613]
+                    - generic [ref=e616]:
+                      - generic [ref=e617]:
+                        - generic [ref=e619]: For
+                        - generic [ref=e620]: 100.0%
+                        - generic [ref=e621]: (980,000)
+                      - generic [ref=e622]:
+                        - generic [ref=e624]: Against
+                        - generic [ref=e625]: 0.0%
+                        - generic [ref=e626]: (420)
+                      - generic [ref=e627]:
+                        - generic [ref=e629]: Abstain
+                        - generic [ref=e630]: 0.0%
+                        - generic [ref=e631]: (3)
+                  - generic [ref=e632]:
+                    - generic [ref=e633]:
+                      - img [ref=e634]
+                      - generic [ref=e636]: 0xf39f…2266
+                    - generic [ref=e637]:
+                      - img [ref=e638]
+                      - text: 9h 59m left
+              - 'link "Open proposal: Chain Migration: Relaunch $OMNOM on an Ethereum L2" [ref=e641] [cursor=pointer]':
+                - /url: /proposals/prop-active-chain-selection
+                - generic [ref=e643]:
+                  - generic [ref=e644]:
+                    - generic [ref=e645]:
+                      - img [ref=e646]
+                      - text: Active
+                    - generic "Where to relaunch / migrate the token." [ref=e649]:
+                      - img [ref=e650]
+                      - text: Chain Selection
+                  - 'heading "Chain Migration: Relaunch $OMNOM on an Ethereum L2" [level=3] [ref=e655]'
+                  - paragraph [ref=e656]: Proposal With the Dogechain sunset, this proposal recommends migrating $OMNOM to a secure, low-fee Ethereum Layer 2. Candidate Chains Base (Coinbase-backed, deep liquidity) Arbitrum One (mature ecosystem, low fees) Optimism (public-goods funded) Rationale A 1:1 airdrop preserves every holder's governance weight. An L2 gives us EVM compatibility, low-cost transactions, and access to the deepest liquidity in crypto. Risks Bridge complexity during the migration window Final chain selected in a follow-up vote (Round 1 of the tokenomics framework) Voting is governed by the Chain Selection supermajority (60%) and 15% quorum.
+                  - generic [ref=e657]:
+                    - img "For 100.0%, Against 0.0%, Abstain 0.0%" [ref=e658]
+                    - generic [ref=e661]:
+                      - generic [ref=e662]:
+                        - generic [ref=e664]: For
+                        - generic [ref=e665]: 100.0%
+                        - generic [ref=e666]: (1,201,500)
+                      - generic [ref=e667]:
+                        - generic [ref=e669]: Against
+                        - generic [ref=e670]: 0.0%
+                        - generic [ref=e671]: (85)
+                      - generic [ref=e672]:
+                        - generic [ref=e674]: Abstain
+                        - generic [ref=e675]: 0.0%
+                        - generic [ref=e676]: (25)
+                  - generic [ref=e677]:
+                    - generic [ref=e678]:
+                      - img [ref=e679]
+                      - generic [ref=e681]: 0xab58…ec9b
+                    - generic [ref=e682]:
+                      - img [ref=e683]
+                      - text: 2d 23h left
+          - generic [ref=e686]:
+            - generic [ref=e687]:
+              - paragraph [ref=e688]: History
+              - heading "Recent Proposals" [level=2] [ref=e689]:
+                - img [ref=e690]
+                - text: Recent Proposals
+            - generic [ref=e693]:
+              - link "Integrate WalletConnect v2 SDK for Multi-Wallet Login 0 votes" [ref=e694] [cursor=pointer]:
+                - /url: /proposals/prop-pending-walletconnect-sdk
+                - generic [ref=e695]: Integrate WalletConnect v2 SDK for Multi-Wallet Login
+                - generic [ref=e696]: 0 votes
+              - link "Adopt a 1% Deflationary Transaction Burn 980,423 votes" [ref=e697] [cursor=pointer]:
+                - /url: /proposals/prop-active-tokenomics-burn
+                - generic [ref=e698]: Adopt a 1% Deflationary Transaction Burn
+                - generic [ref=e699]: 980,423 votes
+              - 'link "Chain Migration: Relaunch $OMNOM on an Ethereum L2 1,201,610 votes" [ref=e700] [cursor=pointer]':
+                - /url: /proposals/prop-active-chain-selection
+                - generic [ref=e701]: "Chain Migration: Relaunch $OMNOM on an Ethereum L2"
+                - generic [ref=e702]: 1,201,610 votes
+              - link "Fund Community Tooling Grant (50,000 $OMNOM) 2,181,585 votes" [ref=e703] [cursor=pointer]:
+                - /url: /proposals/prop-passed-treasury-grant
+                - generic [ref=e704]: Fund Community Tooling Grant (50,000 $OMNOM)
+                - generic [ref=e705]: 2,181,585 votes
+          - generic [ref=e707]:
+            - heading "Ready to have your say?" [level=2] [ref=e708]
+            - paragraph [ref=e709]: Connect your wallet, verify your snapshot holdings, and start voting on the future of $OMNOM. It's free and takes under a minute.
+            - generic [ref=e710]:
+              - button "Connect Wallet & Vote" [ref=e711]:
+                - img
+                - text: Connect Wallet & Vote
+              - link "Browse Proposals" [ref=e712] [cursor=pointer]:
+                - /url: /proposals
+      - contentinfo [ref=e113]:
+        - generic [ref=e114]:
+          - generic [ref=e115]:
+            - img [ref=e116]
+            - generic [ref=e120]: $OMNOM DAO — Community Governance · MIT Licensed
+          - navigation [ref=e121]:
+            - link "Proposals" [ref=e122] [cursor=pointer]:
+              - /url: /proposals
+            - link "Dashboard" [ref=e123] [cursor=pointer]:
+              - /url: /dashboard
+            - link "Telegram" [ref=e124] [cursor=pointer]:
+              - /url: https://t.me/omnomtoken_dc
+            - link "Documentation" [ref=e125] [cursor=pointer]:
+              - /url: /DOCS/README.md
+        - paragraph [ref=e127]: Snapshot · Block 59,922,100 · 2026-06-07 · 25,431 holders
+    - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e486] [cursor=pointer]:
+    - img [ref=e487]
+  - alert [ref=e490]

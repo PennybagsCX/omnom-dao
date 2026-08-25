@@ -1,0 +1,202 @@
+[
+  {
+    "bp": "mobile-390",
+    "route": "home",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 3,
+    "links": 23,
+    "inputs": 0
+  },
+  {
+    "bp": "mobile-390",
+    "route": "proposals",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 10,
+    "links": 22,
+    "inputs": 1
+  },
+  {
+    "bp": "mobile-390",
+    "route": "dashboard",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 2,
+    "links": 14,
+    "inputs": 0
+  },
+  {
+    "bp": "mobile-390",
+    "route": "faq",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 43,
+    "links": 24,
+    "inputs": 1
+  },
+  {
+    "bp": "mobile-390",
+    "route": "brand",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 6,
+    "links": 15,
+    "inputs": 4
+  },
+  {
+    "bp": "mobile-390",
+    "route": "settings",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 2,
+    "links": 14,
+    "inputs": 0
+  },
+  {
+    "bp": "mobile-390",
+    "route": "notifications",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 2,
+    "links": 14,
+    "inputs": 0
+  },
+  {
+    "bp": "mobile-390",
+    "route": "admin",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 1,
+    "links": 14,
+    "inputs": 0
+  },
+  {
+    "bp": "mobile-390",
+    "route": "verify-result",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 1,
+    "links": 15,
+    "inputs": 0
+  },
+  {
+    "bp": "mobile-390",
+    "route": "proposals-create",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 2,
+    "links": 14,
+    "inputs": 0
+  },
+  {
+    "bp": "desktop-1280",
+    "route": "home",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 3,
+    "links": 23,
+    "inputs": 0
+  },
+  {
+    "bp": "desktop-1280",
+    "route": "proposals",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 10,
+    "links": 22,
+    "inputs": 1
+  },
+  {
+    "bp": "desktop-1280",
+    "route": "dashboard",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 2,
+    "links": 14,
+    "inputs": 0
+  },
+  {
+    "bp": "desktop-1280",
+    "route": "faq",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 43,
+    "links": 24,
+    "inputs": 1
+  },
+  {
+    "bp": "desktop-1280",
+    "route": "brand",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 6,
+    "links": 15,
+    "inputs": 4
+  },
+  {
+    "bp": "desktop-1280",
+    "route": "settings",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 2,
+    "links": 14,
+    "inputs": 0
+  },
+  {
+    "bp": "desktop-1280",
+    "route": "notifications",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 2,
+    "links": 14,
+    "inputs": 0
+  },
+  {
+    "bp": "desktop-1280",
+    "route": "admin",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 1,
+    "links": 14,
+    "inputs": 0
+  },
+  {
+    "bp": "desktop-1280",
+    "route": "verify-result",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 1,
+    "links": 15,
+    "inputs": 0
+  },
+  {
+    "bp": "desktop-1280",
+    "route": "proposals-create",
+    "missingAlt": 0,
+    "iconBtnNoAria": 0,
+    "missingLabel": 0,
+    "buttons": 2,
+    "links": 14,
+    "inputs": 0
+  }
+]

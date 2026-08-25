@@ -1,0 +1,349 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to content" [ref=e3] [cursor=pointer]:
+      - /url: "#main-content"
+    - generic [ref=e4]:
+      - banner [ref=e5]:
+        - generic [ref=e6]:
+          - link "$OMNOM DAO" [ref=e7] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e8]: 🐶
+            - generic [ref=e9]: $OMNOM DAO
+          - navigation [ref=e10]:
+            - link "Home" [ref=e11] [cursor=pointer]:
+              - /url: /
+              - text: 🏠Home
+            - link "Proposals" [ref=e12] [cursor=pointer]:
+              - /url: /proposals
+              - text: 📋Proposals
+            - link "Create" [ref=e13] [cursor=pointer]:
+              - /url: /proposals/create
+              - text: ➕Create
+            - link "Dashboard" [ref=e14] [cursor=pointer]:
+              - /url: /dashboard
+              - text: 📊Dashboard
+          - generic [ref=e15]:
+            - button "Notifications" [active] [ref=e17]:
+              - img
+            - button "Connect Wallet" [ref=e19]
+      - main [ref=e20]:
+        - generic [ref=e22]:
+          - generic [ref=e24]:
+            - heading "Proposals" [level=1] [ref=e25]
+            - paragraph [ref=e26]: Shape the future of $OMNOM. Browse, vote, and govern.
+          - generic [ref=e27]:
+            - tablist "Filter proposals by status" [ref=e28]:
+              - tab "All" [selected] [ref=e29]
+              - tab "Draft" [ref=e30]
+              - tab "Pending Review" [ref=e31]
+              - tab "Active" [ref=e32]
+              - tab "Passed" [ref=e33]
+              - tab "Failed" [ref=e34]
+              - tab "Expired" [ref=e35]
+            - generic [ref=e36]:
+              - combobox "Filter by type" [ref=e37]:
+                - img [ref=e38]
+                - generic: All Types
+                - img [ref=e40]
+              - combobox "Sort proposals" [ref=e42]:
+                - generic: Newest
+                - img [ref=e43]
+              - generic [ref=e45]:
+                - img
+                - searchbox "Search proposals by title or description" [ref=e46]
+          - generic [ref=e48]:
+            - 'link "Open proposal: Weekly Community AMA Format & Cadence" [ref=e50] [cursor=pointer]':
+              - /url: /proposals/prop-draft-ama-format
+              - generic [ref=e52]:
+                - generic [ref=e53]:
+                  - generic [ref=e54]:
+                    - generic [ref=e55]: ✏️
+                    - text: Draft
+                  - generic "Anything else." [ref=e56]:
+                    - generic [ref=e57]: 💬
+                    - text: General
+                - heading "Weekly Community AMA Format & Cadence" [level=3] [ref=e58]
+                - paragraph [ref=e59]: "## Description Draft proposal to formalize a weekly AMA with the core team. _Status: **DRAFT** — author is still composing._"
+                - generic [ref=e60]:
+                  - img "For 0.0%, Against 0.0%, Abstain 0.0%" [ref=e61]
+                  - generic [ref=e62]:
+                    - generic [ref=e63]:
+                      - generic [ref=e65]: For
+                      - generic [ref=e66]: 0.0%
+                      - generic [ref=e67]: (0)
+                    - generic [ref=e68]:
+                      - generic [ref=e70]: Against
+                      - generic [ref=e71]: 0.0%
+                      - generic [ref=e72]: (0)
+                    - generic [ref=e73]:
+                      - generic [ref=e75]: Abstain
+                      - generic [ref=e76]: 0.0%
+                      - generic [ref=e77]: (0)
+                - generic [ref=e78]:
+                  - generic [ref=e79]:
+                    - generic [ref=e80]: ✍️
+                    - generic [ref=e81]: 0x7099…79c8
+                  - generic [ref=e82]:
+                    - generic [ref=e83]: 🕒
+                    - text: 13 hours ago
+            - 'link "Open proposal: Integrate WalletConnect v2 SDK for Multi-Wallet Login" [ref=e85] [cursor=pointer]':
+              - /url: /proposals/prop-pending-walletconnect-sdk
+              - generic [ref=e87]:
+                - generic [ref=e88]:
+                  - generic [ref=e89]:
+                    - generic [ref=e90]: ⏳
+                    - text: Pending Review
+                  - generic "Platform features, integrations." [ref=e91]:
+                    - generic [ref=e92]: ⚙️
+                    - text: Technical
+                - heading "Integrate WalletConnect v2 SDK for Multi-Wallet Login" [level=3] [ref=e93]
+                - paragraph [ref=e94]: "## Feature / Change Upgrade the SIWE flow to support WalletConnect v2, enabling mobile wallets (Rainbow, Trust, etc.) to sign in. ## Implementation Plan 1. Swap wagmi connector for WalletConnect v2 2. Update nonce/verify endpoints to remain chain-agnostic 3. QA across 5 mobile wallets _Status: **PENDING REVIEW** — awaiting moderator approval._"
+                - generic [ref=e95]:
+                  - img "For 0.0%, Against 0.0%, Abstain 0.0%" [ref=e96]
+                  - generic [ref=e97]:
+                    - generic [ref=e98]:
+                      - generic [ref=e100]: For
+                      - generic [ref=e101]: 0.0%
+                      - generic [ref=e102]: (0)
+                    - generic [ref=e103]:
+                      - generic [ref=e105]: Against
+                      - generic [ref=e106]: 0.0%
+                      - generic [ref=e107]: (0)
+                    - generic [ref=e108]:
+                      - generic [ref=e110]: Abstain
+                      - generic [ref=e111]: 0.0%
+                      - generic [ref=e112]: (0)
+                - generic [ref=e113]:
+                  - generic [ref=e114]:
+                    - generic [ref=e115]: ✍️
+                    - generic [ref=e116]: 0x742d…f44e
+                  - generic [ref=e117]:
+                    - generic [ref=e118]: 🕒
+                    - text: 1 day ago
+            - 'link "Open proposal: Adopt a 1% Deflationary Transaction Burn" [ref=e120] [cursor=pointer]':
+              - /url: /proposals/prop-active-tokenomics-burn
+              - generic [ref=e122]:
+                - generic [ref=e123]:
+                  - generic [ref=e124]:
+                    - generic [ref=e125]: 🟢
+                    - text: Active
+                  - generic "Supply changes, burns, emissions." [ref=e126]:
+                    - generic [ref=e127]: 🔥
+                    - text: Tokenomics Change
+                - heading "Adopt a 1% Deflationary Transaction Burn" [level=3] [ref=e128]
+                - paragraph [ref=e129]: "## Change Introduce a **1% burn on every $OMNOM transfer**, sent to a verifiable dead address. ## Motivation Deflationary pressure rewards long-term holders and aligns with the Hybrid tokenomics model (Option B + E). ## Expected Impact - Predictable, on-chain supply reduction - Transparent dead address verifiable by anyone - Adjustable down (e.g. 0.5%) in a later governance vote _Closes in under 24 hours — vote now._"
+                - generic [ref=e130]:
+                  - img "For 100.0%, Against 0.0%, Abstain 0.0%" [ref=e131]
+                  - generic [ref=e134]:
+                    - generic [ref=e135]:
+                      - generic [ref=e137]: For
+                      - generic [ref=e138]: 100.0%
+                      - generic [ref=e139]: (980,000)
+                    - generic [ref=e140]:
+                      - generic [ref=e142]: Against
+                      - generic [ref=e143]: 0.0%
+                      - generic [ref=e144]: (420)
+                    - generic [ref=e145]:
+                      - generic [ref=e147]: Abstain
+                      - generic [ref=e148]: 0.0%
+                      - generic [ref=e149]: (3)
+                - generic [ref=e150]:
+                  - generic [ref=e151]:
+                    - generic [ref=e152]: ✍️
+                    - generic [ref=e153]: 0xf39f…2266
+                  - generic [ref=e154]:
+                    - generic [ref=e155]: ⏰
+                    - text: 9h 54m left
+            - 'link "Open proposal: Chain Migration: Relaunch $OMNOM on an Ethereum L2" [ref=e157] [cursor=pointer]':
+              - /url: /proposals/prop-active-chain-selection
+              - generic [ref=e159]:
+                - generic [ref=e160]:
+                  - generic [ref=e161]:
+                    - generic [ref=e162]: 🟢
+                    - text: Active
+                  - generic "Where to relaunch / migrate the token." [ref=e163]:
+                    - generic [ref=e164]: ⛓️
+                    - text: Chain Selection
+                - 'heading "Chain Migration: Relaunch $OMNOM on an Ethereum L2" [level=3] [ref=e165]'
+                - paragraph [ref=e166]: "## Proposal With the Dogechain sunset, this proposal recommends migrating $OMNOM to a **secure, low-fee Ethereum Layer 2**. ### Candidate Chains - **Base** (Coinbase-backed, deep liquidity) - **Arbitrum One** (mature ecosystem, low fees) - **Optimism** (public-goods funded) ### Rationale A 1:1 airdrop preserves every holder's governance weight. An L2 gives us EVM compatibility, low-cost transactions, and access to the deepest liquidity in crypto. ### Risks - Bridge complexity during the migration window - Final chain selected in a follow-up vote (Round 1 of the tokenomics framework) _Voting is governed by the Chain Selection supermajority (60%) and 15% quorum._"
+                - generic [ref=e167]:
+                  - img "For 100.0%, Against 0.0%, Abstain 0.0%" [ref=e168]
+                  - generic [ref=e171]:
+                    - generic [ref=e172]:
+                      - generic [ref=e174]: For
+                      - generic [ref=e175]: 100.0%
+                      - generic [ref=e176]: (1,201,500)
+                    - generic [ref=e177]:
+                      - generic [ref=e179]: Against
+                      - generic [ref=e180]: 0.0%
+                      - generic [ref=e181]: (85)
+                    - generic [ref=e182]:
+                      - generic [ref=e184]: Abstain
+                      - generic [ref=e185]: 0.0%
+                      - generic [ref=e186]: (25)
+                - generic [ref=e187]:
+                  - generic [ref=e188]:
+                    - generic [ref=e189]: ✍️
+                    - generic [ref=e190]: 0xab58…ec9b
+                  - generic [ref=e191]:
+                    - generic [ref=e192]: ⏰
+                    - text: 2d 23h left
+            - 'link "Open proposal: Fund Community Tooling Grant (50,000 $OMNOM)" [ref=e194] [cursor=pointer]':
+              - /url: /proposals/prop-passed-treasury-grant
+              - generic [ref=e196]:
+                - generic [ref=e197]:
+                  - generic [ref=e198]:
+                    - generic [ref=e199]: ✅
+                    - text: Passed
+                  - generic "Fund allocation and spending." [ref=e200]:
+                    - generic [ref=e201]: 💰
+                    - text: Treasury
+                - heading "Fund Community Tooling Grant (50,000 $OMNOM)" [level=3] [ref=e202]
+                - paragraph [ref=e203]: "## Request **50,000 $OMNOM** to `0xToolingGrantee` for a community block explorer + notification bot. ## Purpose Deliverables: 1. Open-source governance dashboard 2. Telegram notification bot for proposal events 3. Quarterly maintenance ## Budget Impact ~0.006% of circulating supply. Funds are advisory and disbursed off-chain by the core team. _Status: **PASSED** — quorum met, simple majority reached._"
+                - generic [ref=e204]:
+                  - img "For 100.0%, Against 0.0%, Abstain 0.0%" [ref=e205]
+                  - generic [ref=e207]:
+                    - generic [ref=e208]:
+                      - generic [ref=e210]: For
+                      - generic [ref=e211]: 100.0%
+                      - generic [ref=e212]: (2,181,500)
+                    - generic [ref=e213]:
+                      - generic [ref=e215]: Against
+                      - generic [ref=e216]: 0.0%
+                      - generic [ref=e217]: (85)
+                    - generic [ref=e218]:
+                      - generic [ref=e220]: Abstain
+                      - generic [ref=e221]: 0.0%
+                      - generic [ref=e222]: (0)
+                - generic [ref=e223]:
+                  - generic [ref=e224]:
+                    - generic [ref=e225]: ✍️
+                    - generic [ref=e226]: 0x742d…f44e
+                  - generic [ref=e227]:
+                    - generic [ref=e228]: 🕒
+                    - text: 2 weeks ago
+                    - generic [ref=e229]: · 2,181,585 votes
+            - 'link "Open proposal: Adopt Community Code of Conduct v2" [ref=e231] [cursor=pointer]':
+              - /url: /proposals/prop-passed-code-of-conduct
+              - generic [ref=e233]:
+                - generic [ref=e234]:
+                  - generic [ref=e235]:
+                    - generic [ref=e236]: ✅
+                    - text: Passed
+                  - generic "Community rules, code of conduct." [ref=e237]:
+                    - generic [ref=e238]: 📜
+                    - text: Guideline
+                - heading "Adopt Community Code of Conduct v2" [level=3] [ref=e239]
+                - paragraph [ref=e240]: "## Proposed Guideline Refresh the community Code of Conduct to cover off-chain governance discussions, respectful debate, and anti-harassment norms. _Status: **PASSED**._"
+                - generic [ref=e241]:
+                  - img "For 100.0%, Against 0.0%, Abstain 0.0%" [ref=e242]
+                  - generic [ref=e244]:
+                    - generic [ref=e245]:
+                      - generic [ref=e247]: For
+                      - generic [ref=e248]: 100.0%
+                      - generic [ref=e249]: (2,030)
+                    - generic [ref=e250]:
+                      - generic [ref=e252]: Against
+                      - generic [ref=e253]: 0.0%
+                      - generic [ref=e254]: (0)
+                    - generic [ref=e255]:
+                      - generic [ref=e257]: Abstain
+                      - generic [ref=e258]: 0.0%
+                      - generic [ref=e259]: (0)
+                - generic [ref=e260]:
+                  - generic [ref=e261]:
+                    - generic [ref=e262]: ✍️
+                    - generic [ref=e263]: 0xab58…ec9b
+                  - generic [ref=e264]:
+                    - generic [ref=e265]: 🕒
+                    - text: 3 weeks ago
+                    - generic [ref=e266]: · 2,030 votes
+            - 'link "Open proposal: Require a 100 $OMNOM Deposit to Submit Proposals" [ref=e268] [cursor=pointer]':
+              - /url: /proposals/prop-failed-submission-fee
+              - generic [ref=e270]:
+                - generic [ref=e271]:
+                  - generic [ref=e272]:
+                    - generic [ref=e273]: ❌
+                    - text: Failed
+                  - generic "Anything else." [ref=e274]:
+                    - generic [ref=e275]: 💬
+                    - text: General
+                - heading "Require a 100 $OMNOM Deposit to Submit Proposals" [level=3] [ref=e276]
+                - paragraph [ref=e277]: "## Description Proposal to add a 100 $OMNOM anti-spam deposit, refunded on a valid outcome. _Status: **FAILED** — majority AGAINST._"
+                - generic [ref=e278]:
+                  - img "For 0.1%, Against 99.9%, Abstain 0.0%" [ref=e279]
+                  - generic [ref=e282]:
+                    - generic [ref=e283]:
+                      - generic [ref=e285]: For
+                      - generic [ref=e286]: 0.1%
+                      - generic [ref=e287]: (1,585)
+                    - generic [ref=e288]:
+                      - generic [ref=e290]: Against
+                      - generic [ref=e291]: 99.9%
+                      - generic [ref=e292]: (1,200,000)
+                    - generic [ref=e293]:
+                      - generic [ref=e295]: Abstain
+                      - generic [ref=e296]: 0.0%
+                      - generic [ref=e297]: (0)
+                - generic [ref=e298]:
+                  - generic [ref=e299]:
+                    - generic [ref=e300]: ✍️
+                    - generic [ref=e301]: 0x5b38…ddc4
+                  - generic [ref=e302]:
+                    - generic [ref=e303]: 🕒
+                    - text: 3 weeks ago
+                    - generic [ref=e304]: · 1,201,585 votes
+            - 'link "Open proposal: Increase Snapshot Refresh Cadence to Quarterly" [ref=e306] [cursor=pointer]':
+              - /url: /proposals/prop-expired-snapshot-cadence
+              - generic [ref=e308]:
+                - generic [ref=e309]:
+                  - generic [ref=e310]:
+                    - generic [ref=e311]: ⌛
+                    - text: Expired
+                  - generic "Platform features, integrations." [ref=e312]:
+                    - generic [ref=e313]: ⚙️
+                    - text: Technical
+                - heading "Increase Snapshot Refresh Cadence to Quarterly" [level=3] [ref=e314]
+                - paragraph [ref=e315]: "## Feature / Change Refresh the governance snapshot every quarter instead of once. _Status: **EXPIRED** — quorum not reached._"
+                - generic [ref=e316]:
+                  - img "For 100.0%, Against 0.0%, Abstain 0.0%" [ref=e317]
+                  - generic [ref=e319]:
+                    - generic [ref=e320]:
+                      - generic [ref=e322]: For
+                      - generic [ref=e323]: 100.0%
+                      - generic [ref=e324]: (85)
+                    - generic [ref=e325]:
+                      - generic [ref=e327]: Against
+                      - generic [ref=e328]: 0.0%
+                      - generic [ref=e329]: (0)
+                    - generic [ref=e330]:
+                      - generic [ref=e332]: Abstain
+                      - generic [ref=e333]: 0.0%
+                      - generic [ref=e334]: (0)
+                - generic [ref=e335]:
+                  - generic [ref=e336]:
+                    - generic [ref=e337]: ✍️
+                    - generic [ref=e338]: 0x5b38…ddc4
+                  - generic [ref=e339]:
+                    - generic [ref=e340]: 🕒
+                    - text: 1 month ago
+                    - generic [ref=e341]: · 85 votes
+      - contentinfo [ref=e342]:
+        - generic [ref=e343]:
+          - generic [ref=e344]:
+            - generic [ref=e345]: 🐶
+            - generic [ref=e346]: $OMNOM DAO — Community Governance · MIT Licensed
+          - navigation [ref=e347]:
+            - link "Proposals" [ref=e348] [cursor=pointer]:
+              - /url: /proposals
+            - link "Dashboard" [ref=e349] [cursor=pointer]:
+              - /url: /dashboard
+            - link "Telegram" [ref=e350] [cursor=pointer]:
+              - /url: https://t.me/omnomtoken_dc
+            - link "Documentation" [ref=e351] [cursor=pointer]:
+              - /url: /DOCS/README.md
+        - paragraph [ref=e353]: Snapshot · Block 59,922,100 · 2026-06-07 · 25,431 holders
+    - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e359] [cursor=pointer]:
+    - img [ref=e360]
+  - alert [ref=e363]

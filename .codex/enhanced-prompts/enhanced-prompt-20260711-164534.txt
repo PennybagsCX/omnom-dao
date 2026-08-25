@@ -1,0 +1,44 @@
+=== ENHANCED PROMPT ===
+# Threat Model & Manipulation-Defense Architecture for OMNOM DAO Governance
+
+## Context (project-specific)
+OMNOM DAO is a snapshot-based, off-chain governance platform for the $OMNOM
+token after the Dogechain sunset (June 7, 2026). The immutable snapshot
+(Block 59,922,100) records 25,431 holder addresses. SIWE (Sign-In with Ethereum)
+verifies holders against the snapshot. Current voting is linear token-weighted
+(v1); PRD §8 recommends Hybrid Quadratic-Token Voting (QTV). 4 whales hold
+~77% of supply. Delegation is informational in v1. Vote changes are allowed
+only in the final 12h. Rate limits exist on /nonce and /verify.
+
+## Task
+As a DAO-governance security architect, produce a comprehensive manipulation-
+defense analysis covering attack vectors and concrete mitigations, using
+Chain-of-Thought reasoning and a Tree-of-Thought comparison of defense options.
+
+## Required Phases (task decomposition)
+Phase 1 — Enumerate attack surfaces (sybil, whale, vote-buying/bribery,
+  delegation abuse, ballot/replay, admin/guardian capture, infrastructure/
+  API abuse, social/MEV-adjacent).
+Phase 2 — For each vector: describe the attack, assess current codebase
+  exposure (cite file), rate severity, and propose concrete mitigations
+  with effort estimate.
+Phase 3 — Tree-of-Thought: compare 3 voting-weight models (linear, pure
+  quadratic, hybrid QTV) on Sybil resistance, whale-tyranny, vote-buying,
+  complexity, and legitimacy.
+Phase 4 — Produce a prioritized hardening roadmap (now / next / later) with
+  cost-consequence flags for each recommendation.
+Phase 5 — Identify open questions needing snapshot data analysis.
+
+## Constraints
+- Ground every claim about the codebase in an actual file/line citation.
+- Mark anything not verifiable from the repo as [UNVERIFIED].
+- Do NOT invent third-party library capabilities or audit results.
+- Distinguish what is enforced NOW (code) vs PROPOSED (PRD/ROADMAP).
+
+## Output Format
+1. Threat-Vector Matrix (markdown table: Vector | Current Status | Severity | Gap | Fix)
+2. Voting-Model Comparison (markdown table with ToT rationale)
+3. Hardening Roadmap (Now / Next / Later, each item with effort + cost flag)
+4. Open Questions
+5. References (file:line citations)
+=== END ===

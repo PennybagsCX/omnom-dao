@@ -1,0 +1,44 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - link "$OMNOM DAO" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e7]: 🐶
+          - generic [ref=e8]: $OMNOM DAO
+        - navigation [ref=e9]:
+          - link "Home" [ref=e10] [cursor=pointer]:
+            - /url: /
+            - text: 🏠Home
+          - link "Proposals" [ref=e11] [cursor=pointer]:
+            - /url: /proposals
+            - text: 📋Proposals
+          - link "Create" [ref=e12] [cursor=pointer]:
+            - /url: /proposals/create
+            - text: ➕Create
+          - link "Dashboard" [ref=e13] [cursor=pointer]:
+            - /url: /dashboard
+            - text: 📊Dashboard
+        - generic [ref=e14]:
+          - button "Notifications" [ref=e16]:
+            - img
+          - generic:
+            - button: Connect Wallet
+    - main [ref=e17]:
+      - status "Loading" [ref=e19]
+    - contentinfo [ref=e74]:
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - generic [ref=e77]: 🐶
+          - generic [ref=e78]: $OMNOM DAO — Community Governance · MIT Licensed
+        - navigation [ref=e79]:
+          - link "Proposals" [ref=e80] [cursor=pointer]:
+            - /url: /proposals
+          - link "Dashboard" [ref=e81] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Telegram" [ref=e82] [cursor=pointer]:
+            - /url: https://t.me/omnomtoken_dc
+          - link "Documentation" [ref=e83] [cursor=pointer]:
+            - /url: /DOCS/README.md
+      - paragraph [ref=e85]: Snapshot · Block 59,922,100 · 2026-06-07 · 25,431 holders
+  - region "Notifications alt+T"

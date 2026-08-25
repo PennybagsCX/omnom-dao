@@ -1,0 +1,70 @@
+- generic [ref=e2]:
+  - link "Skip to content" [ref=e3] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - link "$OMNOM DAO" [ref=e7] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e8]: 🐶
+          - generic [ref=e9]: $OMNOM DAO
+        - navigation [ref=e10]:
+          - link "Home" [ref=e11] [cursor=pointer]:
+            - /url: /
+            - text: 🏠Home
+          - link "Proposals" [ref=e12] [cursor=pointer]:
+            - /url: /proposals
+            - text: 📋Proposals
+          - link "Create" [ref=e13] [cursor=pointer]:
+            - /url: /proposals/create
+            - text: ➕Create
+          - link "Dashboard" [ref=e14] [cursor=pointer]:
+            - /url: /dashboard
+            - text: 📊Dashboard
+        - generic [ref=e15]:
+          - button "Notifications" [ref=e17]:
+            - img
+          - generic:
+            - button: Connect Wallet
+    - main [ref=e18]:
+      - generic [ref=e20]:
+        - generic [ref=e22]:
+          - heading "Proposals" [level=1] [ref=e23]
+          - paragraph [ref=e24]: Shape the future of $OMNOM. Browse, vote, and govern.
+        - generic [ref=e25]:
+          - tablist "Filter proposals by status" [ref=e26]:
+            - tab "All" [selected] [ref=e27]
+            - tab "Draft" [ref=e28]
+            - tab "Pending Review" [ref=e29]
+            - tab "Active" [ref=e30]
+            - tab "Passed" [ref=e31]
+            - tab "Failed" [ref=e32]
+            - tab "Expired" [ref=e33]
+          - generic [ref=e34]:
+            - combobox "Filter by type" [ref=e35]:
+              - img [ref=e36]
+              - img [ref=e38]
+            - combobox [ref=e40]
+            - combobox "Sort proposals" [ref=e41]:
+              - img [ref=e42]
+            - combobox [ref=e44]
+            - generic [ref=e45]:
+              - img
+              - searchbox "Search proposals by title or description" [ref=e46]
+        - status "Loading" [ref=e48]
+    - contentinfo [ref=e103]:
+      - generic [ref=e104]:
+        - generic [ref=e105]:
+          - generic [ref=e106]: 🐶
+          - generic [ref=e107]: $OMNOM DAO — Community Governance · MIT Licensed
+        - navigation [ref=e108]:
+          - link "Proposals" [ref=e109] [cursor=pointer]:
+            - /url: /proposals
+          - link "Dashboard" [ref=e110] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Telegram" [ref=e111] [cursor=pointer]:
+            - /url: https://t.me/omnomtoken_dc
+          - link "Documentation" [ref=e112] [cursor=pointer]:
+            - /url: /DOCS/README.md
+      - paragraph [ref=e114]: Snapshot · Block 59,922,100 · 2026-06-07 · 25,431 holders
+  - region "Notifications alt+T"

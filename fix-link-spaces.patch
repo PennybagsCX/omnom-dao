@@ -1,0 +1,14 @@
+--- a/src/components/shared/wysiwyg-editor.tsx
++++ b/src/components/shared/wysiwyg-editor.tsx
+@@ -162,7 +162,7 @@
+         if (trimmed.startsWith("www.")) return `https://${trimmed}`;
+         return `https://${trimmed}`;
+       })();
+-      
+-      editor.chain().focus().extendMarkRange("link").setLink({ href: normalized }).run();
++      
++      // Apply link only to selected text, don't extend range
++      editor.chain().focus().setLink({ href: normalized }).run();
+     }
+     
+     // Keep dialog open for rapid editing, just close on Esc

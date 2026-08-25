@@ -1,0 +1,100 @@
+# Enhanced Dev Wallet Investigation & Refactoring with Superpowers
+
+## Role
+As a senior Web3/frontend engineer with expertise in React 19, Next.js 16, wallet integration, browser compatibility, and debugging cross-browser issues, investigate and fix the dev test wallet system.
+
+## Context Analysis
+- **Project**: OMNOM DAO - Next.js 16.2.9, React 19, Web3 integration
+- **Issue**: Dev test wallet not updating in Arc browser but works in Chrome; wallet not connecting to platform
+- **Impact**: Critical - prevents testing and development workflow
+- **Browser Environment**: Arc browser (Chromium-based) vs Chrome compatibility issues
+- **Tech Stack**: Enhanced mock wallet system, Radix UI components, React hooks
+
+## Task Decomposition
+
+### Phase 1: Cross-Browser Symptom Analysis
+1. Inspect browser console errors in Arc vs Chrome
+2. Check for browser-specific API incompatibilities (ethereum object, event listeners)
+3. Verify React 19 compatibility with Arc's Chromium version
+4. Test wallet state management across browser contexts
+5. Identify any Arc-specific extension conflicts
+
+### Phase 2: Code Architecture Investigation
+1. Review enhanced-mock-wallet.ts for browser-specific code paths
+2. Examine MockWalletControls component state management
+3. Check React useEffect dependencies and cleanup in browser contexts
+4. Verify event listener registration/deregistration
+5. Inspect provider installation and property definition approaches
+
+### Phase 3: Hypothesis Testing & Root Cause
+**Hypothesis A**: Arc browser extension conflicts
+- Test: Check if Arc's built-in wallet extensions interfere
+- Evidence: Console errors, provider detection timing
+
+**Hypothesis B**: React 19 reconciliation issues
+- Test: Component mounting/unmounting in Arc vs Chrome
+- Evidence: State updates, effect triggers, re-render patterns
+
+**Hypothesis C**: ethereum provider detection differences
+- Test: Provider property availability and detection timing
+- Evidence: window.ethereum existence, __isEnhancedMock flags
+
+**Hypothesis D**: Event propagation/bubbling differences
+- Test: Event listener attachment and response in Arc
+- Evidence: accountsChanged, connect events firing correctly
+
+### Phase 4: Comprehensive Refactoring & Testing
+1. Implement browser-agnostic provider installation
+2. Add robust error boundaries and fallbacks
+3. Enhance state management with cross-browser compatibility
+4. Add comprehensive logging for debugging
+5. Test in Arc, Chrome, and Safari for consistency
+
+### Phase 5: Verification & Validation
+1. Test wallet connection flow in Arc browser
+2. Test wallet connection flow in Chrome (regression check)
+3. Verify UI updates correctly across browsers
+4. Test account switching functionality
+5. Verify platform integration (SIWE auth flow)
+
+## Expected Output Format
+```markdown
+## Investigation Results
+
+### Browser Compatibility Analysis
+- **Arc Browser Issues**: [specific problems found]
+- **Chrome Status**: [working/noting differences]
+- **Root Cause**: [technical explanation]
+
+### Refactoring Applied
+- **Files Modified**: [list of files changed]
+- **Architecture Changes**: [structural improvements]
+- **Compatibility Fixes**: [browser-agnostic solutions]
+
+### Testing Results
+- [x] Arc browser wallet connection working
+- [x] Chrome browser still working (regression test)
+- [x] UI updates correctly in both browsers
+- [x] Account switching functional
+- [x] Platform integration verified
+
+### Additional Improvements
+[Any architectural or reliability improvements discovered]
+```
+
+## Quality Criteria
+- **Cross-browser compatible**: Works consistently across Arc, Chrome, Safari
+- **Robust error handling**: Graceful degradation and clear error messages
+- **Maintainable code**: Clear architecture and comprehensive logging
+- **Production-ready**: Follows React 19 and Next.js 16 best practices
+- **Well-tested**: Verified across multiple browsers and use cases
+
+## Constraints
+- Must preserve existing Chrome functionality
+- Cannot break existing wallet connection flows
+- Must maintain React 19 compatibility
+- Should follow Next.js 16 conventions
+- Must include comprehensive error boundaries
+
+## Success Definition
+The dev test wallet connects, updates, and functions consistently across Arc and Chrome browsers, enabling reliable development and testing of the OMNOM DAO platform.
