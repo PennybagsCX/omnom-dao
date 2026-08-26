@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
  * Skeleton shimmer loader variants.
  * Uses the `.skeleton-shimmer` gradient sweep keyframe defined in globals.css.
  */
-type SkeletonVariant = "card" | "list" | "detail" | "dashboard" | "stat-row";
+type SkeletonVariant = "card" | "list" | "rows" | "detail" | "dashboard" | "stat-row";
 
 interface LoadingSkeletonProps {
   variant?: SkeletonVariant;
@@ -48,8 +48,31 @@ function CardSkeleton() {
   );
 }
 
-function DetailSkeleton() {
+/**
+ * Mirrors the compact proposal-row list: one bordered container, evenly
+ * divided rows with a title on the left and a metric on the right. Row
+ * height tracks the real row's `py-3.5` + `text-sm` so the swap to loaded
+ * content doesn't shift the page.
+ */
+function RowsSkeleton({ count }: { count: number }) {
+  // Staggered title widths so the placeholder reads as text, not as bars.
+  const widths = ["w-2/3", "w-1/2", "w-3/4", "w-2/5", "w-3/5"];
   return (
+    <div className="overflow-hidden rounded-lg border border-border bg-bg-surface/40">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="flex items-center justify-between gap-3 border-b border-border px-4 py-3.5 last:border-b-0"
+        >
+          <Block className={cn("h-5", widths[i % widths.length])} />
+          <Block className="h-4 w-20 shrink-0" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DetailSkeleton() {  return (
     <div className="space-y-5">
       <Block className="h-5 w-28" />
       <Block className="h-9 w-2/3" />
@@ -100,6 +123,13 @@ export function LoadingSkeleton({
 }: LoadingSkeletonProps) {
   if (variant === "stat-row") {
     return <StatRowSkeleton />;
+  }
+  if (variant === "rows") {
+    return (
+      <div className={className} role="status" aria-label="Loading">
+        <RowsSkeleton count={count} />
+      </div>
+    );
   }
   if (variant === "detail") {
     return <div className={className} role="status" aria-label="Loading"><DetailSkeleton /></div>;

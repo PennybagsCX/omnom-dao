@@ -247,16 +247,27 @@ export default function HomePage() {
 
       {/* ── Recent proposals ───────────────────────────────── */}
       <section className="mx-auto w-full max-w-5xl px-4 pb-20 sm:px-6 lg:px-8">
-        <SectionHeading
-          eyebrow="History"
-          title={
-            <>
-              <ClipboardList className="mr-1.5 inline h-4 w-4 align-[-2px]" /> Recent Proposals
-            </>
-          }
-        />
+        <div className="mb-6 text-center">
+          <SectionHeading
+            eyebrow="History"
+            title={
+              <>
+                <ClipboardList className="mr-1.5 inline h-4 w-4 align-[-2px]" /> Recent Proposals
+              </>
+            }
+          />
+          {recentProposals.length > 0 && (
+            <div className="mt-2">
+              <Button asChild variant="ghost" size="sm" className="shrink-0">
+                <Link href="/proposals">
+                  View all <ArrowRight className="h-4 w-4" aria-hidden />
+                </Link>
+              </Button>
+            </div>
+          )}
+        </div>
         {showRecentSkeleton ? (
-          <LoadingSkeleton variant="list" count={4} className="grid-cols-1 md:grid-cols-2" />
+          <LoadingSkeleton variant="rows" count={5} />
         ) : recentProposals.length > 0 ? (
           <div className="overflow-hidden rounded-lg border border-border bg-bg-surface/40">
             {recentProposals.slice(0, 5).map((p) => (

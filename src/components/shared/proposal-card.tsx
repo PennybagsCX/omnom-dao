@@ -4,6 +4,7 @@ import { Clock, PenLine } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { CountdownTimer } from "@/components/shared/countdown-timer";
+import { HolderBadge } from "@/components/shared/holder-badge";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import { ProposalTypeBadge } from "@/components/shared/proposal-type-badge";
 import { VoteBar } from "@/components/shared/vote-bar";
@@ -65,16 +66,21 @@ export const ProposalCard = memo(function ProposalCard({
             />
           )}
 
-          <div className="mt-auto flex flex-wrap items-center justify-center gap-2 border-t border-border pt-3 text-xs text-text-dim sm:justify-between">
+          <div className="mt-auto flex flex-wrap items-center justify-center gap-2 border-t border-border pt-3 text-xs text-text-dim">
             <span className="inline-flex items-center gap-1.5">
               <PenLine className="h-3.5 w-3.5" aria-hidden />
               <span className="font-mono">{shortenAddress(proposal.authorAddress)}</span>
+              {/* No explorer link here — the whole card is the proposal Link,
+                  and nested <a> tags are invalid HTML. Badge only. */}
+              {proposal.authorHolderClass && (
+                <HolderBadge holderClass={proposal.authorHolderClass} size="sm" plain />
+              )}
             </span>
             {isActive && proposal.votingEndsAt ? (
               <CountdownTimer endsAt={proposal.votingEndsAt} compact />
             ) : (
               <span className="inline-flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5 w-3.5" aria-hidden />
+                <Clock className="h-3.5 w-3.5" aria-hidden />
                 {timeAgo(proposal.createdAt)}
                 {totalVotes > 0 && <span> · {totalVotes.toLocaleString()} votes</span>}
               </span>
