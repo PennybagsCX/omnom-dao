@@ -8,7 +8,7 @@
   ],
   "redirects": [
     {
-      "source": "https://www.dao.omnom.dog/:path*",
+      "source": "/:path*",
       "destination": "https://dao.omnom.dog/:path*",
       "statusCode": 308,
       "has": [
@@ -19,8 +19,8 @@
       ]
     },
     {
-      "source": "https://www.dao.omnom.dog",
-      "destination": "https://dao.omnom.dog",
+      "source": "/",
+      "destination": "https://dao.omnom.dog/",
       "statusCode": 308,
       "has": [
         {
