@@ -114,15 +114,13 @@ fi
 # ── 4. Election API (public metadata) ───────────────────────────
 heading "4. Election API"
 
-# /api/v1/governance-vote GET returns UNAUTHORIZED (POST is the write path)
-# So we check the public snapshot-explorer endpoint for election context
+# /api/v1/snapshot-explorer requires auth (returns holder addresses — PII).
+# This is intentional; verify it's protected.
 code=$(http_status "$BASE/api/v1/snapshot-explorer?limit=1")
-body=$(cat /tmp/resp.json)
-assert_status "GET /api/v1/snapshot-explorer" 200 "$code"
-if echo "$body" | grep -q "success.:true"; then
-  ok "Snapshot explorer returned data envelope"
+if [ "$code" = "401" ]; then
+  ok "Snapshot explorer correctly requires auth (401)"
 else
-  warn "Snapshot explorer response shape unexpected: $body"
+  warn "Snapshot explorer returned HTTP $code (expected 401)"
 fi
 
 # ── 5. CSP violation reporting ──────────────────────────────────

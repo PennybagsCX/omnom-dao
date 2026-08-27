@@ -20,6 +20,12 @@ const PUBLIC_API_PREFIXES = [
   "/api/v1/verify",
   "/api/v1/health",
   "/api/v1/logout",
+  // Cron sweep endpoint — has its own Bearer-secret auth check
+  // (cron/finalize/route.ts), so JWT middleware must not intercept it.
+  "/api/v1/cron/finalize",
+  // CSP violation receiver — browsers POST reports without cookies,
+  // and the endpoint must accept them from any origin (CSP is per-origin).
+  "/api/v1/csp-report",
   // DEV ONLY: allow dev auth bypass outside the production bundle
   ...(process.env.NODE_ENV === "development" ? ["/api/v1/dev-login"] : []),
 ];
