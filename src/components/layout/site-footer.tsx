@@ -7,7 +7,7 @@ import { SNAPSHOT } from "@/lib/constants";
  */
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border bg-bg-surface">
+    <footer className="border-t border-border bg-bg-surface pb-16 md:pb-0">
       {/* Essential info section */}
       <div className="border-t border-border px-4 py-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl text-center">

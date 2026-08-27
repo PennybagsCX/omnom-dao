@@ -38,6 +38,10 @@ function isPublicTagsRead(method: string, pathname: string): boolean {
   return method === "GET" && pathname === "/api/v1/tags";
 }
 
+function isPublicSnapshotExplorerRead(method: string, pathname: string): boolean {
+  return method === "GET" && pathname === "/api/v1/snapshot-explorer";
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method.toUpperCase();
@@ -52,6 +56,10 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isPublicTagsRead(method, pathname)) {
+    return NextResponse.next();
+  }
+
+  if (isPublicSnapshotExplorerRead(method, pathname)) {
     return NextResponse.next();
   }
 
