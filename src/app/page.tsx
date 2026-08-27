@@ -279,7 +279,17 @@ export default function HomePage() {
             {/* Featured: newest proposal as a full card */}
             <div>
               <p className="mb-2 text-xs uppercase tracking-wider text-text-dim">Newest</p>
-              <ProposalCard proposal={recentProposals[0]} />
+              {/* Hide the VoteBar when no votes have been cast — an all-zero
+                  bar is visual clutter on Pending Review / Failed items. */}
+              <ProposalCard
+                proposal={recentProposals[0]}
+                hideVoteBar={
+                  recentProposals[0].votesFor +
+                    recentProposals[0].votesAgainst +
+                    recentProposals[0].votesAbstain ===
+                  0
+                }
+              />
             </div>
             {/* Remaining proposals as compact rows */}
             {recentProposals.length > 1 && (
