@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { HolderStatsBar } from "@/components/shared/holder-stats-bar";
 import { ProposalCard } from "@/components/shared/proposal-card";
+import { ProposalRow } from "@/components/shared/proposal-row";
 import { EmptyState } from "@/components/shared/empty-state";
 import type { ReactNode } from "react";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
@@ -245,7 +246,7 @@ export default function HomePage() {
         </section>
       ) : null}
 
-      {/* ── Recent proposals ───────────────────────────────── */}
+      {/* ── Recent proposals — Direction C: editorial hybrid ─── */}
       <section className="mx-auto w-full max-w-5xl px-4 pb-20 sm:px-6 lg:px-8">
         <div className="mb-6 text-center">
           <SectionHeading
@@ -266,24 +267,28 @@ export default function HomePage() {
             </div>
           )}
         </div>
+
         {showRecentSkeleton ? (
-          <LoadingSkeleton variant="rows" count={5} />
+          /* Two skeletons: one card-sized block + rows beneath it */
+          <div className="space-y-3">
+            <LoadingSkeleton variant="card" count={1} />
+            <LoadingSkeleton variant="rows" count={4} />
+          </div>
         ) : recentProposals.length > 0 ? (
-          <div className="overflow-hidden rounded-lg border border-border bg-bg-surface/40">
-            {recentProposals.slice(0, 5).map((p) => (
-              <Link
-                key={p.id}
-                href={`/proposals/${p.id}`}
-                className="flex items-center justify-between gap-3 border-b border-border px-4 py-3.5 transition-colors last:border-b-0 hover:bg-bg-elevated/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-              >
-                <span className="line-clamp-1 text-sm font-medium text-foreground">
-                  {p.title}
-                </span>
-                <span className="shrink-0 font-mono text-xs text-text-dim">
-                  {(p.votesFor + p.votesAgainst + p.votesAbstain).toLocaleString()} votes
-                </span>
-              </Link>
-            ))}
+          <div className="space-y-3">
+            {/* Featured: newest proposal as a full card */}
+            <div>
+              <p className="mb-2 text-xs uppercase tracking-wider text-text-dim">Newest</p>
+              <ProposalCard proposal={recentProposals[0]} />
+            </div>
+            {/* Remaining proposals as compact rows */}
+            {recentProposals.length > 1 && (
+              <div className="overflow-hidden rounded-lg border border-border bg-bg-surface/40">
+                {recentProposals.slice(1, 5).map((p) => (
+                  <ProposalRow key={p.id} proposal={p} />
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <EmptyState
