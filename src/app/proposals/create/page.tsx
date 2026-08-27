@@ -35,12 +35,15 @@ import { Markdown } from "@/components/shared/markdown";
 import { WysiwygEditor } from "@/components/shared/wysiwyg-editor";
 import { ProposalTypeBadge } from "@/components/shared/proposal-type-badge";
 import { HolderBadge } from "@/components/shared/holder-badge";
+import { CountdownTimer } from "@/components/shared/countdown-timer";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ConnectCta } from "@/components/wallet/connect-cta";
-import { useCreateProposal, useCurrentUser, useTags } from "@/lib/api";
+import { useCreateProposal, useCurrentUser, useTags, fetchApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { PROPOSAL_TYPE_CONFIG } from "@/lib/constants";
 import { HolderClass, ProposalType } from "@/types";
+import { useQuery } from "@tanstack/react-query";
+import { FGE_VOTING_ENDS_AT, FGE_VOTING_STARTS_AT } from "@/lib/election";
 
 // Confetti is a client-only canvas component — load it lazily.
 const ReactConfetti = dynamic(() => import("react-confetti"), { ssr: false });
@@ -88,6 +91,23 @@ const TOTAL_STEPS = 4;
 export default function CreateProposalPage() {
   const { data: me } = useCurrentUser({ retry: false });
   const createProposal = useCreateProposal();
+
+  // Fetch election phase to gate submission. Drafts are allowed in any phase
+  // (UPCOMING / OPEN / CLOSED); only submission requires CLOSED. We use a
+  // dedicated useQuery (not coupled to useCreateProposal) so the election
+  // data is independent of proposal-creation mutations.
+  const { data: election } = useQuery({
+    queryKey: ["election", "phase"],
+    queryFn: () =>
+      fetchApi<{ phase: "UPCOMING" | "OPEN" | "CLOSED"; endsAt: string }>(
+        "/api/v1/governance-vote",
+      ),
+    // Refresh every minute; cheap (small JSON payload).
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+
+  const proposalsUnlocked = election?.phase === "CLOSED";
 
   const [step, setStep] = useState(1);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -271,6 +291,89 @@ export default function CreateProposalPage() {
             </Button>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  // ── Election-locked gate ────────────────────────────────────
+  // Proposals cannot be submitted until the FGE closes (Sep 12). Drafts ARE
+  // allowed before then — handled by the auto-save hook below — but submit
+  // requires the platform to have a chosen voting math (which the FGE decides).
+  if (!proposalsUnlocked && !election) {
+    // Election data still loading — render a tiny skeleton so the page
+    // doesn't flash between "Submit a Proposal" and the locked state.
+    return (
+      <div className="mx-auto max-w-xl px-4 py-16 text-center sm:px-6">
+        <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Submit a Proposal
+        </h1>
+        <p className="text-sm text-muted-foreground">Loading election status…</p>
+      </div>
+    );
+  }
+
+  if (!proposalsUnlocked) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
+        <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Submit a Proposal
+        </h1>
+        <p className="mb-8 text-sm text-muted-foreground">
+          Proposal submission unlocks after the Foundational Governance Election
+          closes on <strong>Sep 12, 2026</strong>. The election decides the
+          voting math (linear / 1W1V / tiered / quadratic) that every future
+          proposal is tallied under.
+        </p>
+
+        <CountdownTimer
+          target={election?.endsAt ?? FGE_VOTING_ENDS_AT}
+          label="Proposals unlock in"
+          ariaLabel="Countdown to proposal submission unlock"
+        />
+
+        <Card className="mt-8">
+          <CardContent className="space-y-4 p-6 text-sm text-muted-foreground">
+            <div className="flex items-start gap-3">
+              <ClipboardList className="mt-0.5 h-4 w-4 shrink-0 text-gold" aria-hidden />
+              <div>
+                <strong className="block text-foreground">Drafts are saved</strong>
+                You can start writing your proposal now and it will auto-save
+                to our database. Drafts sync across devices when you sign in
+                with the same wallet.
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Rocket className="mt-0.5 h-4 w-4 shrink-0 text-gold" aria-hidden />
+              <div>
+                <strong className="block text-foreground">Submit when unlocked</strong>
+                On Sep 12, the submit button activates and your drafts can be
+                submitted for admin review.
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Ban className="mt-0.5 h-4 w-4 shrink-0 text-text-dim" aria-hidden />
+              <div>
+                <strong className="block text-text-dim">No early submit</strong>
+                The lock exists because the voting math is undefined until the
+                election completes. Submitting early would produce ambiguous
+                tallies.
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <Button asChild variant="outline">
+            <Link href="/proposals">
+              <ArrowLeft className="h-4 w-4" aria-hidden /> Browse existing proposals
+            </Link>
+          </Button>
+          <Button asChild variant="ghost">
+            <Link href="/governance-vote">
+              View Election <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </Button>
+        </div>
       </div>
     );
   }

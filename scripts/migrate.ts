@@ -86,6 +86,38 @@ async function main() {
     },
     { sql: `CREATE INDEX IF NOT EXISTS idx_proposals_created ON proposals (created_at DESC)` },
 
+    // ── 2b. Proposal drafts (Phase 10) ──────────────────────────
+    //    Server-side drafts persist across devices/browsers/refreshes. Drafts
+    //    auto-save as the author types (debounced 3s on the client) and sync
+    //    the moment the author signs in to any device with the same wallet.
+    //    Drafts are NOT visible to anyone but the author and do not enter
+    //    the public proposals list — they are private workspaces until the
+    //    author submits (which requires the FGE voting math to be locked).
+    {
+      sql: `CREATE TABLE IF NOT EXISTS proposal_drafts (
+        id                  TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        wallet_address      TEXT NOT NULL,
+        type                TEXT NOT NULL DEFAULT 'GENERAL'
+                            CHECK (type IN (
+                              'CHAIN_SELECTION', 'TOKENOMICS_CHANGE', 'TREASURY',
+                              'GUIDELINE', 'TECHNICAL', 'GENERAL'
+                            )),
+        title               TEXT NOT NULL DEFAULT '',
+        summary             TEXT NOT NULL DEFAULT '',
+        body_markdown       TEXT NOT NULL DEFAULT '',
+        tags                TEXT NOT NULL DEFAULT '[]', -- JSON array
+        duration_hours      INTEGER NOT NULL DEFAULT 168,
+        quorum_required     REAL NOT NULL DEFAULT 10.0,
+        created_at          TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at          TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (wallet_address) REFERENCES users (wallet_address) ON DELETE CASCADE
+      )`,
+    },
+    {
+      sql: `CREATE INDEX IF NOT EXISTS idx_proposal_drafts_wallet
+            ON proposal_drafts (wallet_address, updated_at DESC)`,
+    },
+
     // ── 3. Votes ─────────────────────────────────────────────
     {
       sql: `CREATE TABLE IF NOT EXISTS votes (

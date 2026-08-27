@@ -26,10 +26,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProposalCard } from "@/components/shared/proposal-card";
+import { CountdownTimer } from "@/components/shared/countdown-timer";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
-import { useCurrentUser, useProposals } from "@/lib/api";
+import { useCurrentUser, useProposals, fetchApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { FGE_VOTING_ENDS_AT } from "@/lib/election";
 import {
   ProposalStatus,
   ProposalType,
@@ -145,6 +148,20 @@ function ProposalsList({ seed }: { seed: ProposalsUrlSeed | null }) {
 
   const { data: me } = useCurrentUser({ retry: false });
   const isAuthenticated = Boolean(me);
+
+  // Fetch election phase so we can show a banner with the proposal-unlock
+  // countdown. Refresh every 5 minutes; the value rarely changes.
+  const { data: election } = useQuery({
+    queryKey: ["election", "phase"],
+    queryFn: () =>
+      fetchApi<{ phase: "UPCOMING" | "OPEN" | "CLOSED"; endsAt: string }>(
+        "/api/v1/governance-vote",
+      ),
+    refetchInterval: 5 * 60_000,
+    staleTime: 60_000,
+  });
+
+  const proposalsUnlocked = election?.phase === "CLOSED";
 
   // ── Filter state ─────────────────────────────────────────────
   // Seeded from the URL only after the (Suspense-wrapped) `ProposalsSearchParams`
@@ -313,6 +330,23 @@ function ProposalsList({ seed }: { seed: ProposalsUrlSeed | null }) {
             </Button>
           )}
         </header>
+
+        {/* ── Unlock banner — visible only until FGE closes ── */}
+        {!proposalsUnlocked && election?.endsAt && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: EASE }}
+            className="mx-auto mt-6 max-w-xl"
+            data-testid="proposals-unlock-banner"
+          >
+            <CountdownTimer
+              target={election.endsAt}
+              label="Proposal submission unlocks in"
+              ariaLabel="Countdown to proposal submission unlock"
+            />
+          </motion.div>
+        )}
 
         {/* ── Filter bar ─────────────────────────────────────── */}
         <Card className="mt-6 p-4">
