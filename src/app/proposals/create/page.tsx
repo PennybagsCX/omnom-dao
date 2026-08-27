@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -11,10 +11,15 @@ import {
   Ban,
   Check,
   ClipboardList,
+  CloudOff,
+  CloudUpload,
+  FolderOpen,
   Hash,
   Loader2,
   PartyPopper,
   Rocket,
+  Save,
+  Trash2,
   Wallet,
   X,
 } from "lucide-react";
@@ -40,10 +45,11 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { ConnectCta } from "@/components/wallet/connect-cta";
 import { useCreateProposal, useCurrentUser, useTags, fetchApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useDraftAutosave, type DraftRecord } from "@/lib/use-draft-autosave";
 import { PROPOSAL_TYPE_CONFIG } from "@/lib/constants";
 import { HolderClass, ProposalType } from "@/types";
 import { useQuery } from "@tanstack/react-query";
-import { FGE_VOTING_ENDS_AT, FGE_VOTING_STARTS_AT } from "@/lib/election";
+import { FGE_VOTING_ENDS_AT } from "@/lib/election";
 
 // Confetti is a client-only canvas component — load it lazily.
 const ReactConfetti = dynamic(() => import("react-confetti"), { ssr: false });
@@ -122,6 +128,75 @@ export default function CreateProposalPage() {
     tags: "",
     durationHours: 168,
   });
+
+  // ── Draft autosave (Phase 10) ─────────────────────────────────
+  // Saves the wizard state to /api/v1/proposals/drafts every 3 seconds of
+  // inactivity. Cross-device sync: signed-in users see the same drafts on
+  // any device because they're keyed to the SIWE-verified wallet.
+  const initialQuorum = state.type
+    ? (TYPE_DEFAULTS[state.type]?.quorum ?? 10)
+    : 10;
+  const autosave = useDraftAutosave({
+    initial: {
+      type: state.type ?? ProposalType.GENERAL,
+      title: state.title,
+      summary: "", // reserved for future; not in WizardState yet
+      bodyMarkdown: state.body,
+      tags: state.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
+      durationHours: state.durationHours,
+      quorumRequired: initialQuorum,
+    },
+    enabled: Boolean(me),
+  });
+
+  // Re-bind autosave whenever the wizard state changes. The hook debounces
+  // internally; calling bindAutoSave on every keystroke is cheap.
+  useEffect(() => {
+    if (!state.type) return;
+    const eq = TYPE_DEFAULTS[state.type]?.quorum ?? 10;
+    autosave.bindAutoSave({
+      type: state.type,
+      title: state.title,
+      summary: "",
+      bodyMarkdown: state.body,
+      tags: state.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
+      durationHours: state.durationHours,
+      quorumRequired: eq,
+    });
+  }, [state.type, state.title, state.body, state.tags, state.durationHours, autosave]);
+
+  const [draftsOpen, setDraftsOpen] = useState(false);
+  const [savedAgoSeconds, setSavedAgoSeconds] = useState(0);
+
+  // Tick "saved Xs ago" every second when we have a saved timestamp.
+  // The initial value is set lazily — no synchronous setState in the effect.
+  useEffect(() => {
+    if (!autosave.lastSavedAt) return;
+    const tick = () =>
+      setSavedAgoSeconds(Math.floor((Date.now() - autosave.lastSavedAt!) / 1000));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [autosave.lastSavedAt]);
+
+  const loadDraftIntoWizard = (draft: DraftRecord) => {
+    const newState: WizardState = {
+      type: draft.type as ProposalType,
+      title: draft.title,
+      body: draft.bodyMarkdown,
+      tags: draft.tags.join(", "),
+      durationHours: draft.durationHours,
+    };
+    setState(newState);
+    setDraftsOpen(false);
+    setStep(1);
+  };
 
   const patch = useCallback(
     (p: Partial<WizardState>) => setState((s) => ({ ...s, ...p })),
@@ -295,85 +370,21 @@ export default function CreateProposalPage() {
     );
   }
 
-  // ── Election-locked gate ────────────────────────────────────
-  // Proposals cannot be submitted until the FGE closes (Sep 12). Drafts ARE
-  // allowed before then — handled by the auto-save hook below — but submit
-  // requires the platform to have a chosen voting math (which the FGE decides).
+  // ── Election-locked banner (only render when election data is ready) ─
+  // We do NOT block the wizard itself — drafts save any time, even before
+  // the FGE closes. Submit is gated separately via the submit button
+  // disabled state. This lets holders start drafting immediately.
+  const showLockedBanner =
+    !proposalsUnlocked && Boolean(election);
+
+  // ── Loading skeleton (election data not yet returned) ──────────
   if (!proposalsUnlocked && !election) {
-    // Election data still loading — render a tiny skeleton so the page
-    // doesn't flash between "Submit a Proposal" and the locked state.
     return (
       <div className="mx-auto max-w-xl px-4 py-16 text-center sm:px-6">
         <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           Submit a Proposal
         </h1>
         <p className="text-sm text-muted-foreground">Loading election status…</p>
-      </div>
-    );
-  }
-
-  if (!proposalsUnlocked) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
-        <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Submit a Proposal
-        </h1>
-        <p className="mb-8 text-sm text-muted-foreground">
-          Proposal submission unlocks after the Foundational Governance Election
-          closes on <strong>Sep 12, 2026</strong>. The election decides the
-          voting math (linear / 1W1V / tiered / quadratic) that every future
-          proposal is tallied under.
-        </p>
-
-        <CountdownTimer
-          target={election?.endsAt ?? FGE_VOTING_ENDS_AT}
-          label="Proposals unlock in"
-          ariaLabel="Countdown to proposal submission unlock"
-        />
-
-        <Card className="mt-8">
-          <CardContent className="space-y-4 p-6 text-sm text-muted-foreground">
-            <div className="flex items-start gap-3">
-              <ClipboardList className="mt-0.5 h-4 w-4 shrink-0 text-gold" aria-hidden />
-              <div>
-                <strong className="block text-foreground">Drafts are saved</strong>
-                You can start writing your proposal now and it will auto-save
-                to our database. Drafts sync across devices when you sign in
-                with the same wallet.
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Rocket className="mt-0.5 h-4 w-4 shrink-0 text-gold" aria-hidden />
-              <div>
-                <strong className="block text-foreground">Submit when unlocked</strong>
-                On Sep 12, the submit button activates and your drafts can be
-                submitted for admin review.
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Ban className="mt-0.5 h-4 w-4 shrink-0 text-text-dim" aria-hidden />
-              <div>
-                <strong className="block text-text-dim">No early submit</strong>
-                The lock exists because the voting math is undefined until the
-                election completes. Submitting early would produce ambiguous
-                tallies.
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <Button asChild variant="outline">
-            <Link href="/proposals">
-              <ArrowLeft className="h-4 w-4" aria-hidden /> Browse existing proposals
-            </Link>
-          </Button>
-          <Button asChild variant="ghost">
-            <Link href="/governance-vote">
-              View Election <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          </Button>
-        </div>
       </div>
     );
   }
@@ -386,14 +397,69 @@ export default function CreateProposalPage() {
         </Link>
       </Button>
 
+      {/* ── Locked banner — shown above the wizard when FGE is not closed */}
+      {showLockedBanner && election?.endsAt && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: EASE }}
+          className="mb-6"
+          data-testid="proposals-locked-banner"
+        >
+          <CountdownTimer
+            target={election.endsAt}
+            label="Submission unlocks in"
+            ariaLabel="Countdown to proposal submission unlock"
+          />
+          <p className="mt-3 text-center text-xs text-text-dim">
+            Drafts auto-save below. Submit activates after the election closes.
+          </p>
+        </motion.div>
+      )}
+
       <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
         Submit a Proposal
       </h1>
-      <p className="mb-6 text-sm text-muted-foreground">
+      <p className="mb-4 text-sm text-muted-foreground">
         Draft a new governance proposal for OMNOM DAO. Choose a template, fill in
         the details, and submit for admin review. After approval, holders vote
         on whether to ratify.
       </p>
+
+      {/* ── Draft controls row: status indicator + drafts picker */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-bg-elevated/40 px-4 py-2.5 text-xs">
+        <DraftStatusIndicator
+          state={autosave.autoSaveState}
+          savedAgoSeconds={savedAgoSeconds}
+          enabled={Boolean(me)}
+        />
+        {autosave.drafts.length > 0 && (
+          <div className="relative">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setDraftsOpen((v) => !v)}
+              aria-expanded={draftsOpen}
+              aria-haspopup="menu"
+              className="h-7 px-2 text-xs"
+            >
+              <FolderOpen className="h-3.5 w-3.5" aria-hidden />
+              {autosave.drafts.length} saved draft{autosave.drafts.length === 1 ? "" : "s"}
+            </Button>
+            {draftsOpen && (
+              <DraftsMenu
+                drafts={autosave.drafts}
+                onLoad={(d) => loadDraftIntoWizard(d)}
+                onDelete={async (id) => {
+                  await autosave.deleteDraft(id);
+                }}
+                onClose={() => setDraftsOpen(false)}
+              />
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Step indicator */}
       <div className="mb-6">
@@ -503,7 +569,10 @@ export default function CreateProposalPage() {
             Next <ArrowRight className="h-4 w-4" aria-hidden />
           </Button>
         ) : (
-          <Button onClick={onSubmit} disabled={!stepValid || createProposal.isPending}>
+          <Button
+            onClick={onSubmit}
+            disabled={!stepValid || createProposal.isPending || !proposalsUnlocked}
+          >
             {createProposal.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
             ) : (
@@ -963,4 +1032,131 @@ function humanizeHours(hours: number): string {
   if (hours < 24) return `${hours} hours`;
   const days = hours / 24;
   return days === 1 ? "1 day" : `${days} days`;
+}
+
+/* ── Draft status indicator ───────────────────────────────────── */
+
+function DraftStatusIndicator({
+  state,
+  savedAgoSeconds,
+  enabled,
+}: {
+  state: "idle" | "saving" | "saved" | "error";
+  savedAgoSeconds: number;
+  enabled: boolean;
+}) {
+  if (!enabled) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-text-dim">
+        <CloudOff className="h-3.5 w-3.5" aria-hidden />
+        Sign in to save drafts
+      </span>
+    );
+  }
+  if (state === "saving") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-muted-foreground" aria-live="polite">
+        <CloudUpload className="h-3.5 w-3.5 animate-pulse" aria-hidden />
+        Saving…
+      </span>
+    );
+  }
+  if (state === "error") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-danger" role="status">
+        <CloudOff className="h-3.5 w-3.5" aria-hidden />
+        Save failed — retrying
+      </span>
+    );
+  }
+  if (state === "saved" && savedAgoSeconds >= 0) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-success" aria-live="polite">
+        <Save className="h-3.5 w-3.5" aria-hidden />
+        Saved {savedAgoSeconds === 0 ? "just now" : `${savedAgoSeconds}s ago`}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 text-text-dim" aria-live="polite">
+      <Save className="h-3.5 w-3.5" aria-hidden />
+      Drafts auto-save
+    </span>
+  );
+}
+
+/* ── Drafts dropdown ──────────────────────────────────────────── */
+
+function DraftsMenu({
+  drafts,
+  onLoad,
+  onDelete,
+  onClose,
+}: {
+  drafts: DraftRecord[];
+  onLoad: (draft: DraftRecord) => void;
+  onDelete: (id: string) => Promise<void>;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      {/* Click-away backdrop */}
+      <button
+        type="button"
+        aria-label="Close drafts menu"
+        className="fixed inset-0 z-40 cursor-default"
+        onClick={onClose}
+      />
+      <div
+        role="menu"
+        className="absolute right-0 z-50 mt-2 max-h-80 w-72 overflow-auto rounded-lg border border-border bg-bg-surface p-1 shadow-2xl"
+      >
+        <p className="px-3 py-2 text-xs uppercase tracking-wider text-text-dim">
+          Your saved drafts
+        </p>
+        {drafts.map((d) => (
+          <div
+            key={d.id}
+            role="menuitem"
+            className="group flex items-center justify-between gap-2 rounded px-2 py-2 hover:bg-bg-elevated"
+          >
+            <button
+              type="button"
+              onClick={() => onLoad(d)}
+              className="min-w-0 flex-1 text-left"
+            >
+              <p className="truncate text-sm font-medium text-foreground">
+                {d.title || "(untitled)"}
+              </p>
+              <p className="text-xs text-text-dim">
+                {formatDraftTimestamp(d.updatedAt)}
+              </p>
+            </button>
+            <button
+              type="button"
+              aria-label={`Delete draft "${d.title || "(untitled)"}"`}
+              onClick={async (e) => {
+                e.stopPropagation();
+                await onDelete(d.id);
+              }}
+              className="rounded p-1 text-text-dim opacity-0 transition-opacity hover:bg-danger/15 hover:text-danger group-hover:opacity-100"
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function formatDraftTimestamp(iso: string): string {
+  const date = new Date(iso.replace(" ", "T") + (iso.endsWith("Z") ? "" : "Z"));
+  const now = Date.now();
+  const diff = (now - date.getTime()) / 1000;
+  if (Number.isNaN(diff)) return iso;
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86_400) return `${Math.floor(diff / 3600)}h ago`;
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
