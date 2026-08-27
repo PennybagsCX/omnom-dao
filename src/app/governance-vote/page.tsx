@@ -101,8 +101,9 @@ export default function GovernanceVotePage() {
     castVote.mutate(choice);
   };
 
-  // Loading state — H1 is rendered here so SSR/SEO crawlers see the page title
-  // before the React Query client-side hydration completes.
+  // Loading state — H1 + countdown are rendered here so SSR/SEO crawlers
+  // see the page title + countdown before the React Query client-side
+  // hydration completes. The rest of the page renders after data loads.
   if (isLoading) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
@@ -113,6 +114,13 @@ export default function GovernanceVotePage() {
           Decide how future OMNOMDAO proposals should be counted. Every wallet in
           the verified ever-held snapshot gets one ballot, changeable until close.
         </p>
+        <div className="mx-auto mt-6 max-w-xl">
+          <CountdownTimer
+            target={FGE_VOTING_STARTS_AT}
+            label="Voting opens in"
+            ariaLabel="Countdown to Foundational Governance Election opening"
+          />
+        </div>
         <div className="mt-8 flex items-center justify-center" aria-live="polite" aria-busy="true">
           <Loader2 className="h-8 w-8 animate-spin text-gold" />
           <span className="sr-only">Loading election data…</span>
