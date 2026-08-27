@@ -4,27 +4,42 @@ export const OG_SIZE = { width: 1200, height: 630 } as const;
 export const OG_CONTENT_TYPE = "image/png" as const;
 
 /**
+ * Inter font, fetched once at module load from a stable CDN. Next.js edge
+ * runtime caches the response, so this hits the network once per cold start
+ * — every subsequent request reuses the cached ArrayBuffer.
+ *
+ * Source: jsDelivr CDN (`@fontsource/inter` v5). Stable, CORS-friendly,
+ * works inside Vercel edge runtimes. Weights 400 + 800 are bundled so
+ * the visual matches the live site (`src/app/layout.tsx`).
+ */
+async function loadInterFonts(): Promise<
+  { regular: ArrayBuffer; bold: ArrayBuffer }
+> {
+  const fetchAsArrayBuffer = async (url: string): Promise<ArrayBuffer> => {
+    const res = await fetch(url, { cache: "force-cache" });
+    if (!res.ok) throw new Error(`Font fetch failed ${res.status} for ${url}`);
+    return res.arrayBuffer();
+  };
+
+  const FONTS_BASE =
+    "https://cdn.jsdelivr.net/npm/@fontsource/inter@5.1.0/files";
+
+  // Latin subset woff2 — smallest payload, supports the English copy used
+  // in the card. Next.js ImageResponse inlines these into the rendered PNG.
+  const [regular, bold] = await Promise.all([
+    fetchAsArrayBuffer(`${FONTS_BASE}/inter-latin-400-normal.woff2`),
+    fetchAsArrayBuffer(`${FONTS_BASE}/inter-latin-800-normal.woff2`),
+  ]);
+  return { regular, bold };
+}
+
+/**
  * Build the canonical OMNOM DAO social-share card.
  *
  * Returns an `ImageResponse` rendered at the edge — used by both
  * `/opengraph-image` (Facebook, LinkedIn, Discord, Slack, Telegram, iMessage)
- * and `/twitter-image` (X / Twitter card).
- *
- * Note on fonts: we deliberately use the edge default sans-serif stack
- * instead of fetching Inter from Google Fonts. The cross-origin fetch
- * from `fonts.gstatic.com` is unreliable in some Vercel edge regions and
- * caused 500s on first deploy. The system fallback (`-apple-system,
- * BlinkMacSystemFont, "Segoe UI", ...`) renders very close to Inter on
- * every platform that consumes these cards (Apple devices use SF Pro,
- * Windows uses Segoe UI, Linux uses Inter if installed — all close enough
- * to be indistinguishable on social previews).
- *
- * Layout (top → bottom):
- *   1. Brand mark — "OMNOM" (gold) · "DAO" (white), bold
- *   2. Election tagline — uppercase, dim
- *   3. Headline — gold
- *   4. Choices — white
- *   5. Window + eligibility + canonical URL
+ * and `/twitter-image` (X / Twitter card). Inter typography matches the
+ * live site so the share preview looks like part of the same product.
  *
  * Color tokens mirror `src/app/globals.css`:
  *   --color-bg-deep     (#000000) — page background
@@ -32,7 +47,9 @@ export const OG_CONTENT_TYPE = "image/png" as const;
  *   --color-text-dim    (#A1A1AA) — muted labels
  *   --color-foreground  (#FAFAFA) — body text
  */
-export function buildOgCard(): ImageResponse {
+export async function buildOgCard(): Promise<ImageResponse> {
+  const { regular, bold } = await loadInterFonts();
+
   return new ImageResponse(
     (
       <div
@@ -46,8 +63,7 @@ export function buildOgCard(): ImageResponse {
           backgroundColor: "#000000",
           backgroundImage:
             "linear-gradient(135deg, #000000 0%, #0f0f0f 50%, #000000 100%)",
-          fontFamily:
-            '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
+          fontFamily: '"Inter"',
           padding: "64px 80px",
           position: "relative",
         }}
@@ -79,8 +95,8 @@ export function buildOgCard(): ImageResponse {
         >
           <span
             style={{
-              fontSize: 38,
-              fontWeight: 700,
+              fontSize: 40,
+              fontWeight: 800,
               color: "#FFD700",
               letterSpacing: -0.8,
             }}
@@ -89,8 +105,8 @@ export function buildOgCard(): ImageResponse {
           </span>
           <span
             style={{
-              fontSize: 38,
-              fontWeight: 700,
+              fontSize: 40,
+              fontWeight: 800,
               color: "#FAFAFA",
               letterSpacing: -0.8,
             }}
@@ -122,7 +138,7 @@ export function buildOgCard(): ImageResponse {
           </span>
           <span
             style={{
-              fontSize: 80,
+              fontSize: 82,
               fontWeight: 800,
               color: "#FFD700",
               letterSpacing: -2,
@@ -157,6 +173,7 @@ export function buildOgCard(): ImageResponse {
             style={{
               fontSize: 24,
               color: "#A1A1AA",
+              fontWeight: 400,
             }}
           >
             25,686 eligible wallets · Aug 29 → Sep 12, 2026
@@ -174,6 +191,12 @@ export function buildOgCard(): ImageResponse {
         </div>
       </div>
     ),
-    OG_SIZE,
+    {
+      ...OG_SIZE,
+      fonts: [
+        { name: "Inter", data: regular, weight: 400, style: "normal" },
+        { name: "Inter", data: bold, weight: 800, style: "normal" },
+      ],
+    },
   );
 }

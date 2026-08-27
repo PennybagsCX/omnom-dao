@@ -9,6 +9,6 @@ export const contentType = OG_CONTENT_TYPE;
  * Twitter card image — same content as the Open Graph image. Shares the
  * `buildOgCard` helper so a single change updates both surfaces.
  */
-export default function TwitterImage() {
+export default async function TwitterImage() {
   return buildOgCard();
 }

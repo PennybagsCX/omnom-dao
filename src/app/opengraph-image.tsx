@@ -11,9 +11,9 @@ export const contentType = OG_CONTENT_TYPE;
 /**
  * Dynamic Open Graph image for Facebook, LinkedIn, Discord, Slack,
  * Telegram, iMessage, Farcaster, and any other platform that consumes
- * the Open Graph protocol. See `src/components/seo/og-image.tsx` for the
- * shared layout helper.
+ * the Open Graph protocol. Uses Inter (matching the live site) via the
+ * shared `buildOgCard` helper.
  */
-export default function OpenGraphImage() {
+export default async function OpenGraphImage() {
   return buildOgCard();
 }
