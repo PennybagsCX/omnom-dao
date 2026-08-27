@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Brand & Press Kit",
+  title: "Brand & Press Kit — Logo, Colors & Typography",
   description:
-    "OMNOM DAO branding: logo, color palette, typography, and press kit for the Foundational Governance Election.",
+    "OMNOM DAO press kit: logo files, color palette, typography, and verified statistics for the Foundational Governance Election. Free for editorial use.",
   alternates: { canonical: "/brand" },
   openGraph: {
     title: "Brand & Press Kit · OMNOM DAO",

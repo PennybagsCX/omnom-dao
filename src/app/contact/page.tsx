@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Contact",
+  title: "Contact OMNOM DAO — Security, Support & Press",
   description:
-    "Get in touch with the OMNOM DAO team — security disclosures, support, partnerships, and press inquiries.",
+    "Reach the OMNOM DAO team for security disclosures, support, partnerships, or press inquiries. PGP key + response SLAs documented.",
   alternates: { canonical: "/contact" },
   openGraph: {
     title: "Contact · OMNOM DAO",

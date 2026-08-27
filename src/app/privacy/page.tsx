@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy",
+  title: "Privacy Policy — How OMNOM DAO Handles Your Data",
   description:
-    "How OMNOM DAO collects, stores, and uses data — SIWE messages, JWT sessions, IP addresses, and analytics.",
+    "How OMNOM DAO collects, stores, and uses data — SIWE messages, JWT sessions, IP addresses, and analytics. GDPR-aligned.",
   alternates: { canonical: "/privacy" },
   robots: { index: true, follow: true },
   openGraph: {

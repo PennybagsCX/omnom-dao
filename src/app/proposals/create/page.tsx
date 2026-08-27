@@ -226,6 +226,13 @@ export default function CreateProposalPage() {
   if (!me) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 sm:px-6">
+        <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Submit a Proposal
+        </h1>
+        <p className="mb-6 text-sm text-muted-foreground">
+          Draft a new governance proposal for OMNOM DAO. You must connect and
+          verify a wallet that appears in the frozen snapshot.
+        </p>
         <EmptyState
           icon={<Wallet className="h-12 w-12" />}
           title="Connect your wallet"
@@ -240,6 +247,13 @@ export default function CreateProposalPage() {
   if (!me.votingPower) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 sm:px-6">
+        <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Submit a Proposal
+        </h1>
+        <p className="mb-6 text-sm text-muted-foreground">
+          Your wallet must appear in the frozen Dogechain snapshot (block
+          59,922,100) to create a proposal.
+        </p>
         <Card>
           <CardContent className="p-6 text-center">
             <div className="mb-3 flex justify-center" aria-hidden>
