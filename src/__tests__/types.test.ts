@@ -22,9 +22,14 @@ import {
 
 describe("enums have stable string values", () => {
   it.each([
+    [HolderClass.KRAKEN, "KRAKEN"],
     [HolderClass.WHALE, "WHALE"],
     [HolderClass.DOLPHIN, "DOLPHIN"],
-    [HolderClass.FISH, "FISH"],
+    [HolderClass.SHARK, "SHARK"],
+    [HolderClass.OCTOPUS, "OCTOPUS"],
+    [HolderClass.CRAB, "CRAB"],
+    [HolderClass.SEAHORSE, "SEAHORSE"],
+    [HolderClass.FISH, "FISH"], // @deprecated legacy value, still present in enum
   ])("%s serializes to %s", (en, val) => {
     expect(en).toBe(val as HolderClass);
   });

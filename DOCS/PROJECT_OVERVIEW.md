@@ -45,7 +45,7 @@ audience: "All contributors, community members, and observers"
 
 **Why it exists.** On **June 7, 2026**, Dogechain (chain ID 2000) announced its sunset. The chain is no longer operational, leaving every $OMNOM holder's tokens effectively frozen. Vitalik Buterin's public burn of **68.9% of total supply** concentrated the remaining circulating supply among a small group and heightened the need for legitimate, transparent coordination. Prior to this platform, decisions were made informally and opaquely in Telegram chat.
 
-**What it enables.** The platform gives every verified holder — from the largest whale to the smallest fish — a direct, stake-weighted say in major decisions (chain migration, tokenomics, treasury). It turns $OMNOM's sunset narrative into a community-owned relaunch story, with the snapshot as the single, cryptographic source of truth.
+**What it enables.** The platform gives every verified holder — from the largest 🦑 kraken to the smallest 🦄 seahorse — a direct, stake-weighted say in major decisions (chain migration, tokenomics, treasury). It turns $OMNOM's sunset narrative into a community-owned relaunch story, with the snapshot as the single, cryptographic source of truth.
 
 ---
 
@@ -107,13 +107,14 @@ The platform serves five distinct personas, from large-scale technical holders t
 
 | # | Persona | Holder Class | Supply Threshold | Technical Proficiency | Description |
 |---|---|---|---|---|---|
-| 1 | 🐋 **Whale Watcher** (Marcus) | Whale | ≥ 1.00% | High | Software engineer or crypto fund allocator protecting a large position and steering major decisions (chain migration, tokenomics). |
-| 2 | 🐬 **Community Dolphin** (Priya) | Dolphin | 0.01–1.00% | Medium | Engaged community member balancing influence with fairness; active in Telegram governance discussion. |
-| 3 | 🐟 **Fish First-Timer** (Jordan) | Fish | < 0.01% | Low / Medium | First-time DAO participant needing clear education, low friction, and confidence to cast a first vote. |
+| 1 | 🦑 **Kraken Commander** (Marcus) | Kraken | ≥ 10% | High | Software engineer or crypto fund allocator protecting a very large position and steering major decisions (chain migration, tokenomics). |
+| 2 | 🐋 **Whale Watcher** (Priya) | Whale | ≥ 1% and < 10% | High | Large holder focused on ecosystem health and long-term value; active in governance strategy discussions. |
+| 3 | 🦈 **Shark Steward** (Jordan) | Shark | ≥ 0.01% and < 0.1% | Medium | Committed community member with meaningful economic exposure; active in Telegram and proposal discussions. |
+| 4 | 🦄 **Seahorse Citizen** (Alex) | Seahorse | < 0.0001% | Low / Medium | First-time DAO participant needing clear education, low friction, and confidence to cast a first vote. |
 | 4 | 🔍 **Lost Wallet Holder** (Sergei) | (Any) | (Any) | Medium | Holds $OMNOM but has lost wallet access — needs a transparent, empathetic path to understand their status and options. |
 | 5 | 👀 **New Observer** (Alex) | Non-holder | n/a | Variable | Researcher or enthusiast evaluating the project; needs open, readable governance to assess legitimacy. |
 
-> Class emojis (🐋🐬🐟) are part of the OMNOM brand identity and are used consistently across personas, holder tiers, and the UI.
+> Class emojis (🦑🐋🐬🦈🐙🦀🦄) are part of the OMNOM brand identity and are used consistently across personas, holder tiers, and the UI.
 
 ---
 
@@ -137,14 +138,18 @@ At a high level, the platform enables holders to:
 
 ## 6. Holder Classification System
 
-After the burn, supply distribution is heavily skewed. Every holder is assigned to one of three tiers based on their percentage of total supply. In v1, class badges are **cosmetic and social only** — all holders vote proportionally to balance (1 token = 1 vote).
+After the burn, supply distribution is heavily skewed. Every holder is assigned to one of seven tiers based on their percentage of total supply. In v1, class badges are **cosmetic and social only** — all holders vote proportionally to balance (1 token = 1 vote).
 
 | Class | Emoji | Threshold | Holders | Approx. Share of Circulating Supply |
 |---|---|---|---|---|
-| **Whale** | 🐋 | ≥ 1.00% of supply | **4** | ~77% |
-| **Dolphin** | 🐬 | 0.01–1.00% of supply | **322** | ~15% |
-| **Fish** | 🐟 | < 0.01% of supply | **25,105** | ~8% |
-| **Total** | — | — | **25,431** | **100%** |
+| **Kraken** | 🦑 | ≥ 10% of supply | **1** | ~69% |
+| **Whale** | 🐋 | ≥ 1% and < 10% | **3** | ~18% |
+| **Dolphin** | 🐬 | ≥ 0.1% and < 1% | **30** | ~6% |
+| **Shark** | 🦈 | ≥ 0.01% and < 0.1% | **326** | ~6% |
+| **Octopus** | 🐙 | ≥ 0.001% and < 0.01% | **1,078** | ~4% |
+| **Crab** | 🦀 | ≥ 0.0001% and < 0.001% | **1,701** | ~2% |
+| **Seahorse** | 🦄 | < 0.0001% | **22,547** | ~8% |
+| **Total** | — | — | **25,686** | **~100%** |
 
 > ⚠️ **Open decision — voting power & class modifiers.** [`PRD.md`](../PRD.md) frames this distribution as a problem requiring mechanisms (quorum, delegation, optional quadratic elements) to stay legitimate. [`DESIGN.md`](../DESIGN.md) defines the **v1 baseline: all classes vote at 1× balance-weighted power; badges are cosmetic.** Quadratic voting is deferred to v2.0. See [§11](#11-open-decisions-abridged) and [`GOVERNANCE_MECHANICS.md`](./GOVERNANCE_MECHANICS.md).
 

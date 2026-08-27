@@ -546,7 +546,19 @@ function handleSelect(sql: string, upper: string, rawArgs: InArgs): ResultSet {
 
   // Aggregate path: SUM(col) AS x ... GROUP BY col  OR  COUNT(*) AS cnt
   if (hasAgg) {
-    return aggregateSelect(filtered, cols, groupByCol);
+    const rs = aggregateSelect(filtered, cols, groupByCol);
+    // ORDER BY / LIMIT / OFFSET apply to the aggregated rows too (e.g.
+    // `GROUP BY x ORDER BY cnt DESC LIMIT ?` ranks the groups themselves).
+    if (orderCol) {
+      rs.rows.sort((a, b) => {
+        const cmp = compareCells(a[orderCol] ?? null, b[orderCol] ?? null);
+        return orderDir === "DESC" ? -cmp : cmp;
+      });
+    }
+    let rows = rs.rows;
+    if (offset > 0) rows = rows.slice(offset);
+    if (limit >= 0) rows = rows.slice(0, limit);
+    return makeResultSet(rows, rs.columns);
   }
 
   // ORDER BY
@@ -666,7 +678,10 @@ function handleInsert(sql: string, rawArgs: InArgs): ResultSet {
   const cursor: PlaceholderCursor = { args: rawArgs as unknown[], index: 0 };
 
   // INSERT INTO <table> (cols) VALUES (...) [RETURNING cols] [ON CONFLICT ...]
-  const headMatch = sql.match(/^INSERT\s+INTO\s+([A-Za-z_][\w]*)\s*(?:\(([^)]*)\))?\s*VALUES\s*\((.+?)\)\s*(.*)$/i);
+  // The VALUES group is greedy up to the last ')' whose remainder is empty or
+  // starts with RETURNING/ON CONFLICT — a lazy `(.+?)` would truncate at the
+  // first ')', corrupting parenthesized literals like datetime('now').
+  const headMatch = sql.match(/^INSERT\s+INTO\s+([A-Za-z_][\w]*)\s*(?:\(([^)]*)\))?\s*VALUES\s*\((.+)\)\s*((?:RETURNING|ON\s+CONFLICT)\b.*)?$/i);
   if (!headMatch) return emptyResultSet();
   const tableName = headMatch[1]!;
   const colsPart = headMatch[2] ?? "";
@@ -848,12 +863,13 @@ function handleDelete(sql: string, rawArgs: InArgs): ResultSet {
   const table = tableFor(store, tableName);
   if (!table) return emptyResultSet();
 
-  let rest = m[2] ?? "";
+  const rest = m[2] ?? "";
   let whereSql = "";
   const whereSplit = splitOnKeyword(rest, "WHERE");
   if (whereSplit) {
-    whereSql = whereSplit[0];
-    rest = whereSplit[1];
+    // splitOnKeyword returns [before-WHERE, after-WHERE] — the conditions are
+    // the part *after* the keyword (mirrors the UPDATE handler above).
+    whereSql = whereSplit[1];
   }
   const conds = parseWhere(whereSql, cursor);
   const before = table.length;

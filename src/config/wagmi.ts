@@ -32,18 +32,21 @@ export const dogechainSnapshot = defineChain({
     default: { http: ["https://rpc.dogechain.dog"] },
   },
   blockExplorers: {
-    default: { name: "Dogechain Snapshot", url: "https://github.com/DBOT-DC/omnom-token" },
+    default: { name: "Dogechain Snapshot", url: "https://github.com/DBOT-DC/omnom-snapshot" },
   },
   testnet: false,
 });
 
 /**
  * WalletConnect Cloud project ID.
+ *
+ * Required for WalletConnect wallets (WalletConnect, Trust, Argent, etc.).
+ * Get a free project ID at https://cloud.walletconnect.com and set in .env.local
  */
-const rawProjectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID?.trim() || "";
-const projectId = rawProjectId || "21fef48091f12692cad574a6f7753643";
+const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID?.trim();
+const hasWalletConnect = !!projectId;
 
-if (typeof window !== "undefined" && !rawProjectId) {
+if (typeof window !== "undefined" && !hasWalletConnect) {
   console.warn(
     "[OMNOM] NEXT_PUBLIC_WC_PROJECT_ID is not set. " +
       "WalletConnect-based wallets will NOT work. " +
@@ -59,7 +62,9 @@ const MAINNET_RPC = "https://ethereum-rpc.publicnode.com";
  */
 export const config = getDefaultConfig({
   appName: "$OMNOM DAO",
-  projectId,
+  // Use a valid UUID format for dev; WalletConnect wallets won't actually work
+  // without a real project ID from https://cloud.walletconnect.com
+  projectId: projectId || "00000000-0000-0000-0000-000000000000",
   wallets: [
     {
       groupName: "Popular",

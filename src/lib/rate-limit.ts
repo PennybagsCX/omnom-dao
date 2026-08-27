@@ -49,8 +49,10 @@ function isKvAvailable(): boolean {
  * @param bucket  - logical bucket key (e.g. `api:ip:1.2.3.4`)
  * @param limit   - max requests allowed in the window
  * @param windowSeconds - window length in seconds
- * @param failClosed - when true and KV is unavailable, DENY instead of allowing.
- *                     Use for critical governance routes (vote, proposal, delegation).
+ * @param failClosed - when true and KV is unavailable, DENY (production only).
+ *                     In development and test, fail-open so the dev/test loop
+ *                     keeps working without KV. Use this for critical
+ *                     governance routes (vote, proposal, election ballot).
  */
 export async function checkRateLimit(
   bucket: string,
@@ -59,17 +61,18 @@ export async function checkRateLimit(
   failClosed = false,
 ): Promise<RateLimitResult> {
   const resetAt = Math.floor(Date.now() / 1000) + windowSeconds;
+  const isProd = process.env.NODE_ENV === "production";
 
   if (!isKvAvailable()) {
-    // P0 HARDENING: fail-closed for critical routes.
-    if (failClosed && process.env.NODE_ENV === "production") {
+    // P0 HARDENING: fail-closed in production when the caller asks for it.
+    if (failClosed && isProd) {
       console.error(
         `[rate-limit] FAIL-CLOSED: KV unavailable, denying request to bucket "${bucket}" ` +
-        `(failClosed=true, production). This protects governance integrity during outages.`,
+        `(failClosed=true, production). Configure Vercel KV before deploying.`,
       );
       return { allowed: false, remaining: 0, resetAt, count: 0 };
     }
-    // Dev/legacy: fail open.
+    // Dev/test: fail open.
     return { allowed: true, remaining: Number.POSITIVE_INFINITY, resetAt, count: 0 };
   }
 
@@ -85,13 +88,13 @@ export async function checkRateLimit(
     return { allowed: true, remaining: Math.max(0, limit - count), resetAt, count };
   } catch {
     // KV failure during operation.
-    if (failClosed && process.env.NODE_ENV === "production") {
+    if (failClosed && isProd) {
       console.error(
         `[rate-limit] FAIL-CLOSED: KV error for bucket "${bucket}", denying request.`,
       );
       return { allowed: false, remaining: 0, resetAt, count: 0 };
     }
-    // Legacy: fail open.
+    // Dev/test/legacy: fail open.
     return { allowed: true, remaining: Number.POSITIVE_INFINITY, resetAt, count: 0 };
   }
 }

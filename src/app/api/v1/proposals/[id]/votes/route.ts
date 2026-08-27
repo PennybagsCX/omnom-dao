@@ -17,8 +17,6 @@ import {
   type Vote,
 } from "@/types";
 
-const VOTE_CHANGE_WINDOW_MS = 12 * 60 * 60 * 1000; // final 12h
-
 // P1-1: Per-user vote-cast rate limit (defense-in-depth against API abuse).
 // Allows up to 10 vote attempts per 5 minutes per user.
 const VOTE_RATE_LIMIT = { limit: 10, windowSeconds: 5 * 60 };
@@ -27,13 +25,13 @@ const VOTE_RATE_LIMIT = { limit: 10, windowSeconds: 5 * 60 };
  * Votes for a single proposal.
  *
  * POST /api/v1/proposals/[id]/votes   — cast a vote.
- * PUT  /api/v1/proposals/[id]/votes   — change vote (only in final 12h).
+ * PUT  /api/v1/proposals/[id]/votes   — change an existing vote (while voting is open).
  *
  * Server-side invariants enforced:
  *  - proposal is ACTIVE and within [voting_start, voting_end]
  *  - one vote per (proposal, voter) — DB UNIQUE constraint is the hard guarantee
  *  - voting power recorded from the immutable snapshot at cast time
- *  - vote changes only permitted in the final 12h of the active window
+ *  - vote changes permitted at any time while the proposal is ACTIVE
  *
  * DELEGATION (v1): Delegation is informational / trackable. A voter with an
  * active outgoing delegation may still cast their OWN vote (an "override"),
@@ -243,7 +241,7 @@ export async function POST(
   return apiSuccess<VoteResponseData>(data, undefined, 201);
 }
 
-/** PUT /api/v1/proposals/[id]/votes — change an existing vote (final 12h only). */
+/** PUT /api/v1/proposals/[id]/votes — change an existing vote (while voting is open). */
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -288,15 +286,6 @@ export async function PUT(
       ErrorCode.RATE_LIMITED,
       "Too many vote changes. Please slow down.",
       429,
-    );
-  }
-
-  // Vote-change window: only in the final 12 hours.
-  if (ctx.endMs && ctx.endMs - Date.now() > VOTE_CHANGE_WINDOW_MS) {
-    return apiError(
-      ErrorCode.VOTING_CLOSED,
-      "Vote changes are only permitted in the final 12 hours of voting.",
-      409,
     );
   }
 

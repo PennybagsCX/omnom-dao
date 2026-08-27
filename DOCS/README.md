@@ -133,11 +133,15 @@ Documentation is community-maintained. To propose a change:
 | 🪙 **Token Contract** | `0xe3fcA919883950c5cD468156392a6477Ff5d18de` (DRC-20 on Dogechain) |
 | 📸 **Snapshot Block** | `59,922,100` |
 | 📅 **Snapshot Date** | June 7, 2026 23:59:58 UTC |
-| 👥 **Holders Captured** | 25,431 |
+| 👥 **Holders Captured** | 25,686 (ever-held) |
 | 🔥 **Supply Burned** | 68.9% *(burned by Vitalik)* |
-| 🐋 **Whales** | 4 |
-| 🐬 **Dolphins** | 322 |
-| 🐟 **Fish** | 25,105 |
+| 🦑 **Krackens** | 1 |
+| 🐋 **Whales** | 3 |
+| 🐬 **Dolphins** | 30 |
+| 🦈 **Sharks** | 326 |
+| 🐙 **Octopuses** | 1,078 |
+| 🦀 **Crabs** | 1,701 |
+| 🦄 **Seahorses** | 22,547 |
 | 🛠️ **Tech Stack** | Next.js 15, React 19, TypeScript, RainbowKit v2, wagmi v3, viem, Turso (libSQL), Vercel |
 | 🚀 **Deployment** | Vercel |
 | ⚙️ **Governance** | v1: off-chain, advisory, linear voting (1 token = 1 vote) — **no smart contracts** |

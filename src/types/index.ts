@@ -12,11 +12,21 @@
 
 /** Holder classification based on percentage of total supply. */
 export enum HolderClass {
+  /** >= 10.00% of supply */
+  KRAKEN = "KRAKEN",
   /** >= 1.00% of supply */
   WHALE = "WHALE",
-  /** >= 0.01% of supply */
+  /** >= 0.1% of supply */
   DOLPHIN = "DOLPHIN",
-  /** < 0.01% of supply */
+  /** >= 0.01% of supply */
+  SHARK = "SHARK",
+  /** >= 0.001% of supply */
+  OCTOPUS = "OCTOPUS",
+  /** >= 0.0001% of supply */
+  CRAB = "CRAB",
+  /** < 0.0001% of supply */
+  SEAHORSE = "SEAHORSE",
+  /** @deprecated Legacy 3-tier value still present in pre-migration JWTs (≤7d). Maps to Seahorse rank. Never newly assigned. */
   FISH = "FISH",
 }
 
@@ -60,9 +70,13 @@ export interface SnapshotMetadata {
   csvHash: string;
   /** Holder class distribution counts */
   distribution: {
+    krakens: number;
     whales: number;
     dolphins: number;
-    fish: number;
+    sharks: number;
+    octopuses: number;
+    crabs: number;
+    seahorses: number;
   };
 }
 
@@ -238,6 +252,8 @@ export interface Proposal {
   votesAbstain: number;
   /** Flexible metadata bag for type-specific fields */
   metadata: ProposalMetadata;
+  /** Rejecting admin's snapshot holder class (from metadata.rejectedBy, when set) */
+  rejectedByHolderClass?: HolderClass | null;
 }
 
 /** Pre-defined template to standardize common proposal types. */
@@ -264,6 +280,8 @@ export interface ProposalComment {
   proposalId: string;
   /** Checksummed EVM address of commenter */
   authorAddress: string;
+  /** Commenter's snapshot holder class (null when they never held $OMNOM) */
+  authorHolderClass?: HolderClass | null;
   /** Comment body (Markdown, max 2000 chars) */
   content: string;
   /** ISO 8601 timestamp */
@@ -408,6 +426,10 @@ export interface Delegation {
  effectiveAt: string;
  /** ISO 8601 timestamp the delegation was revoked, or null */
  revokedAt: string | null;
+ /** Delegator's snapshot holder class (null when they never held $OMNOM) */
+ delegatorClass?: HolderClass | null;
+ /** Delegatee's snapshot holder class (null when they never held $OMNOM) */
+ delegateeClass?: HolderClass | null;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -421,6 +443,7 @@ export enum ErrorCode {
   INVALID_SIGNATURE = "INVALID_SIGNATURE",
   NONCE_EXPIRED = "NONCE_EXPIRED",
   // Not Found (404)
+  NOT_FOUND = "NOT_FOUND",
   PROPOSAL_NOT_FOUND = "PROPOSAL_NOT_FOUND",
   USER_NOT_FOUND = "USER_NOT_FOUND",
   NOT_IN_SNAPSHOT = "NOT_IN_SNAPSHOT",
@@ -432,6 +455,7 @@ export enum ErrorCode {
   INVALID_ADDRESS = "INVALID_ADDRESS",
   INVALID_CHOICE = "INVALID_CHOICE",
   MISSING_FIELDS = "MISSING_FIELDS",
+  VALIDATION_ERROR = "VALIDATION_ERROR",
   // Conflict (409)
   DELEGATION_EXISTS = "DELEGATION_EXISTS",
   DELEGATION_LIMIT = "DELEGATION_LIMIT",

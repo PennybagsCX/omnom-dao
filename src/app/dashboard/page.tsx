@@ -28,7 +28,7 @@ import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import { ConnectCta } from "@/components/wallet/connect-cta";
 import { useDashboard, ApiRequestError } from "@/lib/api";
 import { formatCompact, formatDate, timeAgo } from "@/lib/utils";
-import { SNAPSHOT } from "@/lib/constants";
+import { HOLDER_CLASS_CONFIG, SNAPSHOT } from "@/lib/constants";
 import { ErrorCode, VoteChoice } from "@/types";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -100,7 +100,7 @@ export default function DashboardPage() {
           <CardContent className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gold/20 to-gold/10 text-3xl">
-                {profile.class === "WHALE" ? "🐋" : profile.class === "DOLPHIN" ? "🐬" : "🐟"}
+                {HOLDER_CLASS_CONFIG[profile.class].emoji}
               </div>
               <div className="min-w-0">
                 <div className="mb-1.5">
@@ -219,7 +219,7 @@ export default function DashboardPage() {
                     <li key={p.id}>
                       <Link
                         href={`/proposals/${p.id}`}
-                        className="flex items-center justify-between gap-3 py-3 transition-colors hover:text-gold focus-visible:outline-none"
+                        className="flex min-h-11 items-center justify-between gap-3 py-3 transition-colors hover:text-gold focus-visible:outline-none"
                       >
                         <span className="line-clamp-1 text-sm font-medium">
                           {p.title}
@@ -303,7 +303,7 @@ function VoteRow({
     <li>
       <Link
         href={`/proposals/${vote.proposalId}`}
-        className="flex items-center justify-between gap-3 py-3 transition-colors hover:text-gold focus-visible:outline-none"
+        className="flex min-h-11 items-center justify-between gap-3 py-3 transition-colors hover:text-gold focus-visible:outline-none"
       >
         <div className="flex min-w-0 items-center gap-2.5">
           <span className={`${cfg.text}`} aria-hidden>

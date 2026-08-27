@@ -228,6 +228,37 @@ describe("POST /api/v1/proposals — tier gating", () => {
     const { status } = await post({ ...GOOD_BODY, type: "TOKENOMICS_CHANGE" });
     expect(status).toBe(201);
   });
+
+  it("shark session can create high-impact types", async () => {
+    // Create a mock shark session - rank 4, meets SHARK requirement
+    const sharkSession = {
+      sub: "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+      holderClass: "SHARK",
+      votingPower: 500000000,
+      iat: 1,
+      exp: 9999999999,
+    };
+    hoisted.requireAuth.mockResolvedValue(sharkSession);
+    hoisted.canCreateProposalType.mockReturnValue(true);
+    const { status } = await post({ ...GOOD_BODY, type: "TECHNICAL" });
+    expect(status).toBe(201);
+  });
+
+  it("octopus session gets 403 for high-impact types with class-requirement message", async () => {
+    // Create a mock octopus session - rank 3, below SHARK requirement
+    const octopusSession = {
+      sub: "0x976EA74026E726554dB657fA54763abd0C3a0aa9",
+      holderClass: "OCTOPUS",
+      votingPower: 50000000,
+      iat: 1,
+      exp: 9999999999,
+    };
+    hoisted.requireAuth.mockResolvedValue(octopusSession);
+    hoisted.canCreateProposalType.mockReturnValue(false);
+    const { status, body } = await post({ ...GOOD_BODY, type: "CHAIN_SELECTION" });
+    expect(status).toBe(403);
+    expect((body.error as { code: string }).code).toBe("NOT_VERIFIED");
+  });
 });
 
 describe("POST /api/v1/proposals — anti-spam", () => {

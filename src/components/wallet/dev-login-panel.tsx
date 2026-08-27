@@ -1,9 +1,11 @@
 /**
  * Development Login Panel - Bypass Mock Wallet Issues
- * 
+ *
  * This component provides a direct development authentication mechanism that
  * bypasses all the window.ethereum and SIWE signature issues while maintaining
  * full compatibility with the rest of the application.
+ *
+ * Now covers all 7 holder tiers (KRAKEN through SEAHORSE) for comprehensive testing.
  */
 
 "use client";
@@ -49,11 +51,11 @@ export function DevLoginPanel() {
         const response = await fetch('/api/v1/me');
         if (response.ok) {
           const result = await response.json();
-          
+
           // Handle both response structures: { data: {...} } or { success: true, data: {...} }
           const userData = result.data || result;
           const accountData = userData.data || userData;
-          
+
           setCurrentAccount({
             address: accountData?.address || accountData?.walletAddress || accountData?.wallet_address || '',
             holderClass: accountData?.class || accountData?.holderClass || 'UNKNOWN',
@@ -114,20 +116,20 @@ export function DevLoginPanel() {
 
   const handleLogout = async () => {
     setStatusMessage("Logging out...");
-    
+
     try {
       // Call logout API
       await fetch('/api/v1/logout', { method: 'POST' });
-      
+
       // Disconnect wallet if connected
       if (isConnected) {
         await disconnect();
       }
-      
+
       setIsLoggedIn(false);
       setCurrentAccount(null);
       setStatusMessage("✅ Logged out successfully");
-      
+
       setTimeout(() => {
         window.location.reload();
       }, 1000);
@@ -135,11 +137,6 @@ export function DevLoginPanel() {
       console.error("Logout failed:", error);
       setStatusMessage("❌ Logout failed");
     }
-  };
-
-  const handleQuickTest = async (accountType: MockAccountType) => {
-    setStatusMessage(`Quick testing as ${accountType}...`);
-    await handleDevLogin(accountType);
   };
 
   if (process.env.NODE_ENV !== "development") {
@@ -153,10 +150,10 @@ export function DevLoginPanel() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-4 right-4 z-40">
       <Card className={`w-96 transition-colors ${
-        isLoggedIn 
-          ? "border-green-500/30 bg-green-500/10" 
+        isLoggedIn
+          ? "border-green-500/30 bg-green-500/10"
           : "border-blue-500/30 bg-blue-500/10"
       }`}>
         <CardHeader className="pb-3">
@@ -216,12 +213,12 @@ export function DevLoginPanel() {
               </div>
             )}
 
-            {/* Account Selection */}
+            {/* Account Selection - All 7 Tiers */}
             <div className="space-y-2">
               <CardDescription className="text-xs">
                 {isLoggedIn ? "Switch Account" : "Select Account Type"}
               </CardDescription>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {Object.entries(mockAccounts).map(([type, account]) => (
                   <button
                     key={type}
@@ -237,8 +234,8 @@ export function DevLoginPanel() {
                       }
                     `}
                   >
-                    <p className="text-sm font-medium">{account.displayName}</p>
-                    <p className="text-xs text-text-dim">{account.balance} tokens</p>
+                    <p className="text-sm font-medium truncate">{account.displayName}</p>
+                    <p className="text-xs text-text-dim truncate">{account.balance} tokens</p>
                     <p className="text-xs text-text-dim">Rank #{account.rank}</p>
                     <Badge variant="outline" className="text-xs">
                       {account.holderClass}
@@ -248,50 +245,20 @@ export function DevLoginPanel() {
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="space-y-2">
-              {!isLoggedIn ? (
-                <div className="grid grid-cols-3 gap-2">
-                  <Button 
-                    onClick={() => handleQuickTest('whale')}
-                    disabled={isLoggingIn}
-                    size="sm" 
-                    variant="outline"
-                    className="text-xs"
-                  >
-                    Whale
-                  </Button>
-                  <Button 
-                    onClick={() => handleQuickTest('dolphin')}
-                    disabled={isLoggingIn}
-                    size="sm" 
-                    variant="outline"
-                    className="text-xs"
-                  >
-                    Dolphin
-                  </Button>
-                  <Button 
-                    onClick={() => handleQuickTest('fish')}
-                    disabled={isLoggingIn}
-                    size="sm" 
-                    variant="outline"
-                    className="text-xs"
-                  >
-                    Fish
-                  </Button>
-                </div>
-              ) : (
-                <Button 
-                  onClick={handleLogout} 
-                  variant="outline" 
-                  size="sm" 
+            {/* Logout Button */}
+            {isLoggedIn && (
+              <div className="space-y-2">
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  size="sm"
                   className="w-full"
                 >
                   <RefreshCw className="h-3.5 w-3.5 mr-1" />
                   Logout & Reset
                 </Button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Status Messages */}
             {statusMessage && (
@@ -303,14 +270,14 @@ export function DevLoginPanel() {
             {/* Instructions */}
             <div className="rounded-lg border border-purple-500/30 bg-purple-500/5 p-3">
               <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-purple-500 mt-0.5 shrink-0" />
+                <CheckCircle className="h-4 w-4 text-purple-300 mt-0.5 shrink-0" />
                 <div className="text-xs text-muted-foreground">
-                  <p className="font-medium text-purple-500 mb-1">Direct Development Auth</p>
+                  <p className="font-medium text-purple-300 mb-1">Direct Development Auth</p>
                   <p className="mb-2">
                     This bypasses wallet connection issues and provides direct authentication for testing.
                   </p>
                   <p className="mb-2">
-                    <strong>Benefits:</strong> No MetaMask conflicts, instant login, full governance access.
+                    <strong>7 Tiers:</strong> Kraken, Whale, Dolphin, Shark, Octopus, Crab, Seahorse.
                   </p>
                   <p className="text-text-dim">
                     Click any account button to instantly authenticate and test the full application flow.

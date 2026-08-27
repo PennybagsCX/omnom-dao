@@ -48,7 +48,7 @@ The $OMNOM DAO operates on **off-chain, snapshot-based, advisory governance**. T
 
 - **Dogechain is dead.** On June 7, 2026 Dogechain (chain ID 2000) announced its sunset. The $OMNOM token contract (`0xe3fcA919883950c5cD468156392a6477Ff5d18de`, DRC-20, 18 decimals) is effectively frozen — holders still *own* their tokens, but there is no live chain to read state from or to execute transactions against.
 - **No live smart contracts.** There is no on-chain governance contract to call. Governance therefore happens entirely off-chain, anchored to a cryptographic point-in-time snapshot that serves as a trustless record of who held what.
-- **Gas-free and inclusive.** Verification uses Sign-In with Ethereum (SIWE) — read-only message signing with **no `eth_sendTransaction`, no token transfers, and no gas fees**. Every holder, from the largest 🐋 whale to a 🐟 fish with a handful of tokens, can participate at zero cost.
+- **Gas-free and inclusive.** Verification uses Sign-In with Ethereum (SIWE) — read-only message signing with **no `eth_sendTransaction`, no token transfers, and no gas fees**. Every holder, from the largest 🦑 kraken to a 🦄 seahorse with a handful of tokens, can participate at zero cost.
 - **Advisory, not auto-executed.** A passed proposal is a **legitimate community decision**, recorded transparently, but it is not automatically executed by a contract. Execution (where applicable, e.g. a future migration) is a separate, human/community-coordinated step.
 
 > ℹ️ **Read-only by design.** The platform NEVER requests a transaction, NEVER stores private keys, and NEVER transfers tokens. The only cryptographic action a holder performs is signing a human-readable message to prove wallet ownership.
@@ -94,7 +94,7 @@ voting_power = raw_token_balance (from snapshot)
 ```
 
 - One token equals one vote. Voting power is the holder's exact snapshot balance.
-- Holder-class badges (🐋 / 🐬 / 🐟) are **cosmetic and social only** — they do not modify voting power. All classes vote proportionally to balance at a 1× modifier.
+- Holder-class badges (🦑🐋🐬🦈🐙🦀🦄) are **cosmetic and social only** — they do not modify voting power. All classes vote proportionally to balance at a 1× modifier.
 - The `voting_power` value is frozen at vote-cast time and stored alongside the ballot, so it can never drift even if the underlying data changed.
 - In the votes table the power is recorded as `REAL` (see [`DATA-MODEL.md`](../DATA-MODEL.md) `votes.voting_power`).
 
@@ -122,18 +122,19 @@ where:
   voting_multiplier = 1.0 (base), adjustable per proposal type by governance
 ```
 
-**Rationale (per PRD):** pure 1-token-1-vote gives 4 whales ~77% of votes (mathematically democratic but practically oligarchic); pure one-person-one-vote gives 25,105 fish ~99.98% of votes (decoupled from economics). Quadratic voting preserves the *direction* of token-weighted influence while compressing the ratio from ~100,000:1 down to ~1,000:1, letting a coalition of dolphins meaningfully challenge a whale.
+**Rationale (per PRD):** pure 1-token-1-vote gives the top 4 wallets ~87% of votes (mathematically democratic but practically oligarchic); pure one-person-one-vote gives 22,547 seahorses ~99.98% of votes (decoupled from economics). Quadratic voting preserves the *direction* of token-weighted influence while compressing the ratio from ~100,000:1 down to ~1,000:1, letting a coalition of sharks/dolphins meaningfully challenge a whale.
 
 **Illustrative QTV distribution (from PRD §8):**
 
 | Holder | Raw Balance | QTV Voting Power | Share of Total Power |
 |---|---|---|---|
-| 🐋 Whale #1 | ~5,000,000,000 | 70,710 | ~29% |
-| 🐋 Whale #2 | ~2,000,000,000 | 44,721 | ~18% |
-| 🐋 Whale #3 | ~1,500,000,000 | 38,729 | ~16% |
-| 🐋 Whale #4 | ~500,000,000 | 22,360 | ~9% |
-| 🐬 All Dolphins (322) | ~600,000,000 total | ~24,494 each | ~24% total |
-| 🐟 All Fish (25,105) | ~400,000,000 total | ~126 each | ~8% total |
+| 🦑 Kraken #1 | ~44,630,000,000 | 211,235 | ~44% |
+| 🐋 Whale #2 | ~5,470,000,000 | 73,960 | ~15% |
+| 🐋 Whale #3 | ~5,280,000,000 | 72,660 | ~15% |
+| 🐋 Whale #4 | ~1,030,000,000 | 32,090 | ~7% |
+| 🐬 All Dolphins (30) | ~80,000,000 total | ~8,944 each | ~6% total |
+| 🦈 All Sharks (326) | ~90,000,000 total | ~1,660 each | ~6% total |
+| 🦄 All Seahorses (22,547) | ~320,000,000 total | ~119 each | ~7% total |
 
 > ⚠️ **Source conflict — voting math.** [`DESIGN.md`](../DESIGN.md) §1.2 and [`DATA-MODEL.md`](../DATA-MODEL.md) specify **linear (1 token = 1 vote)** as the implementation baseline. [`PRD.md`](../PRD.md) §8/FR-5 recommends **quadratic** (`voting_power = floor(sqrt(raw_balance / 10^18)) × multiplier`).
 >
@@ -147,9 +148,14 @@ Holders are classified by share of circulating supply (post-burn). Classes are u
 
 | Class | Threshold | Count | Emoji | Est. % of Circulating Supply |
 |---|---|---|---|---|
-| **Whale** | ≥ 1.00% of supply | 4 | 🐋 | ~77% |
-| **Dolphin** | ≥ 0.01% and < 1.00% | 322 | 🐬 | ~15% |
-| **Fish** | < 0.01% | 25,105 | 🐟 | ~8% |
+| **Kraken** | ≥ 10% of supply | 1 | 🦑 | ~69% |
+| **Whale** | ≥ 1% and < 10% | 3 | 🐋 | ~18% |
+| **Dolphin** | ≥ 0.1% and < 1% | 30 | 🐬 | ~6% |
+| **Shark** | ≥ 0.01% and < 0.1% | 326 | 🦈 | ~6% |
+| **Octopus** | ≥ 0.001% and < 0.01% | 1,078 | 🐙 | ~4% |
+| **Crab** | ≥ 0.0001% and < 0.001% | 1,701 | 🦀 | ~2% |
+| **Seahorse** | < 0.0001% | 22,547 | 🦄 | ~8% |
+| **Total** | — | **25,686** | — | ~100% |
 
 > ℹ️ Class badges are **cosmetic** under v1 linear voting — they do not change voting power (see [§3.1](#31-v1-implementation-baseline--linear-1-token--1-vote--live)). They gate proposal creation (see [§5](#5-proposal-types--thresholds)).
 
@@ -161,7 +167,7 @@ Holders are classified by share of circulating supply (post-burn). Classes are u
 | **Vote** | Any verified holder with ≥1 $OMNOM in snapshot |
 | **Comment** | Any verified holder (anti-spam rules apply — [§11](#11-moderation--administration)) |
 | **Delegate / receive delegation** | Any verified holder |
-| **Create high-impact proposals** (Chain, Tokenomics, Technical Spec) | Dolphin+ (≥0.01% supply) |
+| **Create high-impact proposals** (Chain, Tokenomics, Technical Spec) | Shark+ (≥0.01% supply) |
 | **Create lower-impact proposals** (Treasury, Community, General) | Any verified holder |
 
 ---
@@ -172,14 +178,14 @@ There are six proposal types. Each carries its own quorum, voting period, minimu
 
 | Type | Quorum | Voting Period (min) | Min Holding to Create | Pass Threshold |
 |---|---|---|---|---|
-| **Chain Selection** | 25% of supply | 7 days | 🐬 Dolphin+ (≥0.01%) | 60% supermajority |
-| **Tokenomics Change** | 25% of supply | 7 days | 🐬 Dolphin+ | 60% supermajority |
+| **Chain Selection** | 25% of supply | 7 days | 🦈 Shark+ (≥0.01%) | 60% supermajority |
+| **Tokenomics Change** | 25% of supply | 7 days | 🦈 Shark+ | 60% supermajority |
 | **Treasury / Resource** | 15% of supply | 72 hours | Any verified | Simple majority (>50%) |
 | **Community Guideline** | 10% of supply | 72 hours | Any verified | Simple majority (>50%) |
-| **Technical Spec** | 15% of supply | 72 hours | 🐬 Dolphin+ | 60% supermajority |
+| **Technical Spec** | 15% of supply | 72 hours | 🦈 Shark+ | 60% supermajority |
 | **General Discussion** | 5% of supply | 72 hours | Any verified | Simple majority (>50%) |
 
-> ℹ️ **Why tiered creation thresholds?** High-impact decisions (chain migration, tokenomics) should be proposed by stakeholders with meaningful economic exposure (Dolphin+), while resource, guideline, and sentiment proposals remain open to any verified holder. See [`PRD.md`](../PRD.md) §9 ("Who Can Create Proposals").
+> ℹ️ **Why tiered creation thresholds?** High-impact decisions (chain migration, tokenomics) should be proposed by stakeholders with meaningful economic exposure (Shark+), while resource, guideline, and sentiment proposals remain open to any verified holder. See [`PRD.md`](../PRD.md) §9 ("Who Can Create Proposals").
 
 ### Simple majority vs. supermajority
 
@@ -264,7 +270,7 @@ stateDiagram-v2
 
 - **One vote per (proposal, address).** Enforced at the database layer by a `UNIQUE`/primary-key constraint on `(proposal_id, voter_address)` (see [`DATA-MODEL.md`](../DATA-MODEL.md) `votes` table, and [`DESIGN.md`](../DESIGN.md) §8.1 "Double voting → PRIMARY KEY constraint"). Attempting a second vote for the same proposal from the same address updates the existing ballot rather than inserting a duplicate.
 - **Snapshot-weighted.** Each ballot's `voting_power` is the voter's frozen snapshot balance (v1 linear). Delegated power is added where applicable ([§9](#9-delegation-system)).
-- **Vote changes allowed** until the **final 12 hours** of the voting period. During the last 12 hours, the "Change Vote" control is removed and the existing ballot is locked. Changing a vote requires a fresh signature.
+- **Vote changes allowed** at any time while the proposal is ACTIVE, until voting closes. Your latest ballot is the one counted. Changing a vote requires a fresh signature.
 - **Real-time counting.** Tallies are computed live from the database on read (no separate counter to avoid drift) and update within ~10 seconds via optimistic UI + polling/WebSocket ([`PRD.md`](../PRD.md) NFR-2).
 - **Voting window.** Votes are only accepted while `vote_start ≤ now ≤ vote_end`. Ballots outside the Active window are rejected.
 
@@ -346,7 +352,7 @@ Delegation lets a holder transfer their voting power to a trusted representative
 
 ## 10. Anti-Whale & Anti-Sybil Safeguards
 
-The supply distribution is heavily skewed (4 whales ≈ 77% of circulating supply). Multiple safeguards prevent plutocratic capture and Sybil manipulation.
+The supply distribution is heavily skewed — the kraken alone holds 68.9%; the top four wallets (1 kraken + 3 whales) hold ~87.2% of circulating supply. Multiple safeguards prevent plutocratic capture and Sybil manipulation.
 
 ### 10.1 Anti-whale measures (PRD recommendations)
 
@@ -504,7 +510,7 @@ The following parameters are **unresolved** and require community ratification b
 | 3 | **Global pass threshold** | Simple majority vs. 60% supermajority for all types | Per-type (simple or 60% per §5) | [§8](#8-quorum--pass-thresholds) |
 | 4 | **Pending Review duration** | 24h auto-approve (DESIGN) vs. max 7 days (PRD) | Configurable — pick at deploy | [§6.2](#62-editing--transition-rules) |
 | 5 | **Per-type quorums** | PRD §9 (up to 25%) vs. seeded defaults (10–15%) | Seeded DATA-MODEL defaults | [§8.3](#83-v1-seeded-defaults-data-modelmd) |
-| 6 | **Min holding to create proposals** | Dolphin+ for high-impact / any verified for low-impact (current proposal) vs. any-verified with priority review | Dolphin+ for Chain/Tokenomics/Tech; any for others | [§5](#5-proposal-types--thresholds) |
+| 6 | **Min holding to create proposals** | Shark+ for high-impact / any verified for low-impact (current proposal) vs. any-verified with priority review | Shark+ for Chain/Tokenomics/Tech; any for others | [§5](#5-proposal-types--thresholds) |
 | 7 | **30% unique-holder veto / cooling-off** | Adopt PRD recommendation or defer | Not enforced in v1 | [§10.1](#101-anti-whale-measures-prd-recommendations) |
 | 8 | **Snapshot dispute resolution** | Trust snapshot + Blockscout link / formal dispute process / community override | Trust snapshot (no dispute in v1) | [`PRD.md`](../PRD.md) Q4 |
 | 9 | **Multi-wallet aggregation** | Max wallets per user; abuse prevention | Aggregation allowed, each wallet signed independently | [`PRD.md`](../PRD.md) Q5 |

@@ -3,6 +3,7 @@
 import { XCircle, ShieldAlert } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { HolderBadge } from "@/components/shared/holder-badge";
 import { shortenAddress, timeAgo } from "@/lib/utils";
 import type { Proposal } from "@/types";
 
@@ -57,6 +58,9 @@ export function AdminRejectionBanner({ proposal }: AdminRejectionBannerProps) {
                   <span className="font-mono text-muted-foreground">
                     {shortenAddress(rejectedBy)}
                   </span>
+                  {proposal.rejectedByHolderClass && (
+                    <HolderBadge holderClass={proposal.rejectedByHolderClass} size="sm" plain />
+                  )}
                 </span>
               )}
               {rejectedAt && (

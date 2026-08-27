@@ -33,11 +33,25 @@ The snapshot is the immutable foundation of all governance power. It was capture
 ### 1.1 Enums
 
 ```typescript
-/** Holder classification based on percentage of total supply */
+/**
+ * Holder classification based on percentage of total supply.
+ *
+ * 7-tier marine-ecosystem model with inclusive lower-bound thresholds.
+ * FISH retained as @deprecated legacy mapping for outstanding JWTs (≤7d expiry).
+ */
 enum HolderClass {
-  WHALE = "WHALE",     // ≥ 1.00% of supply — 🐋
-  DOLPHIN = "DOLPHIN", // ≥ 0.01% of supply — 🐬
-  FISH = "FISH",       // < 0.01% of supply — 🐟
+  // Live tiers (descending rank by % of total supply)
+  KRAKEN = "KRAKEN",     // ≥ 10% of supply — 🦑
+  WHALE = "WHALE",       // ≥ 1% of supply — 🐋
+  DOLPHIN = "DOLPHIN",   // ≥ 0.1% of supply — 🐬
+  SHARK = "SHARK",       // ≥ 0.01% of supply — 🦈
+  OCTOPUS = "OCTOPUS",   // ≥ 0.001% of supply — 🐙
+  CRAB = "CRAB",         // ≥ 0.0001% of supply — 🦀
+  SEAHORSE = "SEAHORSE", // < 0.0001% of supply — 🦄 (no seahorse emoji exists)
+
+  // Legacy: outstanding JWTs may still carry FISH; maps to Seahorse rank
+  /** @deprecated Use SEAHORSE for new classifications */
+  FISH = "FISH",
 }
 ```
 
@@ -84,8 +98,8 @@ interface SnapshotMetadata {
   /** ISO 8601 UTC timestamp of snapshot */
   timestamp: "2026-06-07T23:59:58.000Z";
 
-  /** Total unique holder addresses in snapshot */
-  totalHolders: 25_431;
+  /** Total unique holder addresses in snapshot (ever-held) */
+  totalHolders: 25_686;
 
   /** Total supply captured in snapshot (raw wei) */
   totalSupply: bigint;
@@ -96,11 +110,15 @@ interface SnapshotMetadata {
   /** SHA-256 hash of the canonical snapshot CSV for integrity verification */
   csvHash: string;
 
-  /** Holder class distribution counts */
+  /** Holder class distribution counts (ever-held snapshot) */
   distribution: {
-    whales: number;   // 4
-    dolphins: number; // 322
-    fish: number;     // 25_105
+    krakens: number;    // 1
+    whales: number;     // 3
+    dolphins: number;   // 30
+    sharks: number;     // 326
+    octopuses: number;  // 1,078
+    crabs: number;      // 1,701
+    seahorses: number;  // 22,547
   };
 }
 ```
@@ -192,6 +210,23 @@ enum ProposalType {
   TECHNICAL = "TECHNICAL",                 // Platform features, integrations
   GENERAL = "GENERAL",                     // Anything else
 }
+
+/**
+ * Proposal creation eligibility by holder class.
+ *
+ * High-impact proposal types require Shark+ (≥0.01% of supply).
+ * Floor types are open to any holder (Seahorse+).
+ *
+ * Threshold-preserving migration: Shark+ (≥0.01%) ≈ old Dolphin+ gate, identical ~326 wallets.
+ */
+const PROPOSAL_ELIGIBILITY: Record<ProposalType, HolderClass> = {
+  CHAIN_SELECTION: HolderClass.SHARK,     // ≥0.01%
+  TOKENOMICS_CHANGE: HolderClass.SHARK,   // ≥0.01%
+  TECHNICAL: HolderClass.SHARK,           // ≥0.01%
+  TREASURY: HolderClass.SEAHORSE,         // any holder
+  GUIDELINE: HolderClass.SEAHORSE,        // any holder
+  GENERAL: HolderClass.SEAHORSE,          // any holder
+} as const;
 
 enum ProposalStatus {
   DRAFT = "DRAFT",                 // Author editing, not visible to voters
@@ -946,9 +981,13 @@ function parseSnapshotCSV(csvPath: string): HolderSnapshot[] {
 
 // ─── Step 3: Classify Holders ────────────────────────────────────────────────
 function classifyHolder(pct: number): HolderClass {
+  if (pct >= 10.0) return HolderClass.KRAKEN;
   if (pct >= 1.0) return HolderClass.WHALE;
-  if (pct >= 0.01) return HolderClass.DOLPHIN;
-  return HolderClass.FISH;
+  if (pct >= 0.1) return HolderClass.DOLPHIN;
+  if (pct >= 0.01) return HolderClass.SHARK;
+  if (pct >= 0.001) return HolderClass.OCTOPUS;
+  if (pct >= 0.0001) return HolderClass.CRAB;
+  return HolderClass.SEAHORSE;
 }
 
 // ─── Step 4: Build Binary-Search-Optimized Index ─────────────────────────────
@@ -988,9 +1027,13 @@ function buildLookupIndex(holders: HolderSnapshot[], csvHash: string): SnapshotI
       contractAddress: "0xe3fcA919883950c5cD468156392a6477Ff5d18de",
       csvHash,
       distribution: {
+        krakens: holders.filter((h) => h.holderClass === HolderClass.KRAKEN).length,
         whales: holders.filter((h) => h.holderClass === HolderClass.WHALE).length,
         dolphins: holders.filter((h) => h.holderClass === HolderClass.DOLPHIN).length,
-        fish: holders.filter((h) => h.holderClass === HolderClass.FISH).length,
+        sharks: holders.filter((h) => h.holderClass === HolderClass.SHARK).length,
+        octopuses: holders.filter((h) => h.holderClass === HolderClass.OCTOPUS).length,
+        crabs: holders.filter((h) => h.holderClass === HolderClass.CRAB).length,
+        seahorses: holders.filter((h) => h.holderClass === HolderClass.SEAHORSE).length,
       },
     },
   };
@@ -1036,9 +1079,9 @@ function generateArtifacts(csvPath: string, outDir: string) {
   const index = buildLookupIndex(holders, csvHash);
 
   // Validate totals
-  if (index.metadata.totalHolders !== 25_431) {
+  if (index.metadata.totalHolders !== 25_686) {
     throw new Error(
-      `Expected 25,431 holders, got ${index.metadata.totalHolders}`
+      `Expected 25,686 holders, got ${index.metadata.totalHolders}`
     );
   }
 
@@ -1051,9 +1094,13 @@ function generateArtifacts(csvPath: string, outDir: string) {
   console.log(
     `✅ Snapshot indexed: ${holders.length} holders, ` +
     `hash: ${csvHash.slice(0, 16)}..., ` +
+    `krakens: ${index.metadata.distribution.krakens}, ` +
     `whales: ${index.metadata.distribution.whales}, ` +
     `dolphins: ${index.metadata.distribution.dolphins}, ` +
-    `fish: ${index.metadata.distribution.fish}`
+    `sharks: ${index.metadata.distribution.sharks}, ` +
+    `octopuses: ${index.metadata.distribution.octopuses}, ` +
+    `crabs: ${index.metadata.distribution.crabs}, ` +
+    `seahorses: ${index.metadata.distribution.seahorses}`
   );
 }
 
@@ -1096,7 +1143,7 @@ function findHolder(address: string): HolderSnapshot | null {
 
 | Artifact | Content | Size (est.) |
 |---|---|---|
-| `holders.json` | 25,431 records, sorted index | ~3.5 MB |
+| `holders.json` | 25,686 records, sorted index | ~3.6 MB |
 | `csv-hash.txt` | SHA-256 hex string | 64 bytes |
 | `snapshot.csv` | Original CSV | ~1.8 MB |
 
@@ -1105,15 +1152,15 @@ function findHolder(address: string): HolderSnapshot | null {
 ### 8.5 Validation Checklist (Build Time)
 
 ```
-✅ CSV row count matches expected totalHolders (25,431)
+✅ CSV row count matches expected totalHolders (25,686 ever-held)
 ✅ All addresses are valid EVM addresses (0x + 40 hex chars)
 ✅ No duplicate addresses in CSV
 ✅ Total supply from sum(balanceRaw) matches metadata
-✅ Whale count = 4, Dolphin count = 322
+✅ 7-tier distribution: 1 kraken, 3 whales, 30 dolphins, 326 sharks, 1,078 octopuses, 1,701 crabs, 22,547 seahorses
 ✅ All percentages sum to ~100%
 ✅ Sorted array length matches holders object keys
 ✅ Binary search round-trip test: every address finds itself
-✅ CSV hash matches published reference hash
+✅ CSV hash matches published reference hash (1f64a663549ca717c6b612dc71a5cf673ab58badee58f876474c0fc6e551c128)
 ```
 
 ---

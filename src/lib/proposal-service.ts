@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { lookupHolderClasses } from "@/lib/snapshot";
 import type { Proposal, ProposalStatus } from "@/types";
 
 /**
@@ -68,13 +69,34 @@ const SELECT_COLS =
   "voting_starts_at, voting_ends_at, quorum_required, quorum_achieved, " +
   "votes_for, votes_against, votes_abstain, metadata";
 
+/**
+ * Attach snapshot holder classes to proposals in place: each author gets
+ * `authorHolderClass`, and rejected proposals also resolve the rejecting
+ * admin's `rejectedByHolderClass` from metadata.
+ */
+async function attachHolderClasses(proposals: Proposal[]): Promise<void> {
+  if (proposals.length === 0) return;
+  const addresses = proposals.flatMap((p) =>
+    p.metadata.rejectedBy ? [p.authorAddress, p.metadata.rejectedBy] : [p.authorAddress],
+  );
+  const classes = await lookupHolderClasses(addresses);
+  for (const p of proposals) {
+    p.authorHolderClass = classes.get(p.authorAddress.toLowerCase()) ?? null;
+    if (p.metadata.rejectedBy) {
+      p.rejectedByHolderClass = classes.get(p.metadata.rejectedBy.toLowerCase()) ?? null;
+    }
+  }
+}
+
 export async function getProposalById(id: string): Promise<Proposal | null> {
   const res = await db.execute({
     sql: `SELECT ${SELECT_COLS} FROM proposals WHERE id = ?`,
     args: [id],
   });
   if (res.rows.length === 0) return null;
-  return rowToProposal(res.rows[0] as unknown as Record<string, unknown>);
+  const proposal = rowToProposal(res.rows[0] as unknown as Record<string, unknown>);
+  await attachHolderClasses([proposal]);
+  return proposal;
 }
 
 export interface ListProposalsOptions {
@@ -125,6 +147,7 @@ export async function listProposals(
   const proposals = listRes.rows.map((r) =>
     rowToProposal(r as unknown as Record<string, unknown>),
   );
+  await attachHolderClasses(proposals);
   return { proposals, total };
 }
 

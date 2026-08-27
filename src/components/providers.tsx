@@ -73,8 +73,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
             </TooltipProvider>
             <Toaster position="top-right" richColors />
             
-            {/* Development-only auto-auth components */}
-            {process.env.NODE_ENV === "development" && (
+            {/* Development-only auto-auth components.
+                Set NEXT_PUBLIC_ENABLE_DEV_AUTH=true to opt into the dev-auth
+                stack (auto-connect, dev panel, mock-wallet install). Defaults
+                OFF in production. The source still exists in src/ for
+                E2E/CI use but is gated out at runtime in prod. */}
+            {process.env.NODE_ENV === "development" &&
+              process.env.NEXT_PUBLIC_ENABLE_DEV_AUTH === "true" && (
               <>
                 <AutoInstallDevWalletClient />
                 <AutoDevAuthTrigger />

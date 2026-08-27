@@ -98,7 +98,7 @@ export function ConnectWalletButton() {
                         <ChevronDown className="h-4 w-4 opacity-60" aria-hidden />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuContent sideOffset={24} align="end" className="w-56">
                       <DropdownMenuLabel className="font-mono text-xs text-muted-foreground">
                         {me.class} - Dev Auth
                       </DropdownMenuLabel>
@@ -185,7 +185,7 @@ export function ConnectWalletButton() {
                         <ChevronDown className="h-4 w-4 opacity-60" aria-hidden />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuContent sideOffset={24} align="end" className="w-56">
                       <DropdownMenuLabel className="font-mono text-xs text-muted-foreground">
                         Account
                       </DropdownMenuLabel>

@@ -6,6 +6,12 @@
 **Audit date:** 2026-08-16
 **Scope:** All snapshot files published at the pinned commit.
 
+> **Relocation note (2026-08-25):** The snapshot corpus has since moved to
+> <https://github.com/DBOT-DC/omnom-snapshot>, pinned at commit
+> `2c38af77ba37e67328347cc44bcabbd07551ec42`. The ever-held CSV at the new
+> location is byte-identical to the one audited here (SHA-256
+> `1f64a663…c128`); all findings carry over unchanged.
+
 ## Reproducibility
 
 Each input file was downloaded from the pinned commit and compared byte-for-byte to the repository's `HASHES.json`. All four principal snapshot files and all ten weekly CSVs matched their published SHA-256 hashes.

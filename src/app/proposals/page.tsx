@@ -332,7 +332,7 @@ function ProposalsList({ seed }: { seed: ProposalsUrlSeed | null }) {
                   type="button"
                   onClick={() => onStatusChange(tab.value)}
                   className={cn(
-                    "shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "shrink-0 rounded-full border px-3.5 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-11 sm:min-h-9 sm:py-1.5",
                     active
                       ? "border-gold/60 bg-gold/15 text-gold"
                       : "border-border bg-transparent text-muted-foreground hover:border-border hover:bg-accent hover:text-foreground",
@@ -390,7 +390,7 @@ function ProposalsList({ seed }: { seed: ProposalsUrlSeed | null }) {
                 <button
                   type="button"
                   onClick={() => setSearch("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-7 sm:w-7"
                   aria-label="Clear search"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -408,7 +408,7 @@ function ProposalsList({ seed }: { seed: ProposalsUrlSeed | null }) {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex min-h-11 items-center gap-1 px-1 text-muted-foreground transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-0"
               >
                 <RotateCcw className="h-3 w-3" aria-hidden /> Clear filters
               </button>

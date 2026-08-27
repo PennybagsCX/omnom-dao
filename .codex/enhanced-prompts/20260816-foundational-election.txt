@@ -1,9 +1,0 @@
-Implement a production-ready 14-day, one-wallet-one-vote Foundational Governance Election for every wallet in the latest $OMNOM ever-held snapshot.
-
-Deliverables:
-1. Election mechanics: snapshot-only eligibility; one irreversible ballot per wallet; 14-day voting window; live public results; ballot selects the future voting framework.
-2. Data integration: pull the latest DBOT-DC/omnom-token snapshot corpus; rebuild eligibility; record source commit, files, counts, and hashes.
-3. Forensic audit: analyze concentration, abrupt balance changes, churn, and possible coordinated/self-transferred holdings; publish verified conclusions separately from data limitations.
-4. Admin operations: poll status, turnout, results, eligible-wallet export, ballot export/audit trail, and fraud report visibility, restricted to the configured admin wallet without ballot alteration.
-5. Verification/security: cover auth, eligibility, one-vote enforcement, timing controls, races, and admin authorization; run typecheck, lint, unit/e2e tests and browser checks.
-6. Launch plan/copy: checklist and community-facing explanation of choice, data, timeline, audit findings, and voting instructions.

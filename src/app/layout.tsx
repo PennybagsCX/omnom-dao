@@ -60,7 +60,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`dark ${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`dark ${inter.variable} ${jetbrainsMono.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className="min-h-screen bg-bg-deep font-sans text-foreground antialiased">
         <Providers>
           <a href="#main-content" className="skip-link">
@@ -68,7 +68,7 @@ export default function RootLayout({
           </a>
           <div className="relative flex min-h-screen w-full max-w-full flex-col overflow-x-clip">
             <SiteHeader />
-            <main id="main-content" className="w-full max-w-full flex-1 overflow-x-clip pb-16 md:pb-0">
+            <main id="main-content" className="w-full max-w-full flex-1 overflow-x-clip pt-16 pb-16 md:pb-0">
               {children}
             </main>
             <SiteFooter />

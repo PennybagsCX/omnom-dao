@@ -16,7 +16,7 @@
  *  - `resetMockStore()` restores the seeded baseline (used by tests).
  *
  * Addresses + balances are sourced from `scripts/data/snapshot.sample.csv` so
- * they resolve against the real `public/data/holders.json` snapshot lookup
+ * they resolve against the real `data/holders.json` snapshot lookup
  * (where the sample snapshot is installed). See GOVERNANCE_MECHANICS.md.
  */
 
@@ -115,11 +115,6 @@ export interface MockUserSettingsRow {
   notif_voting_ending_soon: number;
   notif_proposal_result: number;
   notif_mention: number;
-  telegram_enabled: number;
-  telegram_chat_id: string | null;
-  telegram_username: string | null;
-  email_enabled: number;
-  email_address: string | null;
   preferred_wallet: string | null;
   display_format: string;
 }
@@ -278,7 +273,7 @@ const governanceElectionSeed: MockElectionRow[] = [
     title: "Foundational Governance Election",
     voting_starts_at: electionStart,
     voting_ends_at: electionEnd,
-    snapshot_commit: "33df90601bd73217c57bc4d93e221c102a3eebce",
+    snapshot_commit: "2c38af77ba37e67328347cc44bcabbd07551ec42",
     snapshot_file: "omnom-snapshot-ever-held.csv",
     snapshot_file_sha256: "1f64a663549ca717c6b612dc71a5cf673ab58badee58f876474c0fc6e551c128",
     eligible_wallet_count: 25_686,
@@ -663,7 +658,7 @@ function buildSeed(): MockStore {
   ];
 
   const user_settings: MockUserSettingsRow[] = [
-    { user_id: U.whale1, notif_proposal_created: 1, notif_voting_started: 1, notif_voting_ending_soon: 1, notif_proposal_result: 1, notif_mention: 1, telegram_enabled: 0, telegram_chat_id: null, telegram_username: null, email_enabled: 0, email_address: null, preferred_wallet: null, display_format: "full" },
+    { user_id: U.whale1, notif_proposal_created: 1, notif_voting_started: 1, notif_voting_ending_soon: 1, notif_proposal_result: 1, notif_mention: 1, preferred_wallet: null, display_format: "full" },
   ];
 
   const comment_reactions: MockReactionRow[] = [];

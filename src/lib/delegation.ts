@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { lookupHolder } from "@/lib/snapshot";
+import { lookupHolder, lookupHolderClasses } from "@/lib/snapshot";
 import {
   DelegationStatus,
   type Delegation,
@@ -110,6 +110,18 @@ export async function getDelegationInfo(address: string): Promise<DelegationInfo
     getOutgoingDelegation(normalized),
     listIncomingDelegations(normalized, 100),
   ]);
+  // Attach both parties' holder classes for inline badges.
+  const parties = [
+    ...(outgoing ? [outgoing.delegatorAddress, outgoing.delegateeAddress] : []),
+    ...incomingList.flatMap((d) => [d.delegatorAddress, d.delegateeAddress]),
+  ];
+  const classes = await lookupHolderClasses(parties);
+  const attach = (d: Delegation) => {
+    d.delegatorClass = classes.get(d.delegatorAddress.toLowerCase()) ?? null;
+    d.delegateeClass = classes.get(d.delegateeAddress.toLowerCase()) ?? null;
+  };
+  if (outgoing) attach(outgoing);
+  for (const d of incomingList) attach(d);
   return {
     outgoing,
     incomingCount: incomingList.length,

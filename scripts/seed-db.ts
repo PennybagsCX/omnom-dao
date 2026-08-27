@@ -1,8 +1,13 @@
 /**
  * OMNOM DAO — Seed Script
  *
- * Seeds the 6 proposal_templates (one per ProposalType) per DATA-MODEL.md §6.6.
- * Uses UPSERT so the script is idempotent and re-runnable.
+ * Seeds:
+ *   1. The 6 proposal_templates (one per ProposalType) per DATA-MODEL.md §6.6.
+ *   2. The Foundational Governance Election row (governance_election) per
+ *      ELECTION-LAUNCH-PLAN.md.
+ *
+ * Uses UPSERT so the script is idempotent and re-runnable. Safe to run on
+ * every deploy.
  *
  * Run: `npm run db:seed` (after `npm run db:migrate`)
  */
@@ -117,6 +122,55 @@ async function main() {
   }
 
   console.log(`✅ Seeded ${TEMPLATES.length} proposal_templates.`);
+
+  // ── Foundational Governance Election ────────────────────────────────
+  // Window: 2026-08-29 00:00:00 UTC → 2026-09-12 00:00:00 UTC (14 days).
+  // Ballot semantics: ONE WALLET = ONE VOTE (every eligible wallet casts
+  // exactly one ballot, regardless of holdings). See src/lib/election.ts.
+  // Snapshot source: DBOT-DC/omnom-snapshot @ 2c38af77 (pinned).
+  console.log("🗳️  Seeding foundational governance election...");
+
+  const electionSeed = {
+    election_key: "foundational-2026",
+    title: "Foundational Governance Election",
+    voting_starts_at: "2026-08-29T00:00:00.000Z",
+    voting_ends_at: "2026-09-12T00:00:00.000Z",
+    snapshot_commit: "2c38af77ba37e67328347cc44bcabbd07551ec42",
+    snapshot_file: "omnom-snapshot-ever-held.csv",
+    snapshot_file_sha256: "1f64a663549ca717c6b612dc71a5cf673ab58badee58f876474c0fc6e551c128",
+    eligible_wallet_count: 25686,
+  };
+
+  const electionUpsert = `
+    INSERT INTO governance_election
+      (election_key, title, voting_starts_at, voting_ends_at,
+       snapshot_commit, snapshot_file, snapshot_file_sha256, eligible_wallet_count)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(election_key) DO UPDATE SET
+      title = excluded.title,
+      voting_starts_at = excluded.voting_starts_at,
+      voting_ends_at = excluded.voting_ends_at,
+      snapshot_commit = excluded.snapshot_commit,
+      snapshot_file = excluded.snapshot_file,
+      snapshot_file_sha256 = excluded.snapshot_file_sha256,
+      eligible_wallet_count = excluded.eligible_wallet_count
+  `;
+
+  await db.execute({
+    sql: electionUpsert,
+    args: [
+      electionSeed.election_key,
+      electionSeed.title,
+      electionSeed.voting_starts_at,
+      electionSeed.voting_ends_at,
+      electionSeed.snapshot_commit,
+      electionSeed.snapshot_file,
+      electionSeed.snapshot_file_sha256,
+      electionSeed.eligible_wallet_count,
+    ],
+  });
+  console.log(`   ✓ ${electionSeed.election_key} (window: ${electionSeed.voting_starts_at} → ${electionSeed.voting_ends_at})`);
+  console.log(`✅ Seeded foundational governance election.`);
 }
 
 main().catch((err) => {

@@ -23,6 +23,7 @@ import { DevLoginButton } from "@/components/admin/dev-login-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProposalTypeBadge } from "@/components/shared/proposal-type-badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { HolderBadge } from "@/components/shared/holder-badge";
 import { Markdown } from "@/components/shared/markdown";
 import { apiGet, fetchApi, useCurrentUser } from "@/lib/api";
 import { shortenAddress } from "@/lib/utils";
@@ -313,7 +314,19 @@ export default function AdminPage() {
                   <div className="min-w-0 space-y-1 text-center sm:text-left">
                     <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                       <ProposalTypeBadge type={p.type} />
-                      <span className="text-xs text-text-dim">by {shortenAddress(p.authorAddress)}</span>
+                      <span className="inline-flex items-center gap-1 text-xs text-text-dim">
+                        by
+                        <Link
+                          href={`/snapshot-explorer?address=${p.authorAddress.toLowerCase()}`}
+                          title={p.authorAddress}
+                          className="font-mono underline-offset-2 hover:underline hover:text-foreground"
+                        >
+                          {shortenAddress(p.authorAddress)}
+                        </Link>
+                        {p.authorHolderClass && (
+                          <HolderBadge holderClass={p.authorHolderClass} size="sm" plain />
+                        )}
+                      </span>
                       <span className="flex items-center gap-1 text-xs text-text-dim">
                         <Clock className="h-3 w-3" aria-hidden />
                         {new Date(p.createdAt).toLocaleDateString()}

@@ -94,6 +94,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Both holders were resolved above for gating — reuse for inline badges.
+  result.delegation.delegatorClass = delegatorHolder.holderClass;
+  result.delegation.delegateeClass = delegateeHolder.holderClass;
+
   return apiSuccess<CreateDelegationResult>(result, undefined, 201);
 }
 

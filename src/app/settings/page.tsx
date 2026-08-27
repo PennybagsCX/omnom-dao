@@ -28,7 +28,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { CopyAddress } from "@/components/shared/copy-address";
-import { DynamicIcon } from "@/components/shared/dynamic-icon";
 import { DelegationCard } from "@/components/shared/delegation-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { HolderBadge } from "@/components/shared/holder-badge";
@@ -45,6 +44,7 @@ import {
   useRevokeDelegation,
 } from "@/lib/delegation-api";
 import { formatDate, isValidAddress } from "@/lib/utils";
+import { HOLDER_CLASS_CONFIG } from "@/lib/constants";
 import { DelegationStatus } from "@/types";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -112,7 +112,6 @@ export default function SettingsPage() {
         <ProfileSection me={me} />
         <DelegationSection me={me} />
         <NotificationsSection me={me} />
-        <AppearanceSection />
         <DangerZone />
       </motion.div>
     </div>
@@ -132,7 +131,7 @@ function WalletSection({ me }: { me: MeData }) {
       <CardContent className="space-y-3">
         <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-bg-elevated/40 p-3 sm:flex-row">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gold/20 to-gold/10 text-lg">
-            {me.class === "WHALE" ? "🐋" : me.class === "DOLPHIN" ? "🐬" : "🐟"}
+            {HOLDER_CLASS_CONFIG[me.class].emoji}
           </div>
           <div className="min-w-0 flex-1 overflow-hidden text-center">
             <CopyAddress address={me.address} full />
@@ -271,6 +270,7 @@ function DelegationSection({ me }: { me: MeData }) {
             delegation={outgoing}
             votingPower={me.votingPower}
             delegatorClass={me.class}
+            delegateeClass={outgoing.delegateeClass ?? undefined}
             currentAddress={me.address}
             onRevoke={onRevoke}
             revoking={revokeDelegation.isPending}
@@ -387,11 +387,6 @@ function DelegationSection({ me }: { me: MeData }) {
 function NotificationsSection({ me }: { me: MeData }) {
   const updateSettings = useUpdateSettings();
   const [prefs, setPrefs] = useState(me.settings.notifications);
-  const [channels, setChannels] = useState({
-    telegram: true,
-    email: false,
-    inApp: true,
-  });
   const [prevNotifs, setPrevNotifs] = useState(me.settings.notifications);
 
   // Re-sync when the server value changes — during render to avoid
@@ -410,10 +405,6 @@ function NotificationsSection({ me }: { me: MeData }) {
   const onSave = () => {
     updateSettings.mutate({
       notifications: prefs,
-      channels: {
-        telegram: { enabled: channels.telegram },
-        email: { enabled: channels.email },
-      },
     });
   };
 
@@ -442,31 +433,6 @@ function NotificationsSection({ me }: { me: MeData }) {
           ))}
         </div>
 
-        {/* Channel preferences */}
-        <div>
-          <p className="mb-2 text-sm font-medium text-foreground">Delivery channels</p>
-          <div className="divide-y divide-border rounded-lg border border-border">
-            {([
-              { key: "telegram", label: "Telegram", iconName: "Send" },
-              { key: "email", label: "Email", iconName: "Mail" },
-              { key: "inApp", label: "In-app", iconName: "Bell" },
-            ] as const).map((ch) => (
-              <div key={ch.key} className="flex items-center justify-between gap-4 px-3 py-2.5">
-                <span className="inline-flex items-center gap-2 text-sm text-foreground">
-                  <DynamicIcon name={ch.iconName} aria-hidden className="h-4 w-4" /> {ch.label}
-                </span>
-                <Switch
-                  checked={channels[ch.key]}
-                  onCheckedChange={() =>
-                    setChannels((c) => ({ ...c, [ch.key]: !c[ch.key] }))
-                  }
-                  aria-label={`${ch.label} delivery channel`}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
         <div className="flex justify-center">
           <Button onClick={onSave} disabled={!dirty || updateSettings.isPending} size="sm">
             {updateSettings.isPending ? (
@@ -476,29 +442,6 @@ function NotificationsSection({ me }: { me: MeData }) {
             )}
             Save Preferences
           </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-/* ── Appearance (dark-only in v1) ─────────────────────────────── */
-
-function AppearanceSection() {
-  return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-base">Appearance</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between gap-4 py-3">
-          <div className="min-w-0 flex-1 text-center sm:text-left">
-            <p className="text-sm font-medium text-foreground">Dark mode</p>
-            <p className="text-xs text-text-dim">
-              The OMNOM DAO interface is always dark in v1.
-            </p>
-          </div>
-          <Switch checked disabled aria-label="Dark mode (always on)" />
         </div>
       </CardContent>
     </Card>

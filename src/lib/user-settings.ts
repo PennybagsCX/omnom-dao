@@ -4,8 +4,8 @@ import { db } from "@/lib/db";
  * User settings data-access (Phase 3).
  *
  * Reads / writes the `user_settings` table, which persists notification
- * preferences (per GOVERNANCE_MECHANICS.md §14) and the Telegram / email
- * delivery channels (per TECHNICAL_ARCHITECTURE.md §4 — notification layer).
+ * preferences (per GOVERNANCE_MECHANICS.md §14). Push delivery channels
+ * (Telegram, Email) have been removed — only in-app notifications remain.
  *
  * All access is keyed by the internal `users.id`. Callers resolve the user id
  * from the wallet address (already done by the auth layer).
@@ -19,15 +19,6 @@ export interface UserSettingsRow {
     votingEndingSoon: boolean;
     proposalResult: boolean;
     mention: boolean;
-  };
-  telegram: {
-    enabled: boolean;
-    chatId: string | null;
-    username: string | null;
-  };
-  email: {
-    enabled: boolean;
-    address: string | null;
   };
   preferredWallet: string | null;
   displayFormat: "full" | "abbreviated" | "raw";
@@ -44,8 +35,7 @@ export async function getUserSettings(userId: string): Promise<UserSettingsRow> 
   const res = await db.execute({
     sql: `SELECT user_id, notif_proposal_created, notif_voting_started,
                  notif_voting_ending_soon, notif_proposal_result, notif_mention,
-                 telegram_enabled, telegram_chat_id, telegram_username,
-                 email_enabled, email_address, preferred_wallet, display_format
+                 preferred_wallet, display_format
           FROM user_settings WHERE user_id = ?`,
     args: [userId],
   });
@@ -69,15 +59,6 @@ export async function getUserSettings(userId: string): Promise<UserSettingsRow> 
       proposalResult: asBool(r.notif_proposal_result),
       mention: asBool(r.notif_mention),
     },
-    telegram: {
-      enabled: asBool(r.telegram_enabled),
-      chatId: (r.telegram_chat_id as string | null) ?? null,
-      username: (r.telegram_username as string | null) ?? null,
-    },
-    email: {
-      enabled: asBool(r.email_enabled),
-      address: (r.email_address as string | null) ?? null,
-    },
     preferredWallet: (r.preferred_wallet as string | null) ?? null,
     displayFormat: (r.display_format as "full" | "abbreviated" | "raw") ?? "abbreviated",
   };
@@ -93,8 +74,6 @@ function defaultSettings(userId: string): UserSettingsRow {
       proposalResult: true,
       mention: true,
     },
-    telegram: { enabled: false, chatId: null, username: null },
-    email: { enabled: false, address: null },
     preferredWallet: null,
     displayFormat: "abbreviated",
   };

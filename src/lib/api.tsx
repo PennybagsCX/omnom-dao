@@ -391,6 +391,28 @@ export function useCastVote(proposalId: string) {
   });
 }
 
+/** PUT /api/v1/proposals/[id]/votes — change an existing vote. */
+export function useChangeVote(proposalId: string) {
+  const qc = useQueryClient();
+  return useMutation<CastVoteData, ApiRequestError, VoteChoice>({
+    mutationFn: (choice) =>
+      fetchApi<CastVoteData>(`/api/v1/proposals/${proposalId}/votes`, {
+        method: "PUT",
+        body: { choice },
+      }),
+    onSuccess: (_data, choice) => {
+      toast.success(`Vote changed: ${choice}`, {
+        description: "Your voting power has been recorded.",
+      });
+      qc.invalidateQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+      qc.invalidateQueries({ queryKey: queryKeys.dashboard });
+    },
+    onError: (error) => {
+      toast.error("Vote change failed", { description: error.message });
+    },
+  });
+}
+
 
 /** GET /api/v1/tags — popular tags for autocomplete. */
 export function useTags(query?: string, enabled = true) {
@@ -460,17 +482,6 @@ export function useUpdateSettings() {
     {
       displayName?: string;
       notifications?: Record<string, boolean>;
-      channels?: {
-        telegram?: {
-          enabled?: boolean;
-          chatId?: string | null;
-          username?: string | null;
-        };
-        email?: {
-          enabled?: boolean;
-          address?: string | null;
-        };
-      };
       preferredWallet?: string | null;
       displayFormat?: "full" | "abbreviated" | "raw";
     }

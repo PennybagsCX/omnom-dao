@@ -121,6 +121,59 @@ describe("checkRateLimit", () => {
   });
 });
 
+describe("fail-closed behavior (production governance limits)", () => {
+  const realNodeEnv = process.env.NODE_ENV;
+
+  afterEach(() => {
+    Object.assign(process.env, { NODE_ENV: realNodeEnv });
+  });
+
+  it("denies when failClosed and KV is unconfigured in production", async () => {
+    Object.assign(process.env, { NODE_ENV: "production" });
+    delete process.env.KV_REST_API_URL;
+    delete process.env.KV_URL;
+    vi.resetModules();
+    const { checkRateLimit } = await import("@/lib/rate-limit");
+
+    const r: RateLimitResult = await checkRateLimit("fc-unconfigured", 5, 60, true);
+    expect(r.allowed).toBe(false);
+    expect(r.remaining).toBe(0);
+    expect(r.count).toBe(0);
+    expect(r.resetAt).toBeGreaterThan(Math.floor(Date.now() / 1000));
+  });
+
+  it("denies when failClosed and kv.incr throws in production", async () => {
+    Object.assign(process.env, { NODE_ENV: "production" });
+    process.env.KV_REST_API_URL = "http://fake-kv";
+    vi.resetModules();
+    vi.doMock("@vercel/kv", () => ({
+      kv: {
+        incr: vi.fn(async () => {
+          throw new Error("KV down");
+        }),
+        expire: vi.fn(),
+      },
+    }));
+    const { checkRateLimit } = await import("@/lib/rate-limit");
+
+    const r: RateLimitResult = await checkRateLimit("fc-throw", 5, 60, true);
+    expect(r.allowed).toBe(false);
+    expect(r.count).toBe(0);
+  });
+
+  it("still fails open outside production even when failClosed is requested", async () => {
+    Object.assign(process.env, { NODE_ENV: "test" });
+    delete process.env.KV_REST_API_URL;
+    delete process.env.KV_URL;
+    vi.resetModules();
+    const { checkRateLimit } = await import("@/lib/rate-limit");
+
+    const r: RateLimitResult = await checkRateLimit("fc-dev", 5, 60, true);
+    expect(r.allowed).toBe(true);
+    expect(r.remaining).toBe(Number.POSITIVE_INFINITY);
+  });
+});
+
 describe("bucket key builders", () => {
   it("ipBucket builds a per-IP API key", () => {
     expect(ipBucket("1.2.3.4")).toBe("rl:api:ip:1.2.3.4");

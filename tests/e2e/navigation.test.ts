@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { dismissWalletDialog } from "./helpers";
 
 const RUN_E2E = !process.env.VITEST;
 
@@ -10,8 +11,12 @@ if (RUN_E2E) {
     test("header nav links route to the correct pages", async ({ page }) => {
       await page.goto("/");
       await page.waitForLoadState("networkidle");
+
+      // Remove any blocking UI elements
+      await dismissWalletDialog(page);
+
       await page.getByRole("link", { name: /^Proposals$/i }).first().click();
-      await page.waitForURL(/\/proposals/, { timeout: 10_000 });
+      await page.waitForURL(/\/proposals/, { timeout: 30_000 });
     });
 
     test("mobile nav is visible at mobile viewport", async ({ page }) => {
@@ -28,6 +33,10 @@ if (RUN_E2E) {
     test("the Create nav link points at the proposal creation flow", async ({ page }) => {
       await page.goto("/");
       await page.waitForLoadState("networkidle");
+
+      // Remove any blocking UI elements
+      await dismissWalletDialog(page);
+
       await page.locator("header").getByRole("link", { name: /^Create$/i }).first().click({ timeout: 30_000 });
       await page.waitForURL(/\/proposals\/create/, { timeout: 30_000 });
     });

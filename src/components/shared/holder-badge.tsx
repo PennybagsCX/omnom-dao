@@ -18,15 +18,10 @@ const SIZE_MAP = {
   lg: { badge: "px-3 py-1.5 text-base", emoji: "text-xl", label: "text-base" },
 } as const;
 
-const BG_MAP: Record<HolderClass, string> = {
-  [HolderClass.WHALE]: "bg-amber-500/15 border-amber-600/40",
-  [HolderClass.DOLPHIN]: "bg-sky-500/15 border-sky-600/40",
-  [HolderClass.FISH]: "bg-slate-500/15 border-slate-600/40",
-};
-
 /**
  * Holder class badge — a core piece of OMNOM brand identity.
- * Color-coded: 🐋 Whale (amber), 🐬 Dolphin (sky), 🐟 Fish (slate).
+ * Seven tiers: 🦑 Kraken (fuchsia), 🐋 Whale (amber), 🐬 Dolphin (sky),
+ * 🦈 Shark (indigo), 🐙 Octopus (violet), 🦀 Crab (orange), 🦄 Seahorse (slate).
  */
 export function HolderBadge({
   holderClass,
@@ -52,12 +47,13 @@ export function HolderBadge({
     <span
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border font-medium",
-        BG_MAP[holderClass],
+        cfg.bgClass,
+        cfg.borderClass,
         cfg.colorClass,
         sz.badge,
         className,
       )}
-      title={`${cfg.label} holder · ${cfg.threshold}% of supply`}
+      title={`${cfg.label} holder · ${cfg.thresholdLabel}`}
     >
       <span aria-hidden className={sz.emoji}>
         {cfg.emoji}

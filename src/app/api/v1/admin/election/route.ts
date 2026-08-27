@@ -84,12 +84,12 @@ export async function GET(request: NextRequest) {
             });
 
     // Eligibility comes from the immutable snapshot artifact rather than the
-    // relational database, so the export is generated from the public file.
+    // relational database, so the export is generated from the server-only file.
     if (exportMode === "eligibility") {
       const { readFile } = await import("node:fs/promises");
       const path = await import("node:path");
       const file = await readFile(
-        path.join(process.cwd(), "public", "data", "holders.json"),
+        path.join(process.cwd(), "data", "holders.json"),
         "utf-8",
       );
       const artifact = JSON.parse(file) as {

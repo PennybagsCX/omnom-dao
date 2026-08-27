@@ -19,6 +19,15 @@ import {
   X,
 } from "lucide-react";
 
+import { LinkBubbleMenu } from "@/components/shared/link-bubble-menu";
+import {
+  EditorLink,
+  MARKDOWN_OPTS,
+  applyLinkFromInput,
+  getMarkdown,
+  removeLink as removeLinkCommand,
+} from "@/components/shared/link-commands";
+import { normalizeLinkUrl } from "@/lib/link-url";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +41,11 @@ import { cn } from "@/lib/utils";
  * All formatting actions from the previous textarea-based editor are
  * preserved: heading, bold, italic, strikethrough, bullet list, numbered list,
  * blockquote, inline code, link, and horizontal rule.
+ *
+ * Link UX follows the standard Notion/GitHub pattern: ⌘K or the toolbar
+ * button opens an insert/edit dialog, clicking a link opens a bubble menu
+ * (open / edit / copy / remove), and the Link mark is non-inclusive so
+ * typing after a link is plain text — see `link-commands.ts`.
  */
 
 interface WysiwygEditorProps {
@@ -45,24 +59,6 @@ interface WysiwygEditorProps {
   "aria-invalid"?: boolean;
 }
 
-const MARKDOWN_OPTS = {
-  html: false,
-  tightLists: true,
-  bulletListMarker: "-",
-  linkify: true,
-  breaks: false,
-  transformPastedText: true,
-  transformCopiedText: true,
-} as const;
-
-/** Get markdown from editor storage with type-safety. */
-function getMarkdown(editor: Editor): string {
-  const storage = editor.storage as unknown as {
-    markdown?: { getMarkdown: () => string };
-  };
-  return storage.markdown?.getMarkdown() ?? "";
-}
-
 export function WysiwygEditor({
   value,
   onChange,
@@ -72,13 +68,34 @@ export function WysiwygEditor({
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const linkButtonRef = useRef<HTMLButtonElement>(null);
+  // The markdown this editor last emitted via onChange. When the parent's
+  // `value` prop is exactly that string, it is an echo of our own update —
+  // re-syncing would round-trip the (possibly cap-truncated) serialisation
+  // back into the document and revert the keystroke that caused it.
+  const lastEmittedRef = useRef(value);
+  // The editor instance is returned *by* useEditor, so its own options
+  // (editorProps.handleKeyDown) reach it through this ref.
+  const editorRef = useRef<Editor | null>(null);
 
   const editor = useEditor({
     immediatelyRender: false,
+    // Toolbar active states, the dialog's live canRemove flag and the link
+    // bubble's href all read editor state during render — opt back into
+    // re-rendering on transactions (the v3 default is off, which left the
+    // toolbar's active states stale on cursor moves).
+    shouldRerenderOnTransaction: true,
     extensions: [
       StarterKit.configure({
         heading: { levels: [2, 3, 4] },
+        // StarterKit bundles the stock Link mark, whose inclusivity follows
+        // `autolink` — that stickiness is the bug this rework fixes, so it is
+        // disabled in favour of our non-sticky variant.
+        link: false,
+        // Code blocks are not needed; the inline `code` mark (styled gold monospace)
+        // is sufficient for contract addresses and token symbols.
+        codeBlock: false,
       }),
+      EditorLink,
       Markdown.configure(MARKDOWN_OPTS),
     ],
     content: value,
@@ -92,20 +109,43 @@ export function WysiwygEditor({
         "aria-invalid": rest["aria-invalid"] ? "true" : "false",
         "data-placeholder": placeholder,
       },
+      // ⌘K opens the link dialog, but only while the editor is focused — a
+      // document-level listener would hijack the shortcut from the title
+      // input and other page fields.
+      handleKeyDown: (_view, event) => {
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+          event.preventDefault();
+          const existing = editorRef.current?.getAttributes("link").href;
+          setLinkUrl(typeof existing === "string" ? existing : "");
+          setShowLinkDialog(true);
+        }
+        return false;
+      },
     },
     onUpdate: ({ editor: ed }) => {
-      const md = getMarkdown(ed);
-      onChange(md.slice(0, 10000));
+      const md = getMarkdown(ed).slice(0, 10000);
+      lastEmittedRef.current = md;
+      onChange(md);
     },
   });
 
+  useEffect(() => {
+    editorRef.current = editor;
+    return () => {
+      editorRef.current = null;
+    };
+  }, [editor]);
+
   // Sync external value changes into the editor (e.g. form reset / step
-  // navigation). We guard against the current serialised content to avoid
-  // clobbering the cursor on every keystroke.
+  // navigation). An echo of our own last emission is skipped whole — at the
+  // 10k cap the emitted string is truncated, so feeding it back would revert
+  // every keystroke and corrupt mid-token pastes.
   useEffect(() => {
     if (!editor) return;
+    if (value === lastEmittedRef.current) return;
     const current = getMarkdown(editor);
     if (value !== current && value.trim() !== current.trim()) {
+      lastEmittedRef.current = value;
       editor.commands.setContent(value || "", { emitUpdate: false });
     }
   }, [value, editor]);
@@ -114,50 +154,14 @@ export function WysiwygEditor({
   const openLinkDialog = () => {
     if (!editor) return;
     const existing = editor.getAttributes("link").href;
-    setLinkUrl(existing ?? "");
+    setLinkUrl(typeof existing === "string" ? existing : "");
     setShowLinkDialog(true);
   };
 
-  // Handle keyboard shortcut for links (Cmd/Ctrl+K). The dialog-open logic is
-  // inlined here (rather than calling openLinkDialog) so the effect only
-  // depends on `editor` — no unstable function identity in the dep array.
-  useEffect(() => {
-    if (!editor) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        const existing = editor.getAttributes("link").href;
-        setLinkUrl(existing ?? "");
-        setShowLinkDialog(true);
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [editor]);
-
-  /** Apply the entered URL to the current selection. */
+  /** Apply the entered URL — or remove the link when left empty. */
   const applyLink = () => {
     if (!editor) return;
-    const url = linkUrl.trim();
-    
-    if (url === "") {
-      editor.chain().focus().extendMarkRange("link").unsetLink().run();
-    } else {
-      // Smart URL normalization - supports www., http://, https://, and plain domains
-      const normalized = (() => {
-        const trimmed = url.trim();
-        if (trimmed.startsWith("/")) return trimmed;
-        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
-        if (trimmed.startsWith("www.")) return `https://${trimmed}`;
-        return `https://${trimmed}`;
-      })();
-      
-      editor.chain().focus().setLink({ href: normalized }).run();
-    }
-    
-    // Keep dialog open for rapid editing, just close on Esc
+    applyLinkFromInput(editor, linkUrl);
     setShowLinkDialog(false);
     setLinkUrl("");
   };
@@ -165,7 +169,7 @@ export function WysiwygEditor({
   /** Remove the link from the current selection. */
   const removeLink = () => {
     if (!editor) return;
-    editor.chain().focus().extendMarkRange("link").unsetLink().run();
+    removeLinkCommand(editor);
     setShowLinkDialog(false);
     setLinkUrl("");
   };
@@ -217,14 +221,17 @@ export function WysiwygEditor({
         <Divider />
         <ToolbarBtn icon={Code} title="Inline code"
           active={editor.isActive("code")}
+          disabled={editor.state.selection.empty}
           onClick={() => editor.chain().focus().toggleCode().run()}
         />
-        <ToolbarBtn 
-          icon={LinkIcon} 
+        <ToolbarBtn
+          icon={LinkIcon}
           title="Link (⌘K)"
           active={editor.isActive("link")}
           onClick={openLinkDialog}
           buttonRef={linkButtonRef}
+          hasPopup="dialog"
+          expanded={showLinkDialog}
         />
         <ToolbarBtn icon={Minus} title="Horizontal rule"
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
@@ -234,6 +241,13 @@ export function WysiwygEditor({
       {/* Editor surface */}
       <EditorContent editor={editor} />
 
+      {/* Selection-anchored link bubble (open / edit / copy / remove).
+       * Unmounted while the ⌘K dialog is open: the bubble's blur containment
+     * can't see the dialog (it appends to document.body, so every element
+     * looks "inside" its parent), which left both UIs stacked. Unmounting
+     * the host is decisive — no floating-ui internals required. */}
+      {!showLinkDialog && <LinkBubbleMenu editor={editor} />}
+
       {/* Floating Link Dialog */}
       {showLinkDialog && (
         <LinkPopover
@@ -242,7 +256,7 @@ export function WysiwygEditor({
           onApply={applyLink}
           onRemove={removeLink}
           onClose={() => { setShowLinkDialog(false); setLinkUrl(""); }}
-          hasExistingLink={editor.isActive("link")}
+          canRemove={editor.isActive("link")}
           anchorRef={linkButtonRef}
         />
       )}
@@ -258,7 +272,7 @@ function LinkPopover({
   onApply,
   onRemove,
   onClose,
-  hasExistingLink,
+  canRemove,
   anchorRef,
 }: {
   url: string;
@@ -266,46 +280,43 @@ function LinkPopover({
   onApply: () => void;
   onRemove: () => void;
   onClose: () => void;
-  hasExistingLink: boolean;
+  /** True while the selection is inside a link — evaluated per render so it
+   * tracks cursor moves (and gates the Remove affordances). */
+  canRemove: boolean;
   anchorRef: React.RefObject<HTMLButtonElement | null>;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
 
-  // Position popover near the toolbar button
+  // Mount-time focus: select-all only when starting empty (prefill stays
+  // editable in place). Reading the input's own value keeps `url` out of
+  // the deps array — re-running mid-typing would steal the caret.
   useEffect(() => {
-    if (!anchorRef.current || !popoverRef.current) return;
-
-    const anchorRect = anchorRef.current.getBoundingClientRect();
-    const popoverRect = popoverRef.current.getBoundingClientRect();
-    
-    // Position above the toolbar button
-    const top = anchorRect.top - popoverRect.height - 8;
-    const left = Math.max(8, Math.min(
-      anchorRect.left - popoverRect.width / 2 + anchorRect.width / 2,
-      window.innerWidth - popoverRect.width - 8
-    ));
-    
-    setPosition({ top, left });
-    
-    // Focus and select input
     inputRef.current?.focus();
-    if (!url) {
+    if (!inputRef.current?.value) {
       inputRef.current?.select();
     }
-  }, [anchorRef, url]);
+  }, []);
 
-  // Close on Escape
+  /** Dismiss and hand focus back to the invoking Link button (WAI-ARIA
+   * dialog pattern) — a plain close would strand it on <body>. Light-dismiss
+   * (outside click) deliberately does NOT steal focus from where the user
+   * clicked. */
+  const dismiss = () => {
+    onClose();
+    anchorRef.current?.focus();
+  };
+
+  // Close on Escape (with focus return)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose();
+        dismiss();
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  });
 
   // Close when clicking outside
   useEffect(() => {
@@ -323,37 +334,35 @@ function LinkPopover({
     onApply();
   };
 
-  // Generate normalized URL for preview
-  const normalizedUrl = (() => {
-    const trimmed = url.trim();
-    if (!trimmed) return "";
-    if (trimmed.startsWith("/")) return trimmed;
-    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
-    if (trimmed.startsWith("www.")) return `https://${trimmed}`;
-    return `https://${trimmed}`;
-  })();
+  // Preview the URL exactly as it will be stored — same normalizer the
+  // apply command uses, so the two can never disagree.
+  const normalizedUrl = normalizeLinkUrl(url);
 
   return (
-    <div
-      ref={popoverRef}
-      className="fixed z-50 w-80 rounded-lg border border-border bg-bg-elevated shadow-lg"
-      style={{ top: `${position.top}px`, left: `${position.left}px` }}
-      role="dialog"
-      aria-label="Insert link"
-    >
+    <>
+      {/* Backdrop — mirrors DialogOverlay */}
+      <div
+        className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
+        onMouseDown={dismiss}
+        aria-hidden="true"
+      />
+      <div
+        ref={popoverRef}
+        className="fixed left-[50%] top-[50%] z-50 w-80 max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-2rem)] translate-x-[-50%] translate-y-[-50%] overflow-y-auto rounded-lg border border-border bg-bg-elevated shadow-lg"
+        role="dialog"
+        aria-modal="true"
+        aria-label={canRemove ? "Edit link" : "Insert link"}
+      >
       <div className="p-3">
         <div className="flex items-center gap-2 border-b border-border pb-2 mb-3">
           <LinkIcon className="h-4 w-4 text-gold" aria-hidden />
           <span className="text-sm font-semibold text-foreground">
-            {hasExistingLink ? "Edit Link" : "Insert Link"}
-          </span>
-          <span className="ml-auto text-xs text-text-dim">
-            ⌘K
+            {canRemove ? "Edit Link" : "Insert Link"}
           </span>
           <button
             type="button"
-            onClick={onClose}
-            className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-bg-elevated hover:text-foreground"
+            onClick={dismiss}
+            className="ml-auto rounded p-0.5 text-muted-foreground transition-colors hover:bg-bg-elevated hover:text-foreground"
             aria-label="Close"
           >
             <X className="h-3.5 w-3.5" aria-hidden />
@@ -374,11 +383,16 @@ function LinkPopover({
               placeholder="www.example.com"
               className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-text-dim focus:border-gold/50 focus:ring-1 focus:ring-gold/50"
             />
+            {canRemove && (
+              <p className="mt-1.5 text-xs text-text-dim">
+                Leave empty to remove the link
+              </p>
+            )}
           </div>
 
           {/* Live link preview */}
           {normalizedUrl && (
-            <div className="flex items-center gap-2 rounded-md bg-bg-subtle p-2">
+            <div className="flex items-center gap-2 rounded-md bg-bg-surface p-2">
               <ExternalLink className="h-3.5 w-3.5 text-gold flex-shrink-0" aria-hidden />
               <span className="text-xs text-muted-foreground truncate">
                 {normalizedUrl}
@@ -386,15 +400,8 @@ function LinkPopover({
             </div>
           )}
 
-          {/* Warning for invalid URLs */}
-          {url && !normalizedUrl && (
-            <div className="flex items-center gap-2 text-xs text-danger">
-              <span>⚠️ Please enter a valid URL</span>
-            </div>
-          )}
-
           <div className="flex items-center justify-between gap-2 pt-1">
-            {hasExistingLink && (
+            {canRemove && (
               <button
                 type="button"
                 onClick={onRemove}
@@ -404,17 +411,18 @@ function LinkPopover({
               </button>
             )}
             <div className="flex items-center gap-2 ml-auto">
-              <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+              <Button type="button" variant="ghost" size="sm" onClick={dismiss}>
                 Cancel
               </Button>
-              <Button type="submit" size="sm" disabled={!normalizedUrl}>
-                {hasExistingLink ? "Update" : "Insert"}
+              <Button type="submit" size="sm" disabled={!normalizedUrl && !canRemove}>
+                {canRemove ? "Update" : "Insert"}
               </Button>
             </div>
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -425,13 +433,22 @@ function ToolbarBtn({
   onClick,
   title,
   active = false,
+  disabled = false,
   buttonRef,
+  hasPopup,
+  expanded,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   onClick: () => void;
   title: string;
   active?: boolean;
+  disabled?: boolean;
   buttonRef?: React.RefObject<HTMLButtonElement | null>;
+  /** When set, the button opens (not toggles) a popup — aria-haspopup/
+   * aria-expanded replace aria-pressed. */
+  hasPopup?: "dialog";
+  /** Current open state of the popup (only meaningful with hasPopup). */
+  expanded?: boolean;
 }) {
   return (
     <button
@@ -439,13 +456,17 @@ function ToolbarBtn({
       type="button"
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
+      disabled={disabled}
       title={title}
-      aria-pressed={active}
+      {...(hasPopup
+        ? { "aria-haspopup": hasPopup, "aria-expanded": !!expanded }
+        : { "aria-pressed": active })}
       className={cn(
         "rounded p-1.5 transition-colors",
         active
           ? "bg-gold/15 text-gold"
           : "text-muted-foreground hover:bg-bg-elevated hover:text-foreground",
+        disabled && "cursor-not-allowed opacity-40",
       )}
     >
       <Icon className="h-4 w-4" aria-hidden />

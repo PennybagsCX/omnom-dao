@@ -24,23 +24,6 @@ const settingsSchema = z.object({
       mention: z.boolean().optional(),
     })
     .optional(),
-  channels: z
-    .object({
-      telegram: z
-        .object({
-          enabled: z.boolean().optional(),
-          chatId: z.string().nullable().optional(),
-          username: z.string().nullable().optional(),
-        })
-        .optional(),
-      email: z
-        .object({
-          enabled: z.boolean().optional(),
-          address: z.email().nullable().optional(),
-        })
-        .optional(),
-    })
-    .optional(),
   preferredWallet: z.string().max(40).nullable().optional(),
   displayFormat: z.enum(["full", "abbreviated", "raw"]).optional(),
 });
@@ -115,32 +98,6 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    const c = input.channels;
-    if (c?.telegram) {
-      if (c.telegram.enabled !== undefined) {
-        sets.push("telegram_enabled = ?");
-        args.push(c.telegram.enabled ? 1 : 0);
-      }
-      if (c.telegram.chatId !== undefined) {
-        sets.push("telegram_chat_id = ?");
-        args.push(c.telegram.chatId);
-      }
-      if (c.telegram.username !== undefined) {
-        sets.push("telegram_username = ?");
-        args.push(c.telegram.username);
-      }
-    }
-    if (c?.email) {
-      if (c.email.enabled !== undefined) {
-        sets.push("email_enabled = ?");
-        args.push(c.email.enabled ? 1 : 0);
-      }
-      if (c.email.address !== undefined) {
-        sets.push("email_address = ?");
-        args.push(c.email.address);
-      }
-    }
-
     if (input.preferredWallet !== undefined) {
       sets.push("preferred_wallet = ?");
       args.push(input.preferredWallet);
@@ -173,9 +130,6 @@ export async function PATCH(request: NextRequest) {
     // Echo the sanitized form (never the raw input).
     displayName: input.displayName !== undefined ? sanitizePlainText(input.displayName) : null,
     notifications: persisted?.notifications ?? input.notifications ?? null,
-    channels: persisted
-      ? { telegram: persisted.telegram, email: persisted.email }
-      : input.channels ?? null,
     preferredWallet: persisted?.preferredWallet ?? input.preferredWallet ?? null,
     displayFormat: persisted?.displayFormat ?? input.displayFormat ?? null,
   };

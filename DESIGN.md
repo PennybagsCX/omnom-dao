@@ -572,7 +572,7 @@ graph TD
 **Purpose:** Load and serve frozen holder data from the June 7, 2026 snapshot.
 
 **Implementation:**
-- Build script (`scripts/build-snapshot.ts`) reads CSV, validates, converts to JSON
+- Build script (`scripts/fetch-snapshot.sh`) reads CSVs, validates against pinned SHA-256s, converts to JSON
 - Two output files:
   - `public/data/snapshot.json` — sorted array (for paginated listing, analytics)
   - `public/data/snapshot-map.json` — object keyed by lowercase address (for O(1) lookup)
@@ -1570,7 +1570,7 @@ const securityHeaders = [
 At build time, the snapshot CSV is processed:
 
 ```typescript
-// scripts/build-snapshot.ts
+// scripts/fetch-snapshot.sh
 import fs from 'fs';
 import Papa from 'papaparse';
 
@@ -1818,7 +1818,7 @@ omnom-dao/
 │       ├── vote.ts                    # Vote types
 │       └── holder.ts                  # Holder/snapshot types
 ├── scripts/
-│   ├── build-snapshot.ts             # CSV → JSON converter
+│   ├── fetch-snapshot.sh             # Pinned DBOT-DC/omnom-snapshot fetcher
 │   └── seed-proposals.ts             # Seed demo proposals
 ├── data/
 │   └── snapshot.csv                  # Original snapshot (not in git)

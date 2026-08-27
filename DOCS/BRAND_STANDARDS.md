@@ -45,7 +45,7 @@
 
 - **Approachable but credible** — friendly community tone with serious governance underpinning
 - **Transparent** — snapshot data, provenance, and block numbers are always visible
-- **Playful identity, serious mechanics** — the dog mascot and 🐋🐬🐟 holder classes add personality; voting power is strictly balance-weighted (1 token = 1 vote)
+- **Playful identity, serious mechanics** — the dog mascot and 🦑🐋🐬🦈🐙🦀🦄 holder classes add personality; voting power is strictly balance-weighted (1 token = 1 vote)
 
 ### Naming Conventions
 
@@ -282,7 +282,7 @@ All icons use **[lucide-react](https://lucide.dev/)** — imported as named comp
 
 1. Always include `aria-hidden` on decorative icons: `<Dog aria-hidden />`
 2. Never use emoji for UI icons — use lucide-react components
-3. Exception: holder class emojis (🐋🐬🐟) are brand identity (see §10)
+3. Exception: holder class emojis (🦑🐋🐬🦈🐙🦀🦄) are brand identity (see §10)
 4. Icon color inherits from parent `currentColor` unless explicitly set
 
 ---
@@ -575,9 +575,13 @@ The holder class system is core brand identity — the **only** emojis retained 
 
 | Class | Emoji | Threshold | Color | Badge Class |
 |-------|-------|-----------|-------|-------------|
-| **Whale** 🐋 | 🐋 | ≥ 1.0% of supply | Amber | `text-amber-400` |
-| **Dolphin** 🐬 | 🐬 | ≥ 0.01% of supply | Sky blue | `text-sky-400` |
-| **Fish** 🐟 | 🐟 | All others | Slate | `text-slate-400` |
+| **Kraken** 🦑 | 🦑 | ≥ 10% of supply | Fuchsia | `text-fuchsia-400` |
+| **Whale** 🐋 | 🐋 | ≥ 1% and < 10% | Amber | `text-amber-400` |
+| **Dolphin** 🐬 | 🐬 | ≥ 0.1% and < 1% | Sky blue | `text-sky-400` |
+| **Shark** 🦈 | 🦈 | ≥ 0.01% and < 0.1% | Indigo | `text-indigo-400` |
+| **Octopus** 🐙 | 🐙 | ≥ 0.001% and < 0.01% | Violet | `text-violet-400` |
+| **Crab** 🦀 | 🦀 | ≥ 0.0001% and < 0.001% | Orange | `text-orange-400` |
+| **Seahorse** 🦄 | 🦄 | < 0.0001% | Slate | `text-slate-400` |
 
 ### Configuration
 
@@ -585,20 +589,29 @@ Defined in [`HOLDER_CLASS_CONFIG`](src/lib/constants.ts:64) and classified by [`
 
 ```typescript
 export const HOLDER_CLASS_CONFIG: Record<HolderClass, HolderClassConfig> = {
-  WHALE:   { label: "Whale",   emoji: "🐋", threshold: 1.0,  colorClass: "text-amber-400" },
-  DOLPHIN: { label: "Dolphin", emoji: "🐬", threshold: 0.01, colorClass: "text-sky-400" },
-  FISH:    { label: "Fish",    emoji: "🐟", threshold: 0,    colorClass: "text-slate-400" },
+  KRAKEN:   { label: "Kraken",   emoji: "🦑", threshold: 10.0,  colorClass: "text-fuchsia-400" },
+  WHALE:    { label: "Whale",    emoji: "🐋", threshold: 1.0,   colorClass: "text-amber-400" },
+  DOLPHIN:  { label: "Dolphin",  emoji: "🐬", threshold: 0.1,   colorClass: "text-sky-400" },
+  SHARK:    { label: "Shark",    emoji: "🦈", threshold: 0.01,  colorClass: "text-indigo-400" },
+  OCTOPUS:  { label: "Octopus",  emoji: "🐙", threshold: 0.001, colorClass: "text-violet-400" },
+  CRAB:     { label: "Crab",     emoji: "🦀", threshold: 0.0001, colorClass: "text-orange-400" },
+  SEAHORSE: { label: "Seahorse", emoji: "🦄", threshold: 0,      colorClass: "text-slate-400" },
+  FISH:     { label: "Fish",     emoji: "🐟", threshold: 0,      colorClass: "text-slate-400", deprecated: true }, // legacy mapping
 };
 ```
 
-### Distribution (June 7, 2026 Snapshot)
+### Distribution (Ever-Held Snapshot)
 
 | Class | Count |
 |-------|-------|
-| Whales | 4 |
-| Dolphins | 322 |
-| Fish | 25,105 |
-| **Total** | **25,431** |
+| Krakens | 1 |
+| Whales | 3 |
+| Dolphins | 30 |
+| Sharks | 326 |
+| Octopuses | 1,078 |
+| Crabs | 1,701 |
+| Seahorses | 22,547 |
+| **Total** | **25,686** |
 
 ### Usage Rules
 

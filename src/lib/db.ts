@@ -1,6 +1,11 @@
 import { createClient, type Client } from "@libsql/client";
 
 import { getMockDbClient } from "@/lib/mock-db";
+import {
+  assertAdminConfigProductionSafe,
+  assertDevAuthDisabledInProduction,
+  assertKvConfiguredInProduction,
+} from "@/lib/constants";
 
 /**
  * Database client factory.
@@ -44,6 +49,20 @@ export function isMockMode(): boolean {
 }
 
 /**
+ * Run production startup assertions. Called from getDb() the first time the
+ * client is requested in production. Throws if admin list is empty / contains
+ * anvil addresses, if dev-auth is enabled, or if Vercel KV is unconfigured.
+ *
+ * Idempotent across warm serverless invocations via the globalThis guard
+ * around getDb() itself.
+ */
+function runProductionAssertions(): void {
+  assertAdminConfigProductionSafe();
+  assertDevAuthDisabledInProduction();
+  assertKvConfiguredInProduction();
+}
+
+/**
  * Get the shared database client. Returns the mock client when Turso is not
  * configured; otherwise returns the real Turso/libsql client.
  *
@@ -58,8 +77,10 @@ export function getDb(): Client {
 
   if (g.__omnomDbClient) return g.__omnomDbClient;
 
-  // CRITICAL: In production, throw fatal error if Turso credentials missing
+  // CRITICAL: In production, run startup assertions + fatal-error if Turso
+  // credentials are missing. Refuses to start without a real database.
   if (process.env.NODE_ENV === "production") {
+    runProductionAssertions();
     const url = process.env.TURSO_DATABASE_URL;
     const authToken = process.env.TURSO_AUTH_TOKEN;
     if (!url || url.trim() === "" || url.startsWith("mock://") || !authToken || authToken.trim() === "") {

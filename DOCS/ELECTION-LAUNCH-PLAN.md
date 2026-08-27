@@ -14,7 +14,7 @@ regardless of token balance.
 | Ballot rule | One wallet = one vote |
 | Voting period | 14 days |
 | Eligibility | 25,686 wallets in the pinned ever-held master list |
-| Source commit | `33df90601bd73217c57bc4d93e221c102a3eebce` |
+| Source commit | `2c38af77ba37e67328347cc44bcabbd07551ec42` |
 | Source file | `omnom-snapshot-ever-held.csv` |
 | Source SHA-256 | `1f64a663549ca717c6b612dc71a5cf673ab58badee58f876474c0fc6e551c128` |
 | Ballots | Irrevocable once cast |
@@ -24,7 +24,7 @@ regardless of token balance.
 
 1. **Quadratic voting** — voting power equals the square root of snapshot token balance.
 2. **One wallet, one vote** — every eligible wallet receives one equal vote.
-3. **Tiered voting** — whale, dolphin, and fish cohorts receive fixed voting blocks.
+3. **Tiered voting** — kraken, whale, dolphin, shark, octopus, crab, and seahorse cohorts receive fixed voting blocks.
 4. **Linear token voting** — retain one token = one vote.
 
 ## Security controls
@@ -83,7 +83,7 @@ regardless of token balance.
 > one vote, one time. Voting stays open for 14 days.
 >
 > The electorate is 25,686 ever-held wallets from the public snapshot corpus at
-> github.com/DBOT-DC/omnom-token (pinned commit `33df906`). The ever-held file
+> github.com/DBOT-DC/omnom-snapshot (pinned commit `2c38af77`). The ever-held file
 > is SHA-256 verified as `1f64a663…c128`.
 >
 > Your choices are:
@@ -93,14 +93,14 @@ regardless of token balance.
 > 4. Linear token voting
 >
 > Why this first vote uses one wallet, one vote: under the current linear model,
-> four wallets control 83.529% of token-weighted votes. A one-wallet-one-vote
+> four wallets control ~87.1% of token-weighted votes. A one-wallet-one-vote
 > founding election prevents that concentration from determining the future
 > voting framework itself.
 >
 > Snapshot audit summary:
 > - All repository snapshot files and ten weekly CSVs matched their published hashes.
 > - The final snapshot contains 25,542 current wallets.
-> - Top 1 wallet: 68.900% of supply; top 4: 83.529%.
+> - Top 1 wallet: 68.9% of supply; top 4: ~87.1%.
 > - 255 wallets first appeared after baseline; those still holding own 1.2546%.
 > - 84 repeated round-number historical balances cover 665 wallets.
 > - Three exact offsetting baseline-to-final balance changes were identified.

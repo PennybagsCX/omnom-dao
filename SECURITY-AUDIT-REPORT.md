@@ -52,7 +52,7 @@ echo '{"sortedAddresses":[],"holders":{"0xattacker...":{"rank":1,"balanceRaw":"9
 
 **Remediation**:
 ```typescript
-// At generation time (scripts/build-snapshot.ts):
+// At generation time (scripts/fetch-snapshot.sh):
 writeFileSync("public/data/holders.json", artifact);
 writeFileSync("public/data/holders.json.sha256", sha256(artifact));
 // Deployment: SNAPSHOT_SHA256=<hash> vercel env add

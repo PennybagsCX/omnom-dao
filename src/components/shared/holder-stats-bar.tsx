@@ -167,7 +167,7 @@ export function HolderStatsBar({
             Snapshot Timeline
           </span>
           <a
-            href="https://github.com/DBOT-DC/omnom-token"
+            href="https://github.com/DBOT-DC/omnom-snapshot"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-[10px] text-gold/70 transition-colors hover:text-gold"

@@ -54,7 +54,7 @@ const FAQ_SECTIONS: FAQSection[] = [
       },
       {
         q: "What is a snapshot and why does it matter?",
-        a: `The platform uses an ever-held master list: a union of 11 weekly snapshots taken from June 7 through August 8, 2026 (Dogechain block 59,922,100 through 62,576,248). It covers ${SNAPSHOT.totalHolders.toLocaleString()} unique holder addresses — anyone who held $OMNOM at any point during that window. Your voting power is based on your maximum balance across all snapshots. The snapshot data is verified using SHA-256 integrity checking and sourced from the public repository at github.com/DBOT-DC/omnom-token.`,
+        a: `The platform uses an ever-held master list: a union of 11 weekly snapshots taken from June 7 through August 8, 2026 (Dogechain block 59,922,100 through 62,576,248). It covers ${SNAPSHOT.totalHolders.toLocaleString()} unique holder addresses — anyone who held $OMNOM at any point during that window. Your voting power is based on your maximum balance across all snapshots. The snapshot data is verified using SHA-256 integrity checking and sourced from the public repository at github.com/DBOT-DC/omnom-snapshot.`,
       },
       {
         q: "Can anyone participate?",
@@ -104,7 +104,7 @@ const FAQ_SECTIONS: FAQSection[] = [
     items: [
       {
         q: "How is voting power calculated?",
-        a: "In v1, voting power is strictly linear: 1 token = 1 vote. Your voting power equals your $OMNOM balance at the snapshot block (Block 59,922,100). Holder-class badges (🐋 Whale, 🐬 Dolphin, 🐟 Fish) are cosmetic — they do not change your voting power. A Quadratic Token Voting model (which compresses whale influence) is proposed for v2 but is not yet implemented.",
+        a: "In v1, voting power is strictly linear: 1 token = 1 vote. Your voting power equals your $OMNOM balance at the snapshot block (Block 59,922,100). Holder-class badges (🦑 Kraken, 🐋 Whale, 🐬 Dolphin, 🦈 Shark, 🐙 Octopus, 🦀 Crab, 🦄 Seahorse) are cosmetic — they do not change your voting power. A Quadratic Token Voting model (which compresses whale influence) is proposed for v2 but is not yet implemented.",
       },
       {
         q: "What can I vote on?",
@@ -128,7 +128,7 @@ const FAQ_SECTIONS: FAQSection[] = [
       },
       {
         q: "Can I change my vote?",
-        a: "Yes, but only during the final 12 hours of the voting window. This allows last-minute reconsideration while preventing the entire period from being a live flip-flop. The vote-change window opens 12 hours before voting closes.",
+        a: "Yes. You may change your vote as many times as you like while voting is open. Your latest ballot is the one counted. Once voting closes, your ballot is locked.",
       },
       {
         q: "How long do votes last?",
@@ -136,7 +136,7 @@ const FAQ_SECTIONS: FAQSection[] = [
       },
       {
         q: "What is the Voting Model Reform poll?",
-        a: "The community is currently voting on whether to change how voting power is calculated. Right now, 4 whale wallets control ~84% of all votes under the linear (1 token = 1 vote) model. The reform poll at /governance-vote lets every verified holder cast 1 vote to choose between: Quadratic Voting (compresses whale power from 84% to 9%), One Wallet One Vote (pure democracy), or Tiered Voting (equal blocks per class). This meta-poll uses 1-wallet-1-vote by design — every holder gets equal say in how future voting works.",
+        a: "The community is currently voting on whether to change how voting power is calculated. Right now, the top 4 wallets (1 kraken + 3 whales) control ~87.1% of all votes under the linear (1 token = 1 vote) model. The reform poll at /governance-vote lets every verified holder cast 1 vote to choose between: Quadratic Voting (compresses whale power), One Wallet One Vote (pure democracy), or Tiered Voting (equal blocks per class). This meta-poll uses 1-wallet-1-vote by design — every holder gets equal say in how future voting works.",
       },
     ],
   },
@@ -147,11 +147,11 @@ const FAQ_SECTIONS: FAQSection[] = [
     items: [
       {
         q: "Who can create a proposal?",
-        a: "Any verified holder can create Treasury, Guideline, or General proposals. However, high-impact proposal types (Chain Selection, Tokenomics Change, Technical) require at least Dolphin-class status — meaning you hold ≥0.01% of total supply. This tiered system ensures that decisions with major consequences are proposed by stakeholders with meaningful economic exposure.",
+        a: "Any verified holder can create Treasury, Guideline, or General proposals. However, high-impact proposal types (Chain Selection, Tokenomics Change, Technical) require at least Shark-class status — meaning you hold ≥0.01% of total supply. This tiered system ensures that decisions with major consequences are proposed by stakeholders with meaningful economic exposure.",
       },
       {
         q: "What are the holder classes?",
-        a: `Holders are classified into three tiers based on snapshot balance: 🐋 Whale (≥1% of supply, ${SNAPSHOT.expectedDistribution.whales} addresses), 🐬 Dolphin (≥0.01%, ${SNAPSHOT.expectedDistribution.dolphins} addresses), and 🐟 Fish (any balance, ${SNAPSHOT.expectedDistribution.fish} addresses). In v1, classes are cosmetic for voting power — they only gate which proposal types you can create.`,
+        a: `Holders are classified into seven tiers based on snapshot balance: 🦑 Kraken (≥10% of supply, ${SNAPSHOT.expectedDistribution.krakens.toLocaleString()} address), 🐋 Whale (≥1%, ${SNAPSHOT.expectedDistribution.whales.toLocaleString()} addresses), 🐬 Dolphin (≥0.1%, ${SNAPSHOT.expectedDistribution.dolphins.toLocaleString()} addresses), 🦈 Shark (≥0.01%, ${SNAPSHOT.expectedDistribution.sharks.toLocaleString()} addresses), 🐙 Octopus (≥0.001%, ${SNAPSHOT.expectedDistribution.octopuses.toLocaleString()} addresses), 🦀 Crab (≥0.0001%, ${SNAPSHOT.expectedDistribution.crabs.toLocaleString()} addresses), and 🦄 Seahorse (any balance, ${SNAPSHOT.expectedDistribution.seahorses.toLocaleString()} addresses). In v1, classes are cosmetic for voting power — they only gate which proposal types you can create.`,
       },
       {
         q: "Are there anti-spam protections?",
@@ -232,7 +232,7 @@ const FAQ_SECTIONS: FAQSection[] = [
       },
       {
         q: "What was the Vitalik burn?",
-        a: "Vitalik Buterin publicly burned 68.9% of the total $OMNOM supply, which elevated the project's visibility and meme-cultural significance. This burn also concentrated the remaining supply among a smaller group of holders — approximately 31.1% of the original supply remains in circulation among the 25,542 current holders.",
+        a: "Vitalik Buterin publicly burned 68.9% of the total $OMNOM supply, which elevated the project's visibility and meme-cultural significance. This burn also concentrated the remaining supply among a smaller group of holders — approximately 31.1% of the original supply remains in circulation among the ${SNAPSHOT.totalHolders.toLocaleString()} current holders.",
       },
       {
         q: "How is the snapshot verified?",
@@ -240,7 +240,7 @@ const FAQ_SECTIONS: FAQSection[] = [
       },
       {
         q: "What is the token distribution?",
-        a: `Based on the latest snapshot data, the supply is distributed as follows: ${SNAPSHOT.expectedDistribution.whales} whale addresses (≥1% of supply each), ${SNAPSHOT.expectedDistribution.dolphins} dolphin addresses (≥0.01% each), and ${SNAPSHOT.expectedDistribution.fish} fish addresses (<0.01% each). This concentration is why the governance system implements quorum requirements and supermajority thresholds — to ensure decisions have broad backing and feel legitimate to all holders, not just the largest.`,
+        a: `Based on the latest snapshot data, the supply is distributed across seven tiers: ${SNAPSHOT.expectedDistribution.krakens.toLocaleString()} kraken (≥10%), ${SNAPSHOT.expectedDistribution.whales.toLocaleString()} whales (≥1%), ${SNAPSHOT.expectedDistribution.dolphins.toLocaleString()} dolphins (≥0.1%), ${SNAPSHOT.expectedDistribution.sharks.toLocaleString()} sharks (≥0.01%), ${SNAPSHOT.expectedDistribution.octopuses.toLocaleString()} octopuses (≥0.001%), ${SNAPSHOT.expectedDistribution.crabs.toLocaleString()} crabs (≥0.0001%), and ${SNAPSHOT.expectedDistribution.seahorses.toLocaleString()} seahorses (any balance). One kraken holds 68.9% of supply; the top four wallets (1 kraken + 3 whales) hold ~87.1%. This concentration is why the governance system implements quorum requirements and supermajority thresholds — to ensure decisions have broad backing and feel legitimate to all holders, not just the largest.`,
       },
     ],
   },
@@ -251,7 +251,7 @@ const FAQ_SECTIONS: FAQSection[] = [
     items: [
       {
         q: "What are the current limitations of the platform?",
-        a: "The following are known limitations of v1 that holders should understand:\n\n1. Single administrator — One person currently gates which proposals reach the ballot. All admin actions are publicly audited, but this is a centralization point.\n2. Linear voting — Voting power is strictly 1 token = 1 vote, meaning 4 whales control ~84% of votes. A community poll is currently open at /governance-vote to choose between Quadratic, One-Wallet-One-Vote, or Tiered models.\n3. Informational delegation — Delegation records who represents whom but does not transfer voting power in v1.\n4. Advisory outcomes — Passed proposals are community decisions, not auto-executed transactions.\n5. Off-chain governance — There is no on-chain enforcement; the platform records the community's will, but acting on it requires coordination.\n6. No secret ballot — All votes are transparent and visible. This enables auditability but also means votes can be observed in real-time, which theoretically enables coercion.",
+        a: "The following are known limitations of v1 that holders should understand:\n\n1. Single administrator — One person currently gates which proposals reach the ballot. All admin actions are publicly audited, but this is a centralization point.\n2. Linear voting — Voting power is strictly 1 token = 1 vote, meaning the top 4 wallets (1 kraken + 3 whales) control ~87.1% of votes. A community poll is currently open at /governance-vote to choose between Quadratic, One-Wallet-One-Vote, or Tiered models.\n3. Informational delegation — Delegation records who represents whom but does not transfer voting power in v1.\n4. Advisory outcomes — Passed proposals are community decisions, not auto-executed transactions.\n5. Off-chain governance — There is no on-chain enforcement; the platform records the community's will, but acting on it requires coordination.\n6. No secret ballot — All votes are transparent and visible. This enables auditability but also means votes can be observed in real-time, which theoretically enables coercion.",
       },
       {
         q: "What safeguards are in place despite these limitations?",

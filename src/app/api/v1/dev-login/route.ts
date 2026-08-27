@@ -12,33 +12,62 @@ interface MockSnapshotEntry {
 }
 
 const MOCK_SNAPSHOT_DATA: Record<string, MockSnapshotEntry> = {
-  "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266": {
-    holderClass: "WHALE" as HolderClass,
-    balanceRaw: "1000000000000000000000000", 
-    balanceFormatted: "1000000.0",
+  "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65": {
+    holderClass: HolderClass.KRAKEN,
+    balanceRaw: "1200000000000000000000000000",
+    balanceFormatted: "1200000000000.0",
     rank: 1,
-    votingPower: 1000000
+    votingPower: 1200000000000
+  },
+  "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266": {
+    holderClass: HolderClass.WHALE,
+    balanceRaw: "250000000000000000000000000",
+    balanceFormatted: "250000000000.0",
+    rank: 2,
+    votingPower: 250000000000
   },
   "0x70997970c51812dc3a010c7d01b50e0d17dc79c8": {
-    holderClass: "DOLPHIN" as HolderClass,
-    balanceRaw: "15000000000000000000000", 
-    balanceFormatted: "15000.0", 
-    rank: 100,
-    votingPower: 15000
+    holderClass: HolderClass.DOLPHIN,
+    balanceRaw: "50000000000000000000000000",
+    balanceFormatted: "50000000000.0",
+    rank: 50,
+    votingPower: 50000000000
+  },
+  "0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc": {
+    holderClass: HolderClass.SHARK,
+    balanceRaw: "500000000000000000000000",
+    balanceFormatted: "500000000.0",
+    rank: 500,
+    votingPower: 500000000
+  },
+  "0x976ea74026e726554db657fa54763abd0c3a0aa9": {
+    holderClass: HolderClass.OCTOPUS,
+    balanceRaw: "50000000000000000000000",
+    balanceFormatted: "50000000.0",
+    rank: 5000,
+    votingPower: 50000000
   },
   "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc": {
-    holderClass: "FISH" as HolderClass,
-    balanceRaw: "100000000000000000000", 
-    balanceFormatted: "100.0",
+    holderClass: HolderClass.CRAB,
+    balanceRaw: "5000000000000000000000",
+    balanceFormatted: "5000000.0",
     rank: 10000,
-    votingPower: 100
-  }
+    votingPower: 5000000
+  },
+  "0x90f79bf6eb2c4f870365e785982e1f101e93b906": {
+    holderClass: HolderClass.SEAHORSE,
+    balanceRaw: "1000000000000000000",
+    balanceFormatted: "1000.0",
+    rank: 25000,
+    votingPower: 1000
+  },
 };
 
 export async function POST(request: NextRequest) {
-  // Server-side NODE_ENV guard
+  // Server-side NODE_ENV guard — any non-development environment (including
+  // production and test) returns 404 without revealing the endpoint exists.
   if (process.env.NODE_ENV !== "development") {
-    return apiError(ErrorCode.UNAUTHORIZED, "Dev login is disabled", 404);
+    return apiError(ErrorCode.NOT_FOUND, "Not found", 404);
   }
 
   console.log("[DevLogin] Starting request...");
@@ -64,9 +93,18 @@ export async function POST(request: NextRequest) {
         votingPower: snapshotData.votingPower
       };
     } else if (holderClass && votingPower) {
+      // Validate holderClass against allowed values
+      const validHolderClasses = Object.values(HolderClass);
+      if (!validHolderClasses.includes(holderClass as HolderClass)) {
+        return apiError(ErrorCode.VALIDATION_ERROR, `Invalid holderClass: ${holderClass}. Must be one of: ${validHolderClasses.join(", ")}`, 400);
+      }
+
+      // Normalize FISH → SEAHORSE (legacy value mapping)
+      const normalizedClass = holderClass === "FISH" ? HolderClass.SEAHORSE : holderClass as HolderClass;
+
       sessionData = {
         walletAddress: walletAddress,
-        holderClass: holderClass as HolderClass,
+        holderClass: normalizedClass,
         votingPower: votingPower
       };
     } else {
@@ -93,7 +131,7 @@ export async function POST(request: NextRequest) {
     response.cookies.set(SESSION_COOKIE, token, SESSION_COOKIE_ATTRIBUTES);
 
     console.log(`[DevLogin] ✅ Created JWT session for ${walletAddress} as ${sessionData.holderClass}`);
-    
+
     return response;
 
   } catch (error) {

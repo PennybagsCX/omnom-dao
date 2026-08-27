@@ -26,12 +26,12 @@ export function SiteHeader() {
         (pathname.startsWith(href + "/") && !anyExactMatch);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-bg-deep/90 backdrop-blur-lg">
+    <header role="banner" className="fixed top-0 left-0 right-0 z-[100] w-full border-b border-border/50 bg-bg-deep/90 backdrop-blur-lg">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo - Clean typography */}
         <Link
           href="/"
-          className="flex shrink-0 items-center text-base font-bold tracking-tight text-foreground transition-opacity hover:opacity-80 sm:text-lg lg:text-xl"
+          className="flex min-h-11 shrink-0 items-center text-base font-bold tracking-tight text-foreground transition-opacity hover:opacity-80 sm:text-lg lg:text-xl"
         >
           <span className="text-gold">OMNOM</span>
           <span className="text-foreground">DAO</span>
@@ -76,7 +76,7 @@ export function SiteHeader() {
         </nav>
 
         {/* Wallet Section */}
-        <div className="flex shrink-0 items-center relative z-50">
+        <div className="flex shrink-0 items-center relative">
           <ConnectWalletButton />
         </div>
       </div>

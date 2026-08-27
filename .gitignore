@@ -58,11 +58,32 @@ pnpm-debug.log*
 
 # Backup files
 *.bak
+*.bak*
+*.fallback*
+*.final*
 *-backup*
 *-backup.json
 
-# Large data files (snapshots are pulled from DBOT-DC/omnom-token at build time)
-public/data/holders-backup.json
-public/data/holders.json
+# Stray experiment / one-off outputs
+*.tmp
+*.html
+*.jpeg
+*.png
+
+# Audit / experiment directories
+.audit/
+.codex/snapshot-corpus/
+.codex/enhanced-prompts/
+.playwright-mcp/
+
+# Next.js backup snapshots (regenerable from `npm run build`)
+.next.backup.*/
+
+# In-repo memory / scratchpads
+memory/
+
+# Large data files (snapshots are pulled from DBOT-DC/omnom-snapshot at build time)
+# holders.json now lives in /data (server-only, never shipped to the client)
+# and is covered by the /data/ rule above.
 
 # Keep snapshot-metadata.json and csv-hash.txt tracked (small, needed for verification)

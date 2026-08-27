@@ -32,6 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CountdownTimer } from "@/components/shared/countdown-timer";
 import { DynamicIcon } from "@/components/shared/dynamic-icon";
 import { EmptyState } from "@/components/shared/empty-state";
+import { HolderBadge } from "@/components/shared/holder-badge";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { Markdown } from "@/components/shared/markdown";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
@@ -41,6 +42,7 @@ import { VoteBar } from "@/components/shared/vote-bar";
 import { AdminRejectionBanner } from "@/components/proposals/admin-rejection-banner";
 import {
   useCastVote,
+  useChangeVote,
   useCreateComment,
   useToggleReaction,
   useCurrentUser,
@@ -82,6 +84,7 @@ export default function ProposalDetailPage() {
   const { data, isLoading, isError, error } = useProposalDetail(proposalId);
   const { data: me } = useCurrentUser({ retry: false });
   const castVote = useCastVote(proposalId);
+  const changeVote = useChangeVote(proposalId);
 
   // Track the user's vote. The detail payload now includes the current user's
   // ballot (C2.1) so returning voters see their choice on load; we also update
@@ -110,6 +113,18 @@ export default function ProposalDetailPage() {
       }
     },
     [castVote],
+  );
+
+  const onChangeVote = useCallback(
+    async (choice: VoteChoice) => {
+      try {
+        await changeVote.mutateAsync(choice);
+        setMyVote(choice);
+      } catch {
+        // toast surfaced by the mutation hook.
+      }
+    },
+    [changeVote],
   );
 
   if (isLoading) {
@@ -196,7 +211,16 @@ export default function ProposalDetailPage() {
               <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1.5">
                   <PenLine className="h-3.5 w-3.5" aria-hidden />
-                  <span className="font-mono">{shortenAddress(proposal.authorAddress)}</span>
+                  <Link
+                    href={`/snapshot-explorer?address=${proposal.authorAddress.toLowerCase()}`}
+                    title={proposal.authorAddress}
+                    className="font-mono underline-offset-2 hover:underline hover:text-foreground"
+                  >
+                    {shortenAddress(proposal.authorAddress)}
+                  </Link>
+                  {proposal.authorHolderClass && (
+                    <HolderBadge holderClass={proposal.authorHolderClass} size="sm" plain />
+                  )}
                 </span>
                 <span className="text-text-dim">·</span>
                 <span>{formatDate(proposal.createdAt)}</span>
@@ -314,6 +338,8 @@ export default function ProposalDetailPage() {
               votingPower={me?.votingPower}
               onVote={onVote}
               isVoting={castVote.isPending}
+              onChangeVote={onChangeVote}
+              isChangingVote={changeVote.isPending}
             />
           </div>
         </aside>
@@ -328,6 +354,8 @@ export default function ProposalDetailPage() {
           isAuthenticated={Boolean(me)}
           onVote={onVote}
           isVoting={castVote.isPending}
+          onChangeVote={onChangeVote}
+          isChangingVote={changeVote.isPending}
         />
       )}
     </div>
@@ -367,6 +395,8 @@ interface VotePanelProps {
   votingPower?: number;
   onVote: (choice: VoteChoice) => void;
   isVoting: boolean;
+  onChangeVote: (choice: VoteChoice) => void;
+  isChangingVote: boolean;
 }
 
 function VotePanel({
@@ -380,7 +410,15 @@ function VotePanel({
   votingPower,
   onVote,
   isVoting,
+  onChangeVote,
+  isChangingVote,
 }: VotePanelProps) {
+  const [isChanging, setIsChanging] = useState(false);
+
+  const handleVoteChange = async (choice: VoteChoice) => {
+    await onChangeVote(choice);
+    setIsChanging(false);
+  };
   return (
     <Card>
       <CardContent className="space-y-4 p-5">
@@ -435,8 +473,8 @@ function VotePanel({
           </>
         )}
 
-        {/* Already voted */}
-        {isActive && userVoted && myVote && (
+        {/* Already voted / changing vote */}
+        {isActive && userVoted && myVote && !isChanging && (
           <div className="space-y-2 rounded-lg border border-emerald-600/30 bg-emerald-500/10 p-3 text-center">
             <p className="text-sm font-medium text-foreground">
               You voted:{" "}
@@ -446,6 +484,36 @@ function VotePanel({
               </span>
             </p>
             <p className="text-xs text-text-dim">Your vote has been recorded.</p>
+            <Button variant="outline" size="sm" className="w-full" onClick={() => setIsChanging(true)}>
+              Change Vote
+            </Button>
+          </div>
+        )}
+
+        {/* Changing vote */}
+        {isActive && userVoted && isChanging && (
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-foreground">Change your vote</p>
+            <div className="grid grid-cols-1 gap-2">
+              <VoteButton
+                choice={VoteChoice.FOR}
+                onVote={handleVoteChange}
+                disabled={isChangingVote}
+              />
+              <VoteButton
+                choice={VoteChoice.AGAINST}
+                onVote={handleVoteChange}
+                disabled={isChangingVote}
+              />
+              <VoteButton
+                choice={VoteChoice.ABSTAIN}
+                onVote={handleVoteChange}
+                disabled={isChangingVote}
+              />
+            </div>
+            <Button variant="ghost" size="sm" className="w-full" onClick={() => setIsChanging(false)} disabled={isChangingVote}>
+              Cancel
+            </Button>
           </div>
         )}
 
@@ -521,27 +589,61 @@ function MobileVoteBar({
   isAuthenticated,
   onVote,
   isVoting,
+  onChangeVote,
+  isChangingVote,
+  myVote,
 }: Pick<
   VotePanelProps,
-  "isActive" | "userVoted" | "isAuthenticated" | "onVote" | "isVoting"
+  "isActive" | "userVoted" | "isAuthenticated" | "onVote" | "isVoting" | "onChangeVote" | "isChangingVote"
 > & {
   myVote: VoteChoice | null;
 }) {
   // Compact three-button row fixed to the bottom on mobile.
-  if (isActive && userVoted) {
-    return null; // already voted → no bottom bar
+  const [isChanging, setIsChanging] = useState(false);
+
+  const handleVoteChange = async (choice: VoteChoice) => {
+    await onChangeVote(choice);
+    setIsChanging(false);
+  };
+
+  if (isActive && userVoted && myVote && !isChanging) {
+    return (
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg-surface/95 px-4 py-3 backdrop-blur lg:hidden">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-1 items-center gap-2">
+            <span className="text-sm text-text-dim">You voted:</span>
+            <span className={`inline-flex items-center gap-1 text-sm font-medium ${VOTE_CHOICE_CONFIG[myVote].accentClass}`}>
+              <DynamicIcon name={VOTE_CHOICE_CONFIG[myVote].iconName} className="h-3.5 w-3.5" aria-hidden />
+              {VOTE_CHOICE_CONFIG[myVote].label}
+            </span>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setIsChanging(true)} disabled={isChangingVote}>
+            Change
+          </Button>
+        </div>
+      </div>
+    );
   }
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg-surface/95 px-4 py-3 backdrop-blur lg:hidden">
       {isActive && !isAuthenticated ? (
         <ConnectCta className="w-full">Connect to Vote</ConnectCta>
+      ) : isActive && isChanging ? (
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-2">
+            {([VoteChoice.FOR, VoteChoice.AGAINST, VoteChoice.ABSTAIN] as VoteChoice[]).map((c) => (
+              <VoteButton key={c} choice={c} onVote={handleVoteChange} disabled={isChangingVote} />
+            ))}
+          </div>
+          <Button variant="ghost" size="sm" className="w-full" onClick={() => setIsChanging(false)} disabled={isChangingVote}>
+            Cancel
+          </Button>
+        </div>
       ) : isActive ? (
         <div className="grid grid-cols-3 gap-2">
-          {([VoteChoice.FOR, VoteChoice.AGAINST, VoteChoice.ABSTAIN] as VoteChoice[]).map(
-            (c) => (
-              <VoteButton key={c} choice={c} onVote={onVote} disabled={isVoting} />
-            ),
-          )}
+          {([VoteChoice.FOR, VoteChoice.AGAINST, VoteChoice.ABSTAIN] as VoteChoice[]).map((c) => (
+            <VoteButton key={c} choice={c} onVote={onVote} disabled={isVoting} />
+          ))}
         </div>
       ) : null}
     </div>
@@ -853,9 +955,18 @@ function CommentItem({
               {isDeleted ? (
                 <span className="text-text-dim">[deleted]</span>
               ) : (
-                <span className="font-mono text-xs text-muted-foreground">
-                  {shortenAddress(node.authorAddress)}
-                </span>
+                <>
+                  <Link
+                    href={`/snapshot-explorer?address=${node.authorAddress.toLowerCase()}`}
+                    title={node.authorAddress}
+                    className="font-mono text-xs text-muted-foreground underline-offset-2 hover:underline hover:text-foreground"
+                  >
+                    {shortenAddress(node.authorAddress)}
+                  </Link>
+                  {node.authorHolderClass && (
+                    <HolderBadge holderClass={node.authorHolderClass} size="sm" plain />
+                  )}
+                </>
               )}
               {isMine && !isDeleted && (
                 <span className="ml-1.5 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-medium text-gold">

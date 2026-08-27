@@ -1,6 +1,7 @@
 import { type NextRequest } from "next/server";
 
 import { apiError, apiSuccess } from "@/lib/api-response";
+import { DISTRIBUTION_KEY } from "@/lib/constants";
 import {
   getSnapshotMetadata,
   listHoldersByRank,
@@ -8,8 +9,20 @@ import {
   lookupHolderByRank,
   searchHoldersByAddressPrefix,
   type EnrichedSnapshotHolder,
+  type HolderSortKey,
+  type SortDirection,
 } from "@/lib/snapshot";
 import { ErrorCode, HolderClass } from "@/types";
+
+const SORT_KEYS: readonly HolderSortKey[] = [
+  "rank",
+  "address",
+  "class",
+  "balance",
+  "percentage",
+  "latestBalance",
+  "holds",
+];
 
 /**
  * GET /api/v1/snapshot-explorer
@@ -19,12 +32,15 @@ import { ErrorCode, HolderClass } from "@/types";
  * Modes:
  *   ?address=0x…          — exact address lookup
  *   ?rank=1               — exact rank lookup
+ *   ?prefix=0xab…         — prefix search (≥3 chars, first 25 matches)
  *   default               — ranked list, optionally filtered by class
  *
  * Query:
- *   class=WHALE|DOLPHIN|FISH
+ *   class=KRAKEN|WHALE|DOLPHIN|SHARK|OCTOPUS|CRAB|SEAHORSE
  *   page=1
  *   pageSize=1..100
+ *   sort=rank|address|class|balance|percentage|latestBalance|holds
+ *   dir=asc|desc
  */
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
@@ -36,6 +52,15 @@ export async function GET(request: NextRequest) {
     100,
     Math.max(1, Number(params.get("pageSize") ?? "25") || 25),
   );
+  // Compare case-insensitively: the canonical keys are camelCase
+  // ("latestBalance"), so a blanket .toLowerCase() before the includes()
+  // check would silently reject them and fall back to rank.
+  const sortParam = params.get("sort")?.trim() ?? "";
+  const sort =
+    SORT_KEYS.find((k) => k.toLowerCase() === sortParam.toLowerCase()) ??
+    "rank";
+  const dirParam = params.get("dir")?.trim().toLowerCase() ?? "";
+  const direction: SortDirection = dirParam === "desc" ? "desc" : "asc";
 
   const metadata = await getSnapshotMetadata();
   const summary = {
@@ -91,7 +116,12 @@ export async function GET(request: NextRequest) {
 
   const addressPrefix = params.get("prefix")?.trim().toLowerCase() ?? "";
   if (addressPrefix.length >= 3 && !address) {
-    const holders = await searchHoldersByAddressPrefix(addressPrefix, 25);
+    const holders = await searchHoldersByAddressPrefix(
+      addressPrefix,
+      25,
+      sort,
+      direction,
+    );
     return apiSuccess<ExplorerListData>({
       mode: "list",
       summary,
@@ -101,9 +131,13 @@ export async function GET(request: NextRequest) {
   }
 
   const holderClass =
+    classParam === "KRAKEN" ||
     classParam === "WHALE" ||
     classParam === "DOLPHIN" ||
-    classParam === "FISH"
+    classParam === "SHARK" ||
+    classParam === "OCTOPUS" ||
+    classParam === "CRAB" ||
+    classParam === "SEAHORSE"
       ? (classParam as HolderClass)
       : undefined;
 
@@ -111,16 +145,12 @@ export async function GET(request: NextRequest) {
     offset: (page - 1) * pageSize,
     limit: pageSize,
     holderClass,
+    sort,
+    direction,
   });
 
   const classCount = holderClass
-    ? metadata.distribution[
-        holderClass === "WHALE"
-          ? "whales"
-          : holderClass === "DOLPHIN"
-            ? "dolphins"
-            : "fish"
-      ]
+    ? metadata.distribution[DISTRIBUTION_KEY[holderClass]]
     : metadata.totalHolders;
 
   const meta = {
@@ -128,6 +158,8 @@ export async function GET(request: NextRequest) {
     pageSize,
     totalItems: classCount,
     totalPages: Math.max(1, Math.ceil(classCount / pageSize)),
+    sort,
+    direction,
   };
 
   return apiSuccess<ExplorerListData>({

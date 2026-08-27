@@ -14,6 +14,7 @@ import { sanitizeContent } from "@/lib/sanitize";
 import { createProposalSchema, getProposalsSchema } from "@/lib/validators";
 import { RATE_LIMITS } from "@/lib/constants";
 import { notifyProposalCreated } from "@/lib/notifications";
+import { lookupHolder } from "@/lib/snapshot";
 import {
   ErrorCode,
   ProposalStatus,
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
   }
   const input = parsed.data;
 
-  // Tier gate: high-impact types require Dolphin+.
+  // Tier gate: high-impact types require Shark+.
   if (!canCreateProposalType(session.holderClass, input.type)) {
     return apiError(
       ErrorCode.NOT_VERIFIED,
@@ -209,6 +210,7 @@ export async function POST(request: NextRequest) {
     args: [proposalId],
   });
   const row = fetchRes.rows[0]!;
+  const authorHolder = await lookupHolder(address);
   const proposal: Proposal = {
     id: row.id as string,
     title: row.title as string,
@@ -216,6 +218,7 @@ export async function POST(request: NextRequest) {
     type: row.type as Proposal["type"],
     status: row.status as ProposalStatus,
     authorAddress: row.author_address as string,
+    authorHolderClass: authorHolder?.holderClass ?? null,
     createdAt: row.created_at as string,
     votingStartsAt: (row.voting_starts_at as string | null) ?? null,
     votingEndsAt: (row.voting_ends_at as string | null) ?? null,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { levenshtein, normalizeForCompare } from "@/lib/text";
+import { levenshtein, normalizeForCompare, stripMarkdown } from "@/lib/text";
 import { RATE_LIMITS } from "@/lib/constants";
 
 describe("levenshtein", () => {
@@ -70,5 +70,58 @@ describe("duplicate detection threshold (≤3 = duplicate)", () => {
 
   it("duplicateDistance constant is 3", () => {
     expect(RATE_LIMITS.duplicateDistance).toBe(3);
+  });
+});
+
+describe("stripMarkdown", () => {
+  it("removes heading markers", () => {
+    expect(stripMarkdown("# Title")).toBe("Title");
+    expect(stripMarkdown("### Deep heading")).toBe("Deep heading");
+  });
+
+  it("unwraps bold, italic, underscore and inline code", () => {
+    expect(stripMarkdown("**bold** text")).toBe("bold text");
+    expect(stripMarkdown("*italic* text")).toBe("italic text");
+    expect(stripMarkdown("__strong__ and _em_")).toBe("strong and em");
+    expect(stripMarkdown("use `npm test` here")).toBe("use npm test here");
+  });
+
+  it("keeps link text but drops the URL", () => {
+    expect(stripMarkdown("See [the docs](https://example.com) now")).toBe(
+      "See the docs now",
+    );
+  });
+
+  it("strips list markers, blockquotes and horizontal rules", () => {
+    expect(stripMarkdown("- item one\n* item two")).toBe("item one item two");
+    expect(stripMarkdown("1. first\n2. second")).toBe("first second");
+    expect(stripMarkdown("> quoted line")).toBe("quoted line");
+    expect(stripMarkdown("above\n---\nbelow")).toBe("above below");
+  });
+
+  it("collapses paragraph breaks and whitespace runs", () => {
+    expect(stripMarkdown("Para one.\n\n\nPara   two.")).toBe("Para one. Para two.");
+  });
+
+  it("leaves plain text untouched", () => {
+    expect(stripMarkdown("Just plain text.")).toBe("Just plain text.");
+  });
+
+  it("flattens a mixed markdown document", () => {
+    const doc = [
+      "# Proposal Title",
+      "",
+      "This **proposal** covers `voting`.",
+      "",
+      "- Point one",
+      "- Point two",
+      "",
+      "> Quoted rationale",
+      "",
+      "[Details](https://example.com)",
+    ].join("\n");
+    expect(stripMarkdown(doc)).toBe(
+      "Proposal Title This proposal covers voting. Point one Point two Quoted rationale Details",
+    );
   });
 });

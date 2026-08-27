@@ -1,18 +1,27 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { SESSION_COOKIE, verifySession } from "@/lib/session";
+
 /**
- * Simplified Proxy for Development - Performance Optimized
- * 
- * This version removes the JWT verification call that might be causing
- * the server performance issues, while still maintaining basic routing.
+ * API gateway proxy (edge) — defense-in-depth JWT check.
+ *
+ * Verifies the session JWT cryptographically (HS256 via jose, issuer +
+ * audience validated) before a request reaches a protected API route. This is
+ * the outer layer only: every protected route handler independently validates
+ * the session via `@/lib/auth` (`getSession` / `requireAuth`), which performs
+ * the same `verifySession` against the same secret.
+ *
+ * `@/lib/session` is deliberately dependency-light (jose only) so it can run
+ * in the edge runtime without bundling Node-only snapshot/db code.
  */
 
 const PUBLIC_API_PREFIXES = [
   "/api/v1/nonce",
-  "/api/v1/verify", 
+  "/api/v1/verify",
   "/api/v1/health",
   "/api/v1/logout",
-  "/api/v1/dev-login", // DEV ONLY: Allow dev authentication bypass
+  // DEV ONLY: allow dev auth bypass outside the production bundle
+  ...(process.env.NODE_ENV === "development" ? ["/api/v1/dev-login"] : []),
 ];
 
 function isPublicReadProposal(method: string, pathname: string): boolean {
@@ -27,42 +36,35 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method.toUpperCase();
 
-  console.log(`[Proxy] ${method} ${pathname}`); // Debug logging
-
-  // Only API routes are guarded at the proxy level
-  if (!pathname.startsWith("/api/v1/")) {
-    console.log(`[Proxy] Allowing page route: ${pathname}`);
-    return NextResponse.next();
-  }
-
   // Public API routes
   if (PUBLIC_API_PREFIXES.some((p) => pathname === p)) {
-    console.log(`[Proxy] Allowing public API: ${pathname}`);
     return NextResponse.next();
   }
-  
+
   if (isPublicReadProposal(method, pathname)) {
-    console.log(`[Proxy] Allowing public proposal read: ${pathname}`);
     return NextResponse.next();
   }
-  
+
   if (isPublicTagsRead(method, pathname)) {
-    console.log(`[Proxy] Allowing public tags read: ${pathname}`);
     return NextResponse.next();
   }
 
-  // For now, allow all API requests in development for debugging
+  // Development only: bypass the edge check so mock/dev flows are not blocked
+  // here (route handlers still enforce auth themselves). Never active in the
+  // production bundle — NODE_ENV is inlined at build time.
   if (process.env.NODE_ENV === "development") {
-    console.log(`[Proxy] DEV MODE: Allowing all API requests: ${pathname}`);
     return NextResponse.next();
   }
 
-  console.log(`[Proxy] Checking auth for: ${pathname}`);
-
-  // JWT verification - defense-in-depth middleware check
-  const token = request.cookies.get("session")?.value;
-  if (!token) {
-    return NextResponse.json({ success: false, error: { code: "UNAUTHORIZED", message: "Authentication required" }}, { status: 401 });
+  // JWT verification — signature, expiry, issuer and audience are all checked.
+  // A forged/garbage cookie value fails verification here (fail-closed).
+  const token = request.cookies.get(SESSION_COOKIE)?.value;
+  const claims = token ? await verifySession(token) : null;
+  if (!claims) {
+    return NextResponse.json(
+      { success: false, error: { code: "UNAUTHORIZED", message: "Authentication required" } },
+      { status: 401 },
+    );
   }
 
   return NextResponse.next();

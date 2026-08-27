@@ -2,7 +2,7 @@
 
 **Off-chain, snapshot-based governance for $OMNOM token holders.**
 
-OMNOM DAO is a Next.js 15 (App Router) monolith that performs fully off-chain,
+OMNOM DAO is a Next.js 16 (App Router) monolith that performs fully off-chain,
 advisory governance against a **frozen token-holding snapshot** (Dogechain block
 59,922,100, captured 2026-06-07). Because Dogechain is sunset, there are no live
 smart contracts and no on-chain interactions — identity is proven via **SIWE
@@ -49,8 +49,8 @@ npm install
 cp .env.example .env.local
 #   fill in NEXT_PUBLIC_WC_PROJECT_ID, JWT_SECRET, TURSO_DATABASE_URL, TURSO_AUTH_TOKEN
 
-# 3. (Optional) Build the snapshot from the sample CSV
-SNAPSHOT_CSV_PATH=scripts/data/snapshot.sample.csv npm run snapshot:build
+# 3. Fetch the frozen snapshot (pinned commit) and verify SHA-256
+npm run fetch:snapshot
 
 # 4. Run the dev server
 npm run dev          # → http://localhost:3000
@@ -75,9 +75,10 @@ npm run db:seed      # seeds the 6 proposal_templates
 | `npm run typecheck` | `tsc --noEmit` strict type check |
 | `npm test` | Vitest unit/integration suite |
 | `npm run test:e2e` | Playwright E2E suite |
-| `npm run snapshot:build` | CSV → JSON → SHA-256 hash pipeline |
+| `npm run fetch:snapshot` | Fetch pinned snapshot CSVs + build `data/holders.json` |
+| `npm run verify:election` | Post-deploy smoke: election row + snapshot pin |
 | `npm run db:migrate` | Apply Turso schema migrations |
-| `npm run db:seed` | Seed proposal_templates |
+| `npm run db:seed` | Seed proposal_templates + foundational governance election row |
 
 ---
 
@@ -95,12 +96,16 @@ src/
   types/          # all TypeScript types (mirrors DATA-MODEL.md)
   middleware.ts
 public/
-  data/           # snapshot build artifacts (holders.json, metadata, hash)
+  data/           # snapshot build artifacts (metadata, csv hash)
 scripts/
-  build-snapshot.ts
-  migrate.ts
-  seed-db.ts
+  fetch-snapshot.sh       # Pinned DBOT-DC/omnom-snapshot fetcher
+  migrate.ts              # Turso/libSQL schema migrations
+  seed-db.ts              # proposal_templates + foundational election row
+  verify-election.ts      # Post-deploy smoke test
   data/snapshot.sample.csv
+data/
+  holders.json            # server-only; gitignored, traced into API lambdas
+vercel.json               # Cron schedule for /api/v1/cron/finalize
 ```
 
 ---

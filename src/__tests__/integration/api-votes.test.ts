@@ -162,16 +162,25 @@ describe("POST /api/v1/proposals/[id]/votes — duplicate / power", () => {
 });
 
 describe("PUT /api/v1/proposals/[id]/votes — change vote", () => {
-  it("only permits changes within the final 12h window", async () => {
-    // votingEndsAt far in the future (> 12h) -> 409.
+  it("allows a change at any time while voting is open", async () => {
+    // votingEndsAt far in the future (> 12h) -> still allowed (no 12h restriction).
     const end = new Date(Date.now() + 86_400_000).toISOString();
     hoisted.getProposalById.mockResolvedValue(activeProposal({ votingEndsAt: end }));
+    hoisted.execute.mockImplementation(async (stmt: { sql: string }) => {
+      if (stmt.sql.startsWith("SELECT id, created_at FROM votes WHERE proposal_id")) {
+        return { rows: [{ id: "vote-1", created_at: "2026-06-15T00:00:00.000Z" }], columns: [], rowsAffected: 0, lastInsertRowid: undefined };
+      }
+      if (stmt.sql.startsWith("SELECT choice, SUM")) {
+        return { rows: [{ choice: "ABSTAIN", total: 1000 }], columns: [], rowsAffected: 0, lastInsertRowid: undefined };
+      }
+      return { rows: [], columns: [], rowsAffected: 0, lastInsertRowid: undefined };
+    });
     const { status, body } = await callVote("PUT", { choice: "ABSTAIN" });
-    expect(status).toBe(409);
-    expect((body.error as { code: string }).code).toBe("VOTING_CLOSED");
+    expect(status).toBe(200);
+    expect((body.data as { vote: { choice: string } }).vote.choice).toBe("ABSTAIN");
   });
 
-  it("allows a change when within the final 12h and a vote exists", async () => {
+  it("allows a change when a vote exists", async () => {
     // votingEndsAt < 12h away.
     const end = new Date(Date.now() + 3_600_000).toISOString();
     hoisted.getProposalById.mockResolvedValue(activeProposal({ votingEndsAt: end }));
@@ -198,6 +207,15 @@ describe("PUT /api/v1/proposals/[id]/votes — change vote", () => {
       }
       return { rows: [], columns: [], rowsAffected: 0, lastInsertRowid: undefined };
     });
+    const { status } = await callVote("PUT", { choice: "FOR" });
+    expect(status).toBe(409);
+  });
+
+  it("rejects a change when voting has ended with 409", async () => {
+    // votingEndsAt in the past.
+    const pastStart = new Date(Date.now() - 200_000).toISOString();
+    const pastEnd = new Date(Date.now() - 100_000).toISOString();
+    hoisted.getProposalById.mockResolvedValue(activeProposal({ votingStartsAt: pastStart, votingEndsAt: pastEnd }));
     const { status } = await callVote("PUT", { choice: "FOR" });
     expect(status).toBe(409);
   });

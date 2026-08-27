@@ -5,12 +5,14 @@ import { db } from "@/lib/db";
 import { getProposalById } from "@/lib/proposal-service";
 import { getSessionAddress, requireAuth, UnauthorizedError } from "@/lib/auth";
 import { sanitizeContent } from "@/lib/sanitize";
+import { lookupHolderClasses } from "@/lib/snapshot";
 import { finalizeProposal } from "@/lib/proposal-finalize";
 import { z } from "zod";
 import {
   ErrorCode,
   ProposalStatus,
   VoteChoice,
+  type HolderClass,
   type Proposal,
 } from "@/types";
 
@@ -34,6 +36,8 @@ interface MyVoteData {
 interface CommentData {
   id: string;
   authorAddress: string;
+  /** Commenter's snapshot holder class (null when they never held $OMNOM) */
+  authorHolderClass?: HolderClass | null;
   content: string;
   createdAt: string;
   parentId: string | null;
@@ -98,9 +102,15 @@ export async function GET(
         "FROM comments WHERE proposal_id = ? ORDER BY created_at ASC",
       args: [id],
     });
+    // Batch-resolve commenters' holder classes for inline badges.
+    const commentClasses = await lookupHolderClasses(
+      commentsRes.rows.map((r) => r.author_address as string),
+    );
     const comments: CommentData[] = commentsRes.rows.map((r) => ({
       id: r.id as string,
       authorAddress: r.author_address as string,
+      authorHolderClass:
+        commentClasses.get((r.author_address as string).toLowerCase()) ?? null,
       content: (r.deleted_at ? "[deleted]" : (r.content as string)) ?? "",
       createdAt: r.created_at as string,
       parentId: (r.parent_id as string | null) ?? null,

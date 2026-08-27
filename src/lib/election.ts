@@ -31,7 +31,7 @@ export const ELECTION_CHOICE_DESCRIPTIONS: Record<ElectionChoice, string> = {
   ONE_WALLET_ONE_VOTE:
     "Every eligible snapshot wallet casts one equal vote regardless of token balance.",
   TIERED:
-    "Whale, dolphin, and fish cohorts each receive a fixed voting block, requiring cross-cohort support to pass proposals.",
+    "Seven cohorts (kraken through seahorse) each receive a fixed voting block, requiring cross-cohort support to pass proposals.",
   LINEAR:
     "Keep one token = one vote. Voting power remains exactly proportional to snapshot token balance.",
 };

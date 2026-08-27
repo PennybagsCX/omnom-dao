@@ -61,11 +61,11 @@ const TYPE_DEFAULTS: Record<
 };
 
 const DURATION_OPTIONS = [
-  { value: "24", label: "24 hours", minClass: HolderClass.FISH },
-  { value: "72", label: "72 hours (3 days)", minClass: HolderClass.FISH },
-  { value: "168", label: "7 days", minClass: HolderClass.FISH },
-  { value: "336", label: "14 days", minClass: HolderClass.FISH },
-  { value: "720", label: "30 days", minClass: HolderClass.FISH },
+  { value: "24", label: "24 hours" },
+  { value: "72", label: "72 hours (3 days)" },
+  { value: "168", label: "7 days" },
+  { value: "336", label: "14 days" },
+  { value: "720", label: "30 days" },
 ];
 
 interface WizardState {

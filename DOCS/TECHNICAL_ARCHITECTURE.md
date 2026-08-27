@@ -395,7 +395,7 @@ erDiagram
 
 | Table | Purpose | PK | Notable Constraints |
 |---|---|---|---|
-| [`users`](../DATA-MODEL.md) | Verified holders created lazily on first auth | `address` (EVM, checksummed) | `class` ∈ {WHALE, DOLPHIN, FISH}; `created_at` set once |
+| [`users`](../DATA-MODEL.md) | Verified holders created lazily on first auth | `address` (EVM, checksummed) | `class` ∈ {KRAKEN, WHALE, DOLPHIN, SHARK, OCTOPUS, CRAB, SEAHORSE, FISH@deprecated}; `created_at` set once |
 | [`proposals`](../DATA-MODEL.md) | Governance proposals | `id` | `type` ∈ 6 ProposalTypes; `status` lifecycle; `quorum`/`threshold` per type |
 | [`votes`](../DATA-MODEL.md) | Cast votes | `id` | **`UNIQUE(proposal_id, voter_address)`** — hard anti-double-vote |
 | [`comments`](../DATA-MODEL.md) | Threaded discussion | `id` | **self-referential `parent_id`**; **soft-delete** via `deleted` flag |
@@ -527,27 +527,37 @@ CSV (canonical) ──┐
 
 ### 8.3 Validation Checklist (build-time)
 
-- ✅ Total holders = **25,431**
-- ✅ Whales (≥1.00%) = **4**
-- ✅ Dolphins (≥0.01%) = **322**
-- ✅ Fish (<0.01%) = **25,105**
+- ✅ Total holders (ever-held) = **25,686**
+- ✅ Krakens (≥10%) = **1**
+- ✅ Whales (≥1%) = **3**
+- ✅ Dolphins (≥0.1%) = **30**
+- ✅ Sharks (≥0.01%) = **326**
+- ✅ Octopuses (≥0.001%) = **1,078**
+- ✅ Crabs (≥0.0001%) = **1,701**
+- ✅ Seahorses (<0.0001%) = **22,547**
 - ✅ Every address is a valid EVM address (checksummed)
 - ✅ No duplicate addresses
-- ✅ `csv-hash.txt` (SHA-256) matches canonical CSV
+- ✅ `csv-hash.txt` (SHA-256) = `1f64a663549ca717c6b612dc71a5cf673ab58badee58f876474c0fc6e551c128`
 
 ### 8.4 Immutability & Integrity
 
 - The snapshot file is **never written** by application code; it ships as a static asset under [`/public/data/`](../DESIGN.md).
 - `csv-hash.txt` is the integrity seal: any tampering with `holders.json` is detectable by recomputing SHA-256 over the canonical CSV.
 - **Voting power is snapshotted into each `votes` row at cast time**, so historical results remain stable and auditable even if a snapshot file were ever regenerated (it should not be).
+- **Deploy-env note:** after the 7-tier classification change, `holders.json` must be regenerated (`npm run fetch:snapshot`) and `SNAPSHOT_SHA256` updated to the new artifact hash, even though the CSV hash (`1f64a663…`) is unchanged (byte-identical data). The environment variable pins the `holders.json` hash for integrity verification — a mismatch causes governance to fail closed. Deploy the new snapshot artifact and matching `SNAPSHOT_SHA256` together in the same release.
 
 ### 8.5 Holder Classification (cosmetic only)
 
 | Class | Threshold | Count | Voting Power |
 |---|---|---|---|
-| 🐋 Whale | ≥ 1.00% supply | 4 | 1× balance-weighted |
-| 🐬 Dolphin | ≥ 0.01% supply | 322 | 1× balance-weighted |
-| 🐟 Fish | < 0.01% supply | 25,105 | 1× balance-weighted |
+| 🦑 Kraken | ≥ 10% supply | 1 | 1× balance-weighted |
+| 🐋 Whale | ≥ 1% and < 10% | 3 | 1× balance-weighted |
+| 🐬 Dolphin | ≥ 0.1% and < 1% | 30 | 1× balance-weighted |
+| 🦈 Shark | ≥ 0.01% and < 0.1% | 326 | 1× balance-weighted |
+| 🐙 Octopus | ≥ 0.001% and < 0.01% | 1,078 | 1× balance-weighted |
+| 🦀 Crab | ≥ 0.0001% and < 0.001% | 1,701 | 1× balance-weighted |
+| 🦄 Seahorse | < 0.0001% | 22,547 | 1× balance-weighted |
+| **Total** | — | **25,686** | — |
 
 > ℹ️ Class badges are **cosmetic/social** — voting power is strictly balance-weighted (1 token = 1 vote) in v1. Quadratic voting is an open v2 question ([§16](#16-open-technical-questions)).
 

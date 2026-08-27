@@ -45,7 +45,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { HolderBadge } from "@/components/shared/holder-badge";
 import { HolderClass } from "@/types";
-import { SNAPSHOT } from "@/lib/constants";
+import { HOLDER_CLASS_CONFIG, HOLDER_CLASS_ORDER, SNAPSHOT } from "@/lib/constants";
 
 /* ------------------------------------------------------------------ */
 /* Shared animation                                                    */
@@ -189,26 +189,15 @@ const HOLDER_CARDS: {
   count: number;
   accent: string;
   ring: string;
-}[] = [
-  {
-    holderClass: HolderClass.WHALE,
-    count: SNAPSHOT.expectedDistribution.whales,
-    accent: "text-amber-400",
-    ring: "ring-amber-500/30",
-  },
-  {
-    holderClass: HolderClass.DOLPHIN,
-    count: SNAPSHOT.expectedDistribution.dolphins,
-    accent: "text-sky-400",
-    ring: "ring-sky-500/30",
-  },
-  {
-    holderClass: HolderClass.FISH,
-    count: SNAPSHOT.expectedDistribution.fish,
-    accent: "text-slate-400",
-    ring: "ring-slate-500/30",
-  },
-];
+}[] = HOLDER_CLASS_ORDER.map((cls) => {
+  const cfg = HOLDER_CLASS_CONFIG[cls];
+  return {
+    holderClass: cls,
+    count: SNAPSHOT.expectedDistribution[cfg.plural],
+    accent: cfg.colorClass,
+    ring: cfg.borderClass.replace("border-", "ring-").replace("/30", "/30"),
+  };
+});
 
 /* ------------------------------------------------------------------ */
 /* Icon system groups                                                  */
@@ -468,9 +457,9 @@ export default function BrandPage() {
           Core brand identity. Color-coded holder tiers add personality while
           voting power remains strictly balance-weighted (1 token = 1 vote).
         </p>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           {HOLDER_CARDS.map(({ holderClass, count, accent, ring }) => {
-            const cfg = HOLDER_CFG[holderClass];
+            const cfg = HOLDER_CLASS_CONFIG[holderClass];
             return (
               <Card key={holderClass} className={`ring-1 ${ring}`}>
                 <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
@@ -551,9 +540,9 @@ export default function BrandPage() {
                 <span className="text-xs uppercase tracking-wider text-text-dim">
                   Holder:
                 </span>
-                <HolderBadge holderClass={HolderClass.WHALE} />
-                <HolderBadge holderClass={HolderClass.DOLPHIN} />
-                <HolderBadge holderClass={HolderClass.FISH} />
+                {HOLDER_CLASS_ORDER.map((cls) => (
+                  <HolderBadge key={cls} holderClass={cls} />
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -610,7 +599,7 @@ export default function BrandPage() {
           All UI icons use{" "}
           <span className="font-mono text-gold">lucide-react</span>. Decorative
           icons carry <span className="font-mono text-gold">aria-hidden</span>.
-          Holder-class emojis (🐋🐬🐟) are the only intentional exception to the
+          Holder-class emojis (🦑🐋🐬🦈🐙🦀🦄) are the only intentional exception to the
           no-emoji rule.
         </p>
         <div className="grid gap-6 sm:grid-cols-2">
@@ -675,11 +664,3 @@ export default function BrandPage() {
     </motion.main>
   );
 }
-
-/* Local holder config mirror for the brand showcase (avoids importing the
-   full constants record just for emoji/threshold display). */
-const HOLDER_CFG: Record<HolderClass, { emoji: string; threshold: number }> = {
-  [HolderClass.WHALE]: { emoji: "🐋", threshold: 1.0 },
-  [HolderClass.DOLPHIN]: { emoji: "🐬", threshold: 0.01 },
-  [HolderClass.FISH]: { emoji: "🐟", threshold: 0 },
-};

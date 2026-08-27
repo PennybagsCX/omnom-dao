@@ -5,6 +5,7 @@ import { kv } from "@vercel/kv";
 
 import {
   ERROR_CODE_MAP,
+  HOLDER_CLASS_RANK,
   JWT_MAX_AGE_SECONDS,
   NONCE_TTL_SECONDS,
   PROPOSAL_TYPE_CONFIG,
@@ -100,10 +101,10 @@ export async function getSession(): Promise<SessionClaims | null> {
   return verifySession(token);
 }
 
-/** Convenience: the authenticated wallet address, or null. */
+/** Convenience: the authenticated wallet address, or null. Returns lowercase for DB consistency. */
 export async function getSessionAddress(): Promise<string | null> {
   const session = await getSession();
-  return session?.sub ?? null;
+  return session?.sub?.toLowerCase() ?? null;
 }
 
 /**
@@ -409,10 +410,7 @@ export function canCreateProposalType(holderClass: HolderClass, type: string): b
 
 /** Returns true when `actual` is at least `required` on the class hierarchy. */
 export function meetsClassRequirement(actual: HolderClass, required: HolderClass): boolean {
-  const rank: Record<HolderClass, number> = {
-    [HolderClass.WHALE]: 3,
-    [HolderClass.DOLPHIN]: 2,
-    [HolderClass.FISH]: 1,
-  };
-  return rank[actual] >= rank[required];
+  const actualRank = HOLDER_CLASS_RANK[actual] ?? 0;
+  const requiredRank = HOLDER_CLASS_RANK[required] ?? 0;
+  return actualRank >= requiredRank;
 }

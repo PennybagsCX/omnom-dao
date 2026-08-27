@@ -7,18 +7,25 @@
   "burnedSupply": "689000001688160097721124495552325",
   "contractAddress": "0xe3fcA919883950c5cD468156392a6477Ff5d18de",
   "distribution": {
-    "whales": 4,
-    "dolphins": 356,
-    "fish": 25326
+    "krakens": 1,
+    "whales": 3,
+    "dolphins": 30,
+    "sharks": 326,
+    "octopuses": 1078,
+    "crabs": 1701,
+    "seahorses": 22547
   },
-  "source": "DBOT-DC/omnom-token (ever-held master list, 11 snapshots merged)",
-  "csvHash": "1f64a663549ca717c6b612dc71a5cf673ab58badee58f876474c0fc6e551c128",
-  "sourceCommit": "33df90601bd73217c57bc4d93e221c102a3eebce",
-  "sourceRepository": "DBOT-DC/omnom-token",
+  "source": "DBOT-DC/omnom-snapshot (ever-held master list)",
+  "sourceRepository": "DBOT-DC/omnom-snapshot",
+  "sourceCommit": "2c38af77ba37e67328347cc44bcabbd07551ec42",
   "sourceFile": "omnom-snapshot-ever-held.csv",
   "sourceFileSha256": "1f64a663549ca717c6b612dc71a5cf673ab58badee58f876474c0fc6e551c128",
+  "csvHash": "1f64a663549ca717c6b612dc71a5cf673ab58badee58f876474c0fc6e551c128",
   "electionEligibility": "ever-held-master-list",
   "latestSnapshotDate": "2026-08-08",
   "latestSnapshotHolders": 25542,
+  "latestSnapshotId": "weekly-2026-08-08",
+  "latestSourceFile": "omnom-snapshot-latest.csv",
+  "latestSourceFileSha256": "4df99e05d4def915da299b2cbece345519e2cc8afab9a63564e20cc1b883bc87",
   "enriched": true
 }

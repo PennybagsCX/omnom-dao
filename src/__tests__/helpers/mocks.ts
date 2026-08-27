@@ -62,11 +62,55 @@ export function dolphinHolder(): SerializedHolder {
 export function fishHolder(): SerializedHolder {
   return makeHolder({
     address: ADDR_FISH,
-    rank: 100,
+    rank: 25000,
     balanceRaw: "1000000000000000000",
     balanceFormatted: "1.0",
+    percentageOfSupply: 0.00001,
+    holderClass: HolderClass.SEAHORSE,
+  });
+}
+
+export function sharkHolder(): SerializedHolder {
+  return makeHolder({
+    address: "0x2222222222222222222222222222222222222222",
+    rank: 500,
+    balanceRaw: "500000000000000000000",
+    balanceFormatted: "500.0",
+    percentageOfSupply: 0.01,
+    holderClass: HolderClass.SHARK,
+  });
+}
+
+export function octopusHolder(): SerializedHolder {
+  return makeHolder({
+    address: "0x3333333333333333333333333333333333333333",
+    rank: 5000,
+    balanceRaw: "50000000000000000000",
+    balanceFormatted: "50.0",
     percentageOfSupply: 0.001,
-    holderClass: HolderClass.FISH,
+    holderClass: HolderClass.OCTOPUS,
+  });
+}
+
+export function crabHolder(): SerializedHolder {
+  return makeHolder({
+    address: "0x4444444444444444444444444444444444444444",
+    rank: 10000,
+    balanceRaw: "5000000000000000000",
+    balanceFormatted: "5.0",
+    percentageOfSupply: 0.0001,
+    holderClass: HolderClass.CRAB,
+  });
+}
+
+export function krakenHolder(): SerializedHolder {
+  return makeHolder({
+    address: "0x5555555555555555555555555555555555555555",
+    rank: 1,
+    balanceRaw: "1200000000000000000000000",
+    balanceFormatted: "1,200,000.0",
+    percentageOfSupply: 13.78,
+    holderClass: HolderClass.KRAKEN,
   });
 }
 

@@ -3,19 +3,36 @@
  *
  * This version properly handles EIP-191 personal_sign and EIP-4361 SIWE message signing
  * to work correctly with the server-side verification.
+ *
+ * Covers all 7 holder tiers (KRAKEN through SEAHORSE) for comprehensive testing.
+ *
+ * All addresses and keys verified via viem privateKeyToAddress from standard anvil mnemonic.
  */
 
 import { privateKeyToAccount } from "viem/accounts";
 
 // Mock test accounts with different holder classes and characteristics
+// Standard anvil mnemonic: "test test test test test test test test test test test junk"
+// Derivation path: m/44'/60'/0'/0/i
 export const MOCK_ACCOUNTS = {
+  kraken: {
+    address: "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+    // Verified: anvil #4 key derives to this address
+    privateKey: "0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a" as const,
+    holderClass: "KRAKEN" as const,
+    balance: "1200000000000.0",
+    votingPower: 1200000000000,
+    rank: 1,
+    displayName: "Test Kraken 🦑",
+    description: "Legendary holder with maximum governance power",
+  },
   whale: {
     address: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
     privateKey: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" as const,
     holderClass: "WHALE" as const,
-    balance: "1000000.0",
-    votingPower: 1000000,
-    rank: 1,
+    balance: "250000000000.0",
+    votingPower: 250000000000,
+    rank: 2,
     displayName: "Test Whale 🐋",
     description: "Top holder with maximum governance power",
   },
@@ -23,30 +40,53 @@ export const MOCK_ACCOUNTS = {
     address: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
     privateKey: "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d" as const,
     holderClass: "DOLPHIN" as const,
-    balance: "15000.0",
-    votingPower: 15000,
-    rank: 100,
+    balance: "50000000000.0",
+    votingPower: 50000000000,
+    rank: 50,
     displayName: "Test Dolphin 🐬",
     description: "Mid-tier holder with significant governance influence",
   },
-  fish: {
+  shark: {
+    address: "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+    // Verified: anvil #5 key derives to this address
+    privateKey: "0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba" as const,
+    holderClass: "SHARK" as const,
+    balance: "500000000.0",
+    votingPower: 500000000,
+    rank: 500,
+    displayName: "Test Shark 🦈",
+    description: "High-impact governance participant",
+  },
+  octopus: {
+    address: "0x976EA74026E726554dB657fA54763abd0C3a0aa9",
+    // Verified: anvil #6 key derives to this address
+    privateKey: "0x92db14e403b83dfe3df233f83dfa3a0d7096f21ca9b0d6d6b8d88b2b4ec1564e" as const,
+    holderClass: "OCTOPUS" as const,
+    balance: "50000000.0",
+    votingPower: 50000000,
+    rank: 5000,
+    displayName: "Test Octopus 🐙",
+    description: "Emerging holder with growing influence",
+  },
+  crab: {
     address: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
     privateKey: "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a" as const,
-    holderClass: "FISH" as const,
-    balance: "100.0",
-    votingPower: 100,
+    holderClass: "CRAB" as const,
+    balance: "5000000.0",
+    votingPower: 5000000,
     rank: 10000,
-    displayName: "Test Fish 🐟",
-    description: "Regular holder with standard governance participation",
+    displayName: "Test Crab 🦀",
+    description: "Small holder with basic governance participation",
   },
-  errorTester: {
-    address: "0x90F79bf6EB2c4f870365E785982E47f92493D450",
+  seahorse: {
+    address: "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+    // Verified: anvil #3 key (errorTester) derives to this address - corrected from typo
     privateKey: "0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6" as const,
-    holderClass: "FISH" as const,
-    balance: "1.0",
-    votingPower: 1,
+    holderClass: "SEAHORSE" as const,
+    balance: "1000.0",
+    votingPower: 1000,
     rank: 25000,
-    displayName: "Error Tester ⚠️",
+    displayName: "Test Seahorse 🦄",
     description: "For testing error scenarios and edge cases",
   },
 };

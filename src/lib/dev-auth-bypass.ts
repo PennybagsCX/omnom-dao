@@ -1,33 +1,68 @@
 /**
- * Simple Development Authentication - Restore Working Version
- * 
- * Back to the simple version that was working before we started overcomplicating things.
+ * Simple Development Authentication - 7-Tier Holder Class Version
+ *
+ * Comprehensive mock accounts covering all 7 holder tiers (KRAKEN through SEAHORSE).
+ * Default account remains 'dolphin' to maintain high-impact proposal creation capability.
+ *
+ * All addresses verified via viem privateKeyToAddress from standard anvil keys.
  */
 
 const MOCK_ACCOUNTS = {
+  kraken: {
+    walletAddress: "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+    holderClass: "KRAKEN" as const,
+    votingPower: 1200000000000,
+    displayName: "Test Kraken 🦑",
+    balance: "1200000000000.0",
+    rank: 1,
+  },
   whale: {
     walletAddress: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
     holderClass: "WHALE" as const,
-    votingPower: 1000000,
+    votingPower: 250000000000,
     displayName: "Test Whale 🐋",
-    balance: "1000000.0",
-    rank: 1,
+    balance: "250000000000.0",
+    rank: 2,
   },
   dolphin: {
     walletAddress: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
     holderClass: "DOLPHIN" as const,
-    votingPower: 15000,
+    votingPower: 50000000000,
     displayName: "Test Dolphin 🐬",
-    balance: "15000.0",
-    rank: 100,
+    balance: "50000000000.0",
+    rank: 50,
   },
-  fish: {
+  shark: {
+    walletAddress: "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+    holderClass: "SHARK" as const,
+    votingPower: 500000000,
+    displayName: "Test Shark 🦈",
+    balance: "500000000.0",
+    rank: 500,
+  },
+  octopus: {
+    walletAddress: "0x976EA74026E726554dB657fA54763abd0C3a0aa9",
+    holderClass: "OCTOPUS" as const,
+    votingPower: 50000000,
+    displayName: "Test Octopus 🐙",
+    balance: "50000000.0",
+    rank: 5000,
+  },
+  crab: {
     walletAddress: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-    holderClass: "FISH" as const,
-    votingPower: 100,
-    displayName: "Test Fish 🐟",
-    balance: "100.0",
+    holderClass: "CRAB" as const,
+    votingPower: 5000000,
+    displayName: "Test Crab 🦀",
+    balance: "5000000.0",
     rank: 10000,
+  },
+  seahorse: {
+    walletAddress: "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+    holderClass: "SEAHORSE" as const,
+    votingPower: 1000,
+    displayName: "Test Seahorse 🦄",
+    balance: "1000.0",
+    rank: 25000,
   },
 };
 

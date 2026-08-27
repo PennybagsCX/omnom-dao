@@ -99,6 +99,7 @@ export async function GET() {
     type: r.type as Proposal["type"],
     status: r.status as Proposal["status"],
     authorAddress: r.author_address as string,
+    authorHolderClass: holder.holderClass,
     createdAt: r.created_at as string,
     votingStartsAt: (r.voting_starts_at as string | null) ?? null,
     votingEndsAt: (r.voting_ends_at as string | null) ?? null,

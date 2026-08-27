@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   CalendarClock,
   Copy,
   Database,
@@ -25,8 +29,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { HolderBadge } from "@/components/shared/holder-badge";
 import { apiGet } from "@/lib/api";
 import { cn, shortenAddress } from "@/lib/utils";
+import { HOLDER_CLASS_ORDER, HOLDER_CLASS_CONFIG, DISTRIBUTION_KEY } from "@/lib/constants";
+import type { HolderSortKey, SortDirection } from "@/lib/snapshot";
 import { HolderClass } from "@/types";
 
 interface SnapshotHolder {
@@ -49,7 +56,7 @@ interface SnapshotHolder {
 interface SnapshotSummary {
   snapshotType: string;
   totalHolders: number;
-  distribution: { whales: number; dolphins: number; fish: number };
+  distribution: { krakens: number; whales: number; dolphins: number; sharks: number; octopuses: number; crabs: number; seahorses: number };
   blockNumber: number;
   timestamp: string;
   latestSnapshotDate?: string;
@@ -77,6 +84,32 @@ interface ExplorerDetailData {
 const PAGE_SIZE = 25;
 const EASE = [0.22, 1, 0.36, 1] as const;
 
+/** Initial direction when a column is clicked for the first time — balances
+ * read most naturally biggest-first, identities smallest-first. */
+const DEFAULT_SORT_DIRECTION: Record<HolderSortKey, SortDirection> = {
+  rank: "asc",
+  address: "asc",
+  class: "asc",
+  balance: "desc",
+  percentage: "desc",
+  latestBalance: "desc",
+  holds: "desc",
+};
+
+const SORTABLE_COLUMNS: readonly {
+  label: string;
+  column: HolderSortKey;
+  align: "left" | "right" | "center";
+}[] = [
+  { label: "Rank", column: "rank", align: "left" },
+  { label: "Wallet", column: "address", align: "left" },
+  { label: "Class", column: "class", align: "left" },
+  { label: "Max balance", column: "balance", align: "right" },
+  { label: "Max supply %", column: "percentage", align: "right" },
+  { label: "Latest balance", column: "latestBalance", align: "right" },
+  { label: "Holds", column: "holds", align: "center" },
+];
+
 function formatNumber(value: number | undefined | null): string {
   if (value === undefined || value === null) return "—";
   return value.toLocaleString(undefined, { maximumFractionDigits: 3 });
@@ -89,11 +122,67 @@ function formatTokens(value: string | undefined): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
+/**
+ * Reads `?address=` from the URL and forwards it to the explorer as a seed.
+ * Mirrors the proposals-page pattern (DESIGN.md §7.5): this is the ONLY
+ * component inside a `<Suspense>` boundary, keeping the data-heavy explorer
+ * — and its fetches — resolving on cold load instead of hanging behind the
+ * prerendered static fallback.
+ */
+function ExplorerSearchParams({ onSeed }: { onSeed: (address: string) => void }) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    onSeed(searchParams.get("address") ?? "");
+  }, [searchParams, onSeed]);
+
+  return null;
+}
+
 export default function SnapshotExplorerPage() {
-  const [input, setInput] = useState("");
-  const [query, setQuery] = useState("");
+  const [seed, setSeed] = useState<string | null>(null);
+  const onSeed = useCallback((address: string) => setSeed(address), []);
+
+  return (
+    <>
+      <Suspense fallback={null}>
+        <ExplorerSearchParams onSeed={onSeed} />
+      </Suspense>
+      <SnapshotExplorer seed={seed} />
+    </>
+  );
+}
+
+function SnapshotExplorer({ seed }: { seed: string | null }) {
+  // Seeded from `?address=` (deep links from comments, cards, and admin
+  // surfaces). Both `input` and `query` are set so the address lookup is the
+  // FIRST query key — no wasted default-list fetch or table flash while the
+  // 300ms debounce settles (it settles to the same string → no refetch).
+  const [input, setInput] = useState(seed ?? "");
+  const [query, setQuery] = useState(seed ?? "");
+  const [appliedSeed, setAppliedSeed] = useState<string | null>(seed);
+  if (seed !== null && seed !== appliedSeed) {
+    setAppliedSeed(seed);
+    setInput(seed);
+    setQuery(seed);
+  }
   const [classFilter, setClassFilter] = useState<"ALL" | HolderClass>("ALL");
   const [page, setPage] = useState(1);
+  const [sortKey, setSortKey] = useState<HolderSortKey>("rank");
+  const [sortDir, setSortDir] = useState<SortDirection>("asc");
+
+  const onSort = useCallback(
+    (column: HolderSortKey) => {
+      setPage(1);
+      if (column === sortKey) {
+        setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+      } else {
+        setSortKey(column);
+        setSortDir(DEFAULT_SORT_DIRECTION[column]);
+      }
+    },
+    [sortKey],
+  );
 
   // Debounce raw keyboard input. Each settled string becomes the definitive
   // `query`; every settled query gets its own React Query cache key.
@@ -118,13 +207,18 @@ export default function SnapshotExplorerPage() {
     /^0x[0-9a-zA-Z]{40,}$/.test(trimmed) && !isAddress;
 
   const params = useMemo(() => {
-    const p = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+    const p = new URLSearchParams({
+      page: String(page),
+      pageSize: String(PAGE_SIZE),
+      sort: sortKey,
+      dir: sortDir,
+    });
     if (classFilter !== "ALL") p.set("class", classFilter);
     if (isAddress) p.set("address", trimmed.toLowerCase());
     if (isAddressPrefix) p.set("prefix", trimmed.toLowerCase());
     if (isRank) p.set("rank", trimmed);
     return p;
-  }, [classFilter, isAddress, isAddressPrefix, isRank, page, trimmed]);
+  }, [classFilter, isAddress, isAddressPrefix, isRank, page, sortDir, sortKey, trimmed]);
 
   const { data, isFetching, isLoading, isError, error } = useQuery<
     ExplorerListData | ExplorerDetailData
@@ -146,13 +240,7 @@ export default function SnapshotExplorerPage() {
     classFilter === "ALL"
       ? Math.ceil((summary?.totalHolders ?? 0) / PAGE_SIZE)
       : Math.ceil(
-          (summary?.distribution[
-            classFilter === "WHALE"
-              ? "whales"
-              : classFilter === "DOLPHIN"
-                ? "dolphins"
-                : "fish"
-          ] ?? 0) / PAGE_SIZE,
+          (summary?.distribution[DISTRIBUTION_KEY[classFilter] ?? "seahorses"] ?? 0) / PAGE_SIZE,
         );
 
   return (
@@ -203,6 +291,62 @@ export default function SnapshotExplorerPage() {
           <div className="text-[10px] uppercase tracking-wide text-text-dim">pinned source</div>
         </div>
       </motion.div>
+
+      {/* Tier legend: what each class means, with one-tap filtering (mirrors the class Select). */}
+      <motion.section
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.12, duration: 0.4, ease: EASE }}
+        aria-label="Holder class legend"
+        className="mt-6"
+      >
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-text-dim">
+            Holder classes
+          </h2>
+          <p className="text-[10px] uppercase tracking-wide text-text-dim">
+            Tap a card to filter
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {HOLDER_CLASS_ORDER.map((cls) => {
+            const cfg = HOLDER_CLASS_CONFIG[cls];
+            const active = classFilter === cls;
+            return (
+              <button
+                key={cls}
+                type="button"
+                aria-pressed={active}
+                onClick={() => {
+                  setClassFilter(active ? "ALL" : cls);
+                  setInput("");
+                  setQuery("");
+                  setPage(1);
+                }}
+                className={cn(
+                  "cursor-pointer rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gold/50",
+                  active
+                    ? "border-gold/50 bg-gold/5"
+                    : "border-border bg-bg-elevated/40 hover:border-gold/30 hover:bg-bg-elevated/60",
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <HolderBadge holderClass={cls} size="sm" />
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {formatNumber(summary?.distribution[DISTRIBUTION_KEY[cls]])}
+                  </span>
+                </div>
+                <p className="mt-2 font-mono text-xs text-text-dim">
+                  {cfg.threshold > 0 ? `≥ ${cfg.threshold}% of supply` : cfg.thresholdLabel}
+                </p>
+                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                  {cfg.description}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </motion.section>
 
       <motion.form
         initial={{ opacity: 0, y: 8 }}
@@ -257,9 +401,11 @@ export default function SnapshotExplorerPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All classes</SelectItem>
-            <SelectItem value="WHALE">Whales</SelectItem>
-            <SelectItem value="DOLPHIN">Dolphins</SelectItem>
-            <SelectItem value="FISH">Fish</SelectItem>
+            {HOLDER_CLASS_ORDER.map((cls) => (
+              <SelectItem key={cls} value={cls}>
+                {HOLDER_CLASS_CONFIG[cls].plural.charAt(0).toUpperCase() + HOLDER_CLASS_CONFIG[cls].plural.slice(1)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Button type="submit" size="lg" className="sm:w-32">
@@ -320,7 +466,9 @@ export default function SnapshotExplorerPage() {
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Metric label="Class" value={holder.holderClass} />
+              <Metric label="Class" value={holder.holderClass}>
+                <HolderBadge holderClass={holder.holderClass} size="sm" plain />
+              </Metric>
               <Metric label="Ever-held rank" value={`#${formatNumber(holder.rank)}`} />
               <Metric label="Max balance" value={formatTokens(holder.balanceFormatted)} />
               <Metric label="Max supply %" value={`${formatNumber(holder.maxPercentageOfSupply ?? holder.percentageOfSupply)}%`} />
@@ -362,13 +510,17 @@ export default function SnapshotExplorerPage() {
               <table className="w-full min-w-[720px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-border text-xs uppercase tracking-wide text-text-dim">
-                    <th className="px-4 py-3">Rank</th>
-                    <th className="px-4 py-3">Wallet</th>
-                    <th className="px-4 py-3">Class</th>
-                    <th className="px-4 py-3 text-right">Max balance</th>
-                    <th className="px-4 py-3 text-right">Max supply %</th>
-                    <th className="px-4 py-3 text-right">Latest balance</th>
-                    <th className="px-4 py-3 text-center">Holds</th>
+                    {SORTABLE_COLUMNS.map((col) => (
+                      <SortableTh
+                        key={col.column}
+                        label={col.label}
+                        column={col.column}
+                        align={col.align}
+                        sortKey={sortKey}
+                        sortDir={sortDir}
+                        onSort={onSort}
+                      />
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -380,7 +532,9 @@ export default function SnapshotExplorerPage() {
                       <td className="px-4 py-3">
                         <code className="text-xs text-foreground">{shortenAddress(h.address)}</code>
                       </td>
-                      <td className="px-4 py-3 text-xs">{h.holderClass}</td>
+                      <td className="px-4 py-3 text-xs">
+                        <HolderBadge holderClass={h.holderClass} size="sm" plain />
+                      </td>
                       <td className="px-4 py-3 text-right font-mono text-xs">
                         {formatTokens(h.balanceFormatted)}
                       </td>
@@ -475,11 +629,86 @@ export default function SnapshotExplorerPage() {
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+/**
+ * Click-to-sort table header. The whole header cell is announced via
+ * `aria-sort`; the inner button drives the toggle (same column → reverse
+ * direction, new column → its natural default direction).
+ */
+function SortableTh({
+  label,
+  column,
+  align = "left",
+  sortKey,
+  sortDir,
+  onSort,
+}: {
+  label: string;
+  column: HolderSortKey;
+  align?: "left" | "right" | "center";
+  sortKey: HolderSortKey;
+  sortDir: SortDirection;
+  onSort: (column: HolderSortKey) => void;
+}) {
+  const active = sortKey === column;
+  return (
+    <th
+      scope="col"
+      aria-sort={active ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
+      className={cn(
+        "px-4 py-3",
+        align === "right" && "text-right",
+        align === "center" && "text-center",
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(column)}
+        title={
+          active
+            ? `Sorted by ${label}, ${sortDir === "asc" ? "ascending" : "descending"} — click to reverse`
+            : `Sort by ${label}`
+        }
+        className={cn(
+          "group inline-flex cursor-pointer items-center gap-1 whitespace-nowrap uppercase tracking-wide transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gold/50",
+          active && "text-gold",
+        )}
+      >
+        <span>{label}</span>
+        {active ? (
+          sortDir === "asc" ? (
+            <ArrowUp className="h-3 w-3" aria-hidden />
+          ) : (
+            <ArrowDown className="h-3 w-3" aria-hidden />
+          )
+        ) : (
+          <ArrowUpDown
+            className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+            aria-hidden
+          />
+        )}
+      </button>
+    </th>
+  );
+}
+
+function Metric({
+  label,
+  value,
+  children,
+}: {
+  label: string;
+  value: string;
+  /** Optional node replacing the plain value (e.g. a HolderBadge). */
+  children?: ReactNode;
+}) {
   return (
     <div className="rounded-lg border border-border bg-bg-elevated/30 p-3">
       <div className="text-[10px] uppercase tracking-wide text-text-dim">{label}</div>
-      <div className="mt-1 font-mono text-sm font-semibold text-foreground">{value}</div>
+      {children ? (
+        <div className="mt-1 text-sm">{children}</div>
+      ) : (
+        <div className="mt-1 font-mono text-sm font-semibold text-foreground">{value}</div>
+      )}
     </div>
   );
 }

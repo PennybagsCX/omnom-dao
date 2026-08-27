@@ -21,10 +21,13 @@ const buttonVariants = cva(
         link: "text-secondary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
+        // Mobile-first touch targets: every variant is ≥44px (WCAG 2.5.5 / iOS
+        // HIG) below the `sm` breakpoint, reverting to compact sizing on
+        // pointer-precise viewports.
+        default: "h-9 px-4 py-2 min-h-11 sm:min-h-9",
+        sm: "h-8 rounded-md px-3 text-xs min-h-11 sm:min-h-8",
         lg: "h-11 rounded-md px-8",
-        icon: "h-9 w-9",
+        icon: "h-9 w-9 min-h-11 min-w-11 sm:min-h-9 sm:min-w-9",
       },
     },
     defaultVariants: {

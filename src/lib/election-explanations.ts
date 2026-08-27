@@ -86,28 +86,28 @@ export const ELECTION_EXPLANATIONS = [
     id: "TIERED",
     title: "Tiered voting",
     summary:
-      "Wallets are grouped into whale, dolphin, and fish tiers, and each tier receives a fixed share of total voting power.",
+      "Wallets are grouped into seven cohorts (kraken through seahorse) by their share of supply, and each cohort receives a fixed share of total voting power.",
     mathFormula: "total voting power = 100%, split across cohort tiers",
     howItWorks: [
-      "Classify each wallet by its share of supply (for example, whale, dolphin, fish).",
-      "Assign each tier a fixed voting block, such as one third.",
+      "Classify each wallet by its share of supply (kraken, whale, dolphin, shark, octopus, crab, seahorse).",
+      "Assign each tier a fixed voting block (for example, equal shares across all seven tiers).",
       "Distribute that block among the wallets inside the tier.",
     ],
     workedExamples: [
       {
-        label: "One cohort has 4 wallets",
-        calc: "33.33% ÷ 4 wallets",
-        power: "≈ 8.33% per wallet",
+        label: "Krakens (1 wallet, ~14.3% block)",
+        calc: "14.28% ÷ 1 wallet",
+        power: "≈ 14.28% per wallet",
       },
       {
-        label: "One cohort has 294 wallets",
-        calc: "33.33% ÷ 294 wallets",
-        power: "≈ 0.113% per wallet",
+        label: "Dolphins (30 wallets, ~14.3% block)",
+        calc: "14.28% ÷ 30 wallets",
+        power: "≈ 0.476% per wallet",
       },
       {
-        label: "One cohort has 25,244 wallets",
-        calc: "33.33% ÷ 25,244 wallets",
-        power: "≈ 0.00132% per wallet",
+        label: "Seahorses (22,547 wallets, ~14.3% block)",
+        calc: "14.28% ÷ 22,547 wallets",
+        power: "≈ 0.000633% per wallet",
       },
     ],
     advantages: [
@@ -165,7 +165,7 @@ export const ELECTION_FAQ = [
   },
   {
     q: "How is my wallet eligible?",
-    a: "Your wallet address must appear in the pinned ever-held snapshot corpus published at DBOT-DC/omnom-token. That corpus is the union of the pre-announcement snapshot and ten later weekly snapshots through August 8, 2026.",
+    a: "Your wallet address must appear in the pinned ever-held snapshot corpus published at DBOT-DC/omnom-snapshot. That corpus is the union of the pre-announcement snapshot and ten later weekly snapshots through August 8, 2026.",
   },
   {
     q: "Why can I verify at all if my current balance is lower?",
@@ -181,7 +181,7 @@ export const ELECTION_FAQ = [
   },
   {
     q: "What is the source data and can I verify it?",
-    a: "The source is commit 33df90601bd73217c57bc4d93e221c102a3eebce of DBOT-DC/omnom-token. The ever-held CSV has SHA-256 1f64a663549ca717c6b612dc71a5cf673ab58badee58f876474c0fc6e551c128. You can independently download and hash the file.",
+    a: "The source is commit 2c38af77ba37e67328347cc44bcabbd07551ec42 of DBOT-DC/omnom-snapshot. The ever-held CSV has SHA-256 1f64a663549ca717c6b612dc71a5cf673ab58badee58f876474c0fc6e551c128. You can independently download and hash the file.",
   },
   {
     q: "Does voting cost gas?",

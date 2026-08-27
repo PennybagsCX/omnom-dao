@@ -10,6 +10,7 @@ import {
 } from "@/lib/auth";
 import { checkRateLimit, userActionBucket } from "@/lib/rate-limit";
 import { sanitizeContent } from "@/lib/sanitize";
+import { lookupHolder, lookupHolderClasses } from "@/lib/snapshot";
 import { levenshtein, normalizeForCompare } from "@/lib/text";
 import { RATE_LIMITS } from "@/lib/constants";
 import { notifyMentionsFromContent } from "@/lib/notifications";
@@ -100,6 +101,11 @@ export async function GET(
     // Not authenticated — skip.
   }
 
+  // Batch-resolve commenters' holder classes for inline badges.
+  const authorClasses = await lookupHolderClasses(
+    res.rows.map((r) => r.author_address as string),
+  );
+
   const comments: ProposalComment[] = res.rows.map((r) => {
     const cid = r.id as string;
     const reactions = reactionMap.get(cid) ?? { up: 0, down: 0 };
@@ -107,6 +113,8 @@ export async function GET(
       id: cid,
       proposalId: r.proposal_id as string,
       authorAddress: r.author_address as string,
+      authorHolderClass:
+        authorClasses.get((r.author_address as string).toLowerCase()) ?? null,
       content: r.deleted_at ? "[deleted]" : (r.content as string),
       createdAt: r.created_at as string,
       parentId: (r.parent_id as string | null) ?? null,
@@ -215,11 +223,13 @@ export async function POST(
     args: [id, authorAddress, sanitized, parentId ?? null],
   });
   const row = insert.rows[0]!;
+  const authorHolder = await lookupHolder(authorAddress);
 
   const comment: ProposalComment = {
     id: row.id as string,
     proposalId: id,
     authorAddress,
+    authorHolderClass: authorHolder?.holderClass ?? null,
     content: sanitized,
     createdAt: row.created_at as string,
     parentId: parentId ?? null,

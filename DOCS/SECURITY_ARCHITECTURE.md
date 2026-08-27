@@ -146,7 +146,7 @@ The platform operates with a **single-admin trust model** in v1:
 | One vote per address | DB UNIQUE(proposal_id, voter_address) | `votes/route.ts` + DB schema |
 | Immutable voting power | Frozen at cast time from snapshot | `votes/route.ts` |
 | Vote window enforcement | Server-side timestamp check | `votes/route.ts` → `loadContext()` |
-| Vote change restriction | Final 12h only | `votes/route.ts` → PUT handler |
+| Vote change restriction | While proposal is ACTIVE only | `votes/route.ts` → PUT handler |
 | Real-time tally | Denormalized counts recomputed on every vote | `votes/route.ts` |
 | Quorum tracking | Computed + stored on every vote cast | `votes/route.ts` |
 | Finalization enforcement | Quorum + threshold check at close | `proposal-finalize.ts` |
@@ -198,7 +198,7 @@ The platform operates with a **single-admin trust model** in v1:
 
 1. **Single-admin model** — One person gates proposals. Mitigated by public audit log, but a single point of trust/failure.
 2. **No commit-reveal voting** — Votes are visible in real-time, enabling potential coercion/bribery observation.
-3. **Linear voting (v1)** — 4 whales hold ~77% of power. Quadratic voting proposed for v2 but requires identity verification for Sybil safety.
+3. **Linear voting (v1)** — 4 wallets hold ~87% of power. Quadratic voting proposed for v2 but requires identity verification for Sybil safety.
 4. **Informational delegation** — Delegation does not transfer voting power in v1.
 5. **No multi-sig admin** — Admin control is not distributed across multiple signers.
 6. **Off-chain governance** — Outcomes are advisory, not auto-executed.

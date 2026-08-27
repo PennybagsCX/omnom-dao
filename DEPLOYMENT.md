@@ -137,6 +137,28 @@ size limit is larger than this file.
    approximately 23.946 billion OMNOM.
 8. Check SIWE sign-in with a real wallet.
 9. Confirm production nonce/verify flow works after Vercel KV is configured.
+10. Run `npm run verify:election` against the production Turso database
+    (with `SNAPSHOT_SHA256` set) — all checks must pass.
+11. Trigger `/api/v1/cron/finalize` manually with `CRON_SECRET` (curl) — must
+    return 200. Confirms the cron-bound route works before relying on Vercel's
+    scheduler.
+
+## Scheduled jobs
+
+The `vercel.json` at repo root schedules `POST /api/v1/cron/finalize` every 15
+minutes. The handler sweeps ACTIVE proposals whose `voting_ends_at` has passed
+and transitions them to PASSED / FAILED / EXPIRED based on the final tally.
+
+For Vercel Hobby tier this is included automatically. Confirm the schedule is
+visible at **Project → Settings → Cron Jobs** after the first deploy.
+
+Required environment variable:
+
+| Name | Purpose |
+|---|---|
+| `CRON_SECRET` | Bearer token; the handler verifies it via `timingSafeEqual`. Generate with `openssl rand -hex 32`. |
+
+Without `CRON_SECRET`, the handler returns 401 and the cron job silently fails.
 
 ## Third-party services
 

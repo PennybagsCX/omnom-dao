@@ -39,7 +39,7 @@ export function CopyAddress({ address, full = false, className }: CopyAddressPro
         type="button"
         onClick={onCopy}
         aria-label={copied ? "Address copied" : "Copy address"}
-        className="inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-bg-elevated hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="inline-flex h-11 w-11 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-bg-elevated hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-6 sm:w-6"
       >
         {copied ? (
           <Check className="h-3.5 w-3.5 text-success" aria-hidden />

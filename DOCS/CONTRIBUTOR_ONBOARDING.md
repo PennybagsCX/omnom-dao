@@ -265,7 +265,7 @@ pnpm snapshot:build
 1. **Parse & validate** the CSV — checks for valid EVM addresses, removes duplicates, enforces the expected holder count (**25,431 holders**).
 2. **Sort** holders by address.
 3. **Build a binary-search index** for O(log n) runtime lookups against `holders.json` (~3.5 MB).
-4. **Classify holders** into tiers: 🐋 **whales** (4), 🐬 **dolphins** (322), 🐟 **fish** (the remainder).
+4. **Classify holders** into 7 tiers: 🦑 **Kraken** (1), 🐋 **Whale** (3), 🐬 **Dolphin** (30), 🦈 **Shark** (326), 🐙 **Octopus** (1,078), 🦀 **Crab** (1,701), 🦄 **Seahorse** (22,547).
 5. **Compute a SHA-256 hash** written to `csv-hash.txt` for public verifiability.
 
 Outputs land in `public/data/`:
@@ -358,8 +358,11 @@ omnom-dao/
 │       └── snapshot-hash.txt   # SHA-256 source hash
 │
 ├── scripts/                    # Build & data pipeline scripts
-│   ├── build-snapshot.ts       # CSV → JSON → hash pipeline
-│   └── data/                   # Source CSVs
+│   ├── fetch-snapshot.sh       # Pinned DBOT-DC/omnom-snapshot fetcher (CSV → JSON → SHA-256)
+│   ├── migrate.ts              # Turso/libSQL schema migrations
+│   ├── seed-db.ts              # proposal_templates + foundational election row
+│   ├── verify-election.ts      # Post-deploy smoke test
+│   └── data/                   # Source CSVs (sample fixture tracked, real CSVs gitignored)
 │
 ├── db/                         # Schema + migrations
 │   ├── schema.sql              # Full schema (7 tables + indexes)
@@ -384,7 +387,7 @@ omnom-dao/
 | [`lib/snapshot.ts`](lib/snapshot.ts) | Loads `holders.json` and performs the binary-search holder lookup |
 | [`lib/validations.ts`](lib/validations.ts) | Zod schemas — validate every API input against these |
 | [`app/api/v1/auth/`](app/api/v1/auth) | The SIWE flow (nonce → verify → JWT cookie) |
-| [`scripts/build-snapshot.ts`](scripts/build-snapshot.ts) | The snapshot build pipeline |
+| [`scripts/fetch-snapshot.sh`](scripts/fetch-snapshot.sh) | The pinned-snapshot fetch + build pipeline |
 | [`db/schema.sql`](db/schema.sql) | Authoritative database schema |
 
 > 💡 **Read these six files end to end before touching governance logic.** They encode the rules described in [`GOVERNANCE_MECHANICS.md`](GOVERNANCE_MECHANICS.md).
@@ -421,7 +424,7 @@ git checkout -b docs/onboarding-guide
 We use **Conventional Commits**:
 
 ```bash
-git commit -m "feat(votes): allow vote change until final 12 hours"
+git commit -m "feat(votes): allow vote change until voting closes"
 git commit -m "fix(auth): refresh JWT cookie on near-expiry requests"
 git commit -m "docs: add contributor onboarding guide"
 git commit -m "chore(deps): bump wagmi to ^3.1"
@@ -644,7 +647,7 @@ Before opening a PR that touches auth or governance, verify each of these by han
 - [ ] **Holder lookup** — correct tier and balance render for a known address.
 - [ ] **Proposal creation** — admin can create a proposal; non-admin (or under-minimum holder) is rejected.
 - [ ] **Vote submission** — a vote records and updates the live tally.
-- [ ] **Vote change** — within the final-12h window it's blocked; before that it succeeds.
+- [ ] **Vote change** — allowed any time while voting is open; blocked after voting_end.
 - [ ] **Rate limiting** — rapid requests trigger `429`.
 
 ---
@@ -660,8 +663,8 @@ Create a minimal CSV with your MetaMask address and a balance that lands you in 
 ```csv
 address,balance
 0xYourWalletAddress,5000000000
-0xWhaleTestAddress,50000000000
-0xFishTestAddress,1000
+0xSharkTestAddress,50000000000
+0xSeahorseTestAddress,1000
 ```
 
 Then rebuild the snapshot:
@@ -670,7 +673,7 @@ Then rebuild the snapshot:
 pnpm snapshot:build
 ```
 
-> 💡 **Tier thresholds** (for choosing a test balance): 🐋 **whale** (4 in prod), 🐬 **dolphphin** (322 in prod), 🐟 **fish** (everyone else). Check [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) §6 for exact balance cutoffs and craft your CSV accordingly.
+> 💡 **Tier thresholds** (for choosing a test balance): 🦑 **Kraken** (≥10%, 1 in prod), 🐋 **Whale** (≥1%, 3 in prod), 🐬 **Dolphin** (≥0.1%, 30 in prod), 🦈 **Shark** (≥0.01%, 326 in prod). Check [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) §6 for exact balance cutoffs and craft your CSV accordingly.
 
 ### 8.2 Set Yourself as Admin
 
@@ -688,9 +691,8 @@ To exercise each code path, maintain several test addresses and switch your acti
 
 | Account | Balance | Tests |
 |---|---|---|
-| Whale | high | Full proposal creation on **all** categories (Chain Selection, Tokenomics, Technical) |
-| Dolphin | mid | Creation on restricted categories; high vote weight |
-| Fish | low | Standard vote; restricted-category proposal creation blocked |
+| Shark+ (≥0.01%) | ≥ 0.01% of supply | Full proposal creation on **all** categories (Chain Selection, Tokenomics, Technical) |
+| Seahorse (<0.0001%) | < 0.0001% of supply | Standard vote; restricted-category proposal creation blocked |
 | Non-holder | 0 | Should not appear in snapshot; can authenticate but has no voting power |
 
 ### 8.4 Testing the SIWE Flow in Detail
@@ -802,7 +804,7 @@ Accessibility is a **first-class requirement**, audited in Phase 4. For every UI
 
 ### 10.6 Brand Emojis & Animation
 
-- **Holder-tier emojis** are part of the brand: 🐋 **whale**, 🐬 **dolphin**, 🐟 **fish**. Use them consistently in tier badges.
+- **Holder-tier emojis** are part of the brand: 🦑 **Kraken**, 🐋 **Whale**, 🐬 **Dolphin**, 🦈 **Shark**, 🐙 **Octopus**, 🦀 **Crab**, 🦄 **Seahorse**. Use them consistently in tier badges.
 - Use **framer-motion** for motion (page transitions, success states like `react-confetti` on proposal pass). Keep animations subtle and respect `prefers-reduced-motion`.
 
 > 💡 Full design spec: [`DESIGN.md`](../DESIGN.md) and [`UI-WIREFRAMES.md`](../UI-WIREFRAMES.md).
@@ -851,13 +853,13 @@ Proposals move through defined states (Draft → Active → voting window open/c
 ### 12.2 Vote Constraints
 
 - **One vote per user per proposal.** Enforced by a **`UNIQUE` constraint** on the `votes` table (user_id + proposal_id). Rely on the DB constraint as the source of truth, not just application logic.
-- **Vote changes allowed until the final 12 hours** of a proposal. After that, votes are locked.
+- **Vote changes allowed any time while voting is open** (until the proposal's voting_end timestamp). After that, votes are locked.
 
 ### 12.3 Proposal Creation Rules
 
 | Rule | Detail |
 |---|---|
-| **Minimum holding** | Tier-dependent. **Dolphin+** required for *Chain Selection*, *Tokenomics*, and *Technical* categories. Any verified holder may create other proposal types. |
+| **Minimum holding** | Tier-dependent. **Shark+ (≥0.01%)** required for *Chain Selection*, *Tokenomics*, and *Technical* categories. Any verified holder may create other proposal types. |
 | **Anti-spam: rate limit** | **24 hours** between proposals by the same user; **max 3 per week**. |
 | **Comment rate limit** | **30 seconds** between comments; **2,000-character** cap. |
 | **Duplicate detection** | Fuzzy duplicate via **Levenshtein distance ≤ 3** is rejected. |
@@ -939,7 +941,7 @@ Be respectful, inclusive, and constructive. We follow standard open-source commu
 | **Quorum** | Minimum participation threshold required for a proposal to be considered valid |
 | **Quadratic voting** | A voting scheme (P5 future) where cost scales with the square of votes, reducing whale dominance |
 | **Delegation** | Transferring your voting weight to another verified holder (Phase 3) |
-| **Holder tiers** | 🐋 Whale / 🐬 Dolphin / 🐟 Fish — balance-based classification affecting proposal rights |
+| **Holder tiers** | 🦑 Kraken / 🐋 Whale / 🐬 Dolphin / 🦈 Shark / 🐙 Octopus / 🦀 Crab / 🦄 Seahorse — balance-based classification affecting proposal rights |
 | **DRC-20** | Token standard on Dogechain (now sunset) to which $OMNOM belongs |
 | **JWT** | JSON Web Token (HS256 via `jose`) issued after SIWE; stored in `omnom_token` cookie (7-day expiry) |
 | **ISR** | Incremental Static Regeneration — Next.js hybrid rendering used for snapshot pages |
@@ -955,7 +957,8 @@ Be respectful, inclusive, and constructive. We follow standard open-source commu
 | `pnpm test` | Run Vitest (watch) |
 | `pnpm test:ci` | Run tests once with coverage |
 | `pnpm test:e2e` | Run Playwright E2E tests |
-| `pnpm snapshot:build` | Build the holder snapshot (CSV → JSON → hash) |
+| `npm run fetch:snapshot` | Fetch pinned snapshot CSVs + build `data/holders.json` (CSV → JSON → SHA-256) |
+| `npm run verify:election` | Post-deploy smoke test for the foundational governance election |
 | `pnpm db:migrate` | Apply database migrations |
 | `pnpm db:seed` | Seed test data (proposal_templates) |
 | `turso db shell <name>` | Open an interactive SQL shell |

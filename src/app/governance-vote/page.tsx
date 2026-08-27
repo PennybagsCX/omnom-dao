@@ -9,7 +9,6 @@ import {
   Database,
   HelpCircle,
   Loader2,
-  Lock,
   Vote,
 } from "lucide-react";
 
@@ -112,22 +111,6 @@ export default function GovernanceVotePage() {
     );
   }
 
-  // Authentication required
-  if (!me) {
-    return (
-      <div className="mx-auto max-w-xl px-4 py-16 sm:px-6">
-        <div className="text-center">
-          <Lock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <h2 className="text-xl font-bold mb-2">Authentication required</h2>
-          <p className="text-muted-foreground mb-6">
-            Please connect and verify your wallet to participate in the governance election.
-          </p>
-          <ConnectCta>Connect Wallet</ConnectCta>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Header - Centered on all breakpoints */}
@@ -145,8 +128,7 @@ export default function GovernanceVotePage() {
         </div>
         <p className="text-sm text-muted-foreground">
           Decide how future OMNOMDAO proposals should be counted. Every wallet in
-          the verified ever-held snapshot gets one ballot. You may change your
-          ballot until voting closes.
+          the verified ever-held snapshot gets one ballot, changeable until close.
         </p>
       </motion.div>
 
@@ -161,13 +143,13 @@ export default function GovernanceVotePage() {
           <div className="font-mono text-lg font-bold text-foreground">
             {(data?.totalBallots ?? 0).toLocaleString()}
           </div>
-          <div className="text-xs text-text-dim">Total ballots</div>
+          <div className="text-xs text-text-dim">Ballots cast</div>
         </div>
         <div>
           <div className="font-mono text-lg font-bold text-foreground">
-            {data?.turnoutPercentage.toFixed(1)}%
+            {(data?.turnoutPercentage ?? 0).toFixed(1)}%
           </div>
-          <div className="text-xs text-text-dim">Turnout</div>
+          <div className="text-xs text-text-dim">turnout</div>
         </div>
         <div>
           <div className="font-mono text-lg font-bold text-foreground">
@@ -187,7 +169,7 @@ export default function GovernanceVotePage() {
         {data?.phase === "OPEN" && (
           <p className="flex items-center justify-center gap-2">
             <CalendarClock className="h-4 w-4" aria-hidden />
-            Voting open until {formatDateTime(data.endsAt)}
+            <span>voting closes</span> {formatDateTime(data.endsAt)}
           </p>
         )}
         {data?.phase === "CLOSED" && (
@@ -207,7 +189,11 @@ export default function GovernanceVotePage() {
       >
         <div className="text-center">
           <h2 className="text-xl font-bold text-foreground mb-2">Cast your ballot</h2>
-          {data?.userEligible ? (
+          {!me ? (
+            <p className="text-sm text-muted-foreground">
+              Connect and verify your wallet to participate.
+            </p>
+          ) : data?.userEligible ? (
             <p className="text-sm text-muted-foreground">
               {data.phase === "OPEN" ? "Select a voting method below" : "Voting is closed"}
             </p>
@@ -217,6 +203,16 @@ export default function GovernanceVotePage() {
             </p>
           )}
         </div>
+
+        {!me && (
+          <div className="rounded-xl border border-border bg-bg-elevated/40 p-6 text-center">
+            <p className="text-sm font-medium text-foreground mb-1">Connect to vote</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              One ballot per snapshot wallet, regardless of balance.
+            </p>
+            <ConnectCta>Connect Wallet</ConnectCta>
+          </div>
+        )}
 
         {ELECTION_EXPLANATIONS.map((explanation, idx) => {
           const selected = data?.userChoice === explanation.id;
@@ -264,7 +260,7 @@ export default function GovernanceVotePage() {
                       </code>
 
                       <div className="mt-4 space-y-2">
-                        <p className="text-xs font-medium text-foreground">How it works:</p>
+                        <h4 className="text-xs font-medium text-foreground">Calculation steps</h4>
                         <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
                           {explanation.howItWorks.map((step, i) => (
                             <li key={i}>{step}</li>
@@ -274,7 +270,7 @@ export default function GovernanceVotePage() {
 
                       <div className="mt-4 grid gap-2 sm:grid-cols-2">
                         <div>
-                          <p className="text-xs font-medium text-foreground mb-1">Worked examples:</p>
+                          <h4 className="text-xs font-medium text-foreground mb-1">Worked examples</h4>
                           <div className="space-y-1">
                             {explanation.workedExamples.slice(0, 2).map((example, i) => (
                               <div key={i} className="text-xs text-muted-foreground">
@@ -283,10 +279,29 @@ export default function GovernanceVotePage() {
                             ))}
                           </div>
                         </div>
-                        
+
                         <div>
-                          <p className="text-xs font-medium text-foreground mb-1">{explanation.bestFor}</p>
+                          <h4 className="text-xs font-medium text-foreground mb-1">Best for</h4>
                           <p className="text-xs text-muted-foreground line-clamp-2">{explanation.bestFor}</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <h4 className="text-xs font-medium text-foreground mb-1">Advantages</h4>
+                          <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
+                            {explanation.advantages.map((advantage, i) => (
+                              <li key={i}>{advantage}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-medium text-foreground mb-1">Disadvantages</h4>
+                          <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
+                            {explanation.disadvantages.map((disadvantage, i) => (
+                              <li key={i}>{disadvantage}</li>
+                            ))}
+                          </ul>
                         </div>
                       </div>
                     </div>
@@ -408,13 +423,13 @@ export default function GovernanceVotePage() {
         className="mt-8 text-center"
       >
         <Link
-          href="https://github.com/DBOT-DC/omnom-token"
+          href="https://github.com/DBOT-DC/omnom-snapshot"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-gold transition-colors"
         >
           <Database className="h-4 w-4" />
-          View snapshot source data and documentation
+          Snapshot source data and documentation: DBOT-DC/omnom-snapshot
         </Link>
       </motion.div>
     </div>

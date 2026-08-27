@@ -38,7 +38,7 @@
 
 The $OMNOM DAO Governance Platform is a **snapshot-based, off-chain governance interface** that empowers $OMNOM token holders to collectively decide the future of their community after the Dogechain sunset. With the chain no longer operational as of June 7, 2026, the platform operates entirely on a point-in-time snapshot (Block 59,922,100) capturing **25,431 holder addresses** and their balances — providing a trustless, verifiable anchor of legitimacy without requiring a live blockchain.
 
-This platform is the critical next step for the $OMNOM community. Vitalik Buterin's public burn of **68.9% of total supply** elevated the project's visibility and meme-cultural significance, but it also concentrated the remaining supply among a small group of holders. The platform must balance the reality of that distribution (4 🐋 Whales holding ~77% of circulating supply, 322 🐬 Dolphins with ~15%, and 25,105 🐟 Fish with ~8%) with a governance system that feels fair, transparent, and inviting to every holder — from the largest to the smallest. All verification is **read-only**; no private keys are stored, no transactions are initiated, and no gas fees are required.
+This platform is the critical next step for the $OMNOM community. Vitalik Buterin's public burn of **68.9% of total supply** elevated the project's visibility and meme-cultural significance, but it also concentrated the remaining supply among a small group of holders. The platform must balance the reality of that distribution (a single 🦑 Kraken holding 68.9%; the top 4 wallets — 1 kraken + 3 🐋 Whales — holding ~87.2% of circulating supply) with a governance system that feels fair, transparent, and inviting to every holder — from the largest to the smallest. All verification is **read-only**; no private keys are stored, no transactions are initiated, and no gas fees are required.
 
 ---
 
@@ -100,10 +100,19 @@ Who has the authority to decide $OMNOM's future? Without governance, it defaults
 
 ### The Whale Problem
 
-After Vitalik's burn, the supply distribution is heavily skewed:
-- **🐋 Whales (≥1% supply):** 4 holders control ~77% of circulating supply
-- **🐬 Dolphins (≥0.01% supply):** 322 holders control ~15%
-- **🐟 Fish (rest):** 25,105 holders control ~8%
+After Vitalik's burn, the supply distribution is heavily skewed. The single kraken holds 68.9%; the top four wallets (1 kraken + 3 whales) hold ~87.2% of circulating supply:
+
+| Tier | Emoji | Threshold | Count | Share |
+|---|---|---|---|---|
+| **Kraken** | 🦑 | ≥ 10% of supply | 1 | ~69% |
+| **Whale** | 🐋 | ≥ 1% and < 10% | 3 | ~18% |
+| **Dolphin** | 🐬 | ≥ 0.1% and < 1% | 30 | ~6% |
+| **Shark** | 🦈 | ≥ 0.01% and < 0.1% | 326 | ~6% |
+| **Octopus** | 🐙 | ≥ 0.001% and < 0.01% | 1,078 | ~4% |
+| **Crab** | 🦀 | ≥ 0.0001% and < 0.001% | 1,701 | ~2% |
+| **Seahorse** | 🦄 | < 0.0001% | 22,547 | ~8% |
+
+**Total ever-held wallets:** 25,686. "Fish" is a deprecated legacy enum value (still present in ≤7-day-old JWTs; maps to Seahorse rank; never newly assigned).
 
 Any voting system must acknowledge this reality. Pure token-weighted voting means 4 addresses can outvote 25,000. The platform must surface this tension honestly and implement mechanisms (quorum requirements, delegation, optional quadratic elements) to make governance feel legitimate to all participants.
 
@@ -130,7 +139,7 @@ Any voting system must acknowledge this reality. Pure token-weighted voting mean
 ### Persona 2: "Community Dolphin" 🐬
 
 - **Name:** Priya
-- **Demographics:** 22-35, active in crypto Telegram communities, holds 0.01-1% of $OMNOM supply
+- **Demographics:** 22-35, active in crypto Telegram communities, holds ≥ 0.1% and < 1% of $OMNOM supply
 - **Goals:**
   - Participate in proposals and feel heard
   - Stay connected to the $OMNOM community's direction
@@ -144,10 +153,10 @@ Any voting system must acknowledge this reality. Pure token-weighted voting mean
 - **Technical Proficiency:** Medium — has used MetaMask, understands the basics of signing messages, may need guidance
 - **Success Means:** Voting on at least one proposal per month, feeling her voice contributes to outcomes, and building reputation in the community
 
-### Persona 3: "Fish First-Timer" 🐟
+### Persona 3: "Seahorse First-Timer" 🦄
 
 - **Name:** Jordan
-- **Demographics:** 18-30, college student or early-career, holds <0.01% of $OMNOM supply, may have been "airdropped" or bought small amount on a whim
+- **Demographics:** 18-30, college student or early-career, holds < 0.0001% of $OMNOM supply, may have been "airdropped" or bought small amount on a whim
 - **Goals:**
   - Find out if their $OMNOM tokens are "worth anything"
   - Participate in at least one vote to feel included
@@ -199,11 +208,11 @@ Any voting system must acknowledge this reality. Pure token-weighted voting mean
 
 | ID | User Story | Acceptance Criteria |
 |---|---|---|
-| E1-US1 | As a **Fish First-Timer**, I want to connect my wallet with a single click, so that I can verify my $OMNOM holdings without confusion. | Given the user clicks "Connect Wallet", When the Web3 modal appears, Then MetaMask, WalletConnect, Coinbase Wallet, and Phantom are all listed as options; the connection completes within 5 seconds on a standard connection. |
+| E1-US1 | As a **Seahorse First-Timer**, I want to connect my wallet with a single click, so that I can verify my $OMNOM holdings without confusion. | Given the user clicks "Connect Wallet", When the Web3 modal appears, Then MetaMask, WalletConnect, Coinbase Wallet, and Phantom are all listed as options; the connection completes within 5 seconds on a standard connection. |
 | E1-US2 | As a **Lost Wallet Holder**, I want to search for my address manually, so that I can check if I'm in the snapshot without connecting a wallet. | Given the user enters a valid 0x address in the search bar, When the search completes, Then the platform displays: balance at snapshot, rank, holder class, and date of snapshot — all without requiring wallet connection. |
 | E1-US3 | As a **Community Dolphin**, I want to sign a message to prove wallet ownership, so that I can unlock voting rights without spending gas. | Given a connected wallet, When the platform requests a signature, Then the message is human-readable ("Verify ownership of wallet [0x...] for $OMNOM DAO at [timestamp]"), NO transaction is broadcast, and the signature completes in <3 seconds. |
-| E1-US4 | As a **Whale Watcher**, I want to see a detailed breakdown of my verification status, so that I can confirm the exact balance and rank the snapshot records. | Given a verified whale, When the verification completes, Then the dashboard shows: exact token balance (18-decimal precision), circulating supply percentage, holder rank (#N of 25,431), holder class (🐋), and voting power multiplier. |
-| E1-US5 | As a **Fish First-Timer**, I want to see a friendly "Not Found" screen if my wallet isn't in the snapshot, so that I understand why and what to do next. | Given a connected wallet not in the snapshot, When verification completes, Then the platform displays: a clear message ("Your wallet was not found in the June 7, 2026 snapshot"), an explanation of the snapshot date/block, a link to Blockscout to verify manually, and a link to the Telegram group for help. |
+| E1-US4 | As a **Whale Watcher**, I want to see a detailed breakdown of my verification status, so that I can confirm the exact balance and rank the snapshot records. | Given a verified whale, When the verification completes, Then the dashboard shows: exact token balance (18-decimal precision), circulating supply percentage, holder rank (#N of 25,686), holder class (🐋), and voting power multiplier. |
+| E1-US5 | As a **Seahorse First-Timer**, I want to see a friendly "Not Found" screen if my wallet isn't in the snapshot, so that I understand why and what to do next. | Given a connected wallet not in the snapshot, When verification completes, Then the platform displays: a clear message ("Your wallet was not found in the June 7, 2026 snapshot"), an explanation of the snapshot date/block, a link to Blockscout to verify manually, and a link to the Telegram group for help. |
 | E1-US6 | As a **Community Dolphin**, I want to disconnect my wallet, so that I can connect a different one or browse privately. | Given a connected wallet, When the user clicks "Disconnect", Then the session is cleared, all personal data is hidden, and the platform returns to the public view. No residual session data persists after page reload. |
 | E1-US7 | As a **New Observer**, I want to browse the platform without connecting a wallet, so that I can explore proposals before deciding to participate. | Given an unconnected visitor, When they navigate the platform, Then all proposals, discussions, and vote results (with the exception of individual holder balances) are visible and accessible. |
 | E1-US8 | As a **Whale Watcher**, I want the verification process to use my original Dogechain address, so that my snapshot balance is correctly attributed. | Given a wallet that held OMNOM on Dogechain, When connected via the same address, Then the platform resolves the address against the snapshot CSV and displays the correct balance regardless of current chain state. |
@@ -212,13 +221,13 @@ Any voting system must acknowledge this reality. Pure token-weighted voting mean
 
 | ID | User Story | Acceptance Criteria |
 |---|---|---|
-| E2-US1 | As a **Whale Watcher**, I want to see my total balance, holder class, and voting power at a glance, so that I can quickly understand my governance weight. | Given a verified holder, When the dashboard loads, Then a hero card displays: token balance, holder class badge (🐋🐬🐟), global rank, voting power (tokens × delegation bonus), and % of circulating supply. |
+| E2-US1 | As a **Whale Watcher**, I want to see my total balance, holder class, and voting power at a glance, so that I can quickly understand my governance weight. | Given a verified holder, When the dashboard loads, Then a hero card displays: token balance, holder class badge (🦑🐋🐬🦈🐙🦀🦄), global rank, voting power (tokens × delegation bonus), and % of circulating supply. |
 | E2-US2 | As a **Community Dolphin**, I want to see my voting history, so that I can track which proposals I've supported and my participation rate. | Given a verified holder with past votes, When the dashboard loads, Then a "My Votes" section lists all past votes with: proposal title, vote cast (For/Against/Abstain), timestamp, and whether the proposal passed. |
-| E2-US3 | As a **Fish First-Timer**, I want an onboarding checklist on my dashboard, so that I know what steps to take to fully participate. | Given a newly verified holder, When the dashboard loads, Then an onboarding widget shows: ✅ Wallet Connected, ✅ Verified Holder, ☐ Cast First Vote, ☐ Set Display Name, ☐ Enable Notifications — with clickable links to each action. |
+| E2-US3 | As a **Seahorse First-Timer**, I want an onboarding checklist on my dashboard, so that I know what steps to take to fully participate. | Given a newly verified holder, When the dashboard loads, Then an onboarding widget shows: ✅ Wallet Connected, ✅ Verified Holder, ☐ Cast First Vote, ☐ Set Display Name, ☐ Enable Notifications — with clickable links to each action. |
 | E2-US4 | As a **Whale Watcher**, I want to see delegation status, so that I can manage who I've delegated votes to or who has delegated to me. | Given a holder with active delegations, When the dashboard loads, Then a delegation panel shows: outgoing delegations (address, tokens delegated, option to revoke) and incoming delegations (total delegated voting power). |
 | E2-US5 | As a **Community Dolphin**, I want a quick-link to "Active Proposals" from my dashboard, so that I never miss a vote. | Given any logged-in holder, When the dashboard loads, Then a prominent card shows "Active Proposals" with count and a "Vote Now" CTA linking to the proposals page. |
-| E2-US6 | As a **Lost Wallet Holder**, I want to see community-wide snapshot statistics, so that I can understand the holder distribution even without being verified. | Given an unverified visitor, When they view the dashboard, Then aggregate stats display: total holders (25,431), total supply, whale/dolphin/fish distribution breakdown, and top proposal by participation. |
-| E2-US7 | As a **Fish First-Timer**, I want educational tooltips explaining each dashboard metric, so that I learn governance concepts as I explore. | Given any dashboard view, When the user hovers/taps on any metric (voting power, quorum, delegation), Then a tooltip appears with a plain-language explanation and a "Learn More" link to the governance docs. |
+| E2-US6 | As a **Lost Wallet Holder**, I want to see community-wide snapshot statistics, so that I can understand the holder distribution even without being verified. | Given an unverified visitor, When they view the dashboard, Then aggregate stats display: total holders (25,686), total supply, 7-tier distribution breakdown, and top proposal by participation. |
+| E2-US7 | As a **Seahorse First-Timer**, I want educational tooltips explaining each dashboard metric, so that I learn governance concepts as I explore. | Given any dashboard view, When the user hovers/taps on any metric (voting power, quorum, delegation), Then a tooltip appears with a plain-language explanation and a "Learn More" link to the governance docs. |
 
 ### Epic 3: Proposal Browsing & Discovery
 
@@ -227,7 +236,7 @@ Any voting system must acknowledge this reality. Pure token-weighted voting mean
 | E3-US1 | As a **New Observer**, I want to browse all proposals without logging in, so that I can understand the issues being decided. | Given an unauthenticated visitor, When they navigate to `/proposals`, Then all proposals are listed with title, status, vote counts, and time remaining. Full proposal detail is readable. |
 | E3-US2 | As a **Community Dolphin**, I want to filter proposals by status, type, and recency, so that I can quickly find what matters to me. | Given any user on the proposals page, When they apply filters, Then proposals re-filter in real-time with options for: Status (Draft/Active/Closed/Passed/Failed), Type (Chain Selection/Tokenomics/Treasury/etc.), and Sort (Newest/Most Popular/Closing Soon). |
 | E3-US3 | As a **Whale Watcher**, I want to search proposals by keyword, so that I can find specific topics or referenced addresses. | Given any user, When they type in the search bar, Then results update live, matching against proposal title, description, and comments. Results display with relevance ranking. |
-| E3-US4 | As a **Fish First-Timer**, I want a "TL;DR" summary on each proposal, so that I can understand the gist without reading a wall of text. | Given a proposal with a description >500 characters, When the proposal detail loads, Then a collapsed "TL;DR" section appears at the top, written by the proposer, limited to 280 characters. |
+| E3-US4 | As a **Seahorse First-Timer**, I want a "TL;DR" summary on each proposal, so that I can understand the gist without reading a wall of text. | Given a proposal with a description >500 characters, When the proposal detail loads, Then a collapsed "TL;DR" section appears at the top, written by the proposer, limited to 280 characters. |
 | E3-US5 | As a **Community Dolphin**, I want to see discussion threads on proposals, so that I can read arguments before voting. | Given any proposal, When the detail page loads, Then a comments section supports threaded replies, with: author display name, holder class badge, timestamp, and upvote/downvote on comments. |
 | E3-US6 | As a **New Observer**, I want to see vote distributions visually, so that I can gauge community sentiment at a glance. | Given any proposal (active or closed), When the detail page loads, Then a visual bar chart shows: For (% and token count), Against (% and token count), Abstain (% and token count) — with real-time updates for active proposals. |
 | E3-US7 | As a **Whale Watcher**, I want to see who voted and how, so that I can audit governance outcomes for legitimacy. | Given a closed proposal, When the detail page loads, Then a "Votes" tab lists all voters with: display name, holder class, token weight, and vote choice. Privacy toggle allows voters to hide their individual vote (weight still counts). |
@@ -239,10 +248,10 @@ Any voting system must acknowledge this reality. Pure token-weighted voting mean
 |---|---|---|
 | E4-US1 | As a **Community Dolphin**, I want to create a proposal using a template, so that I can structure my ideas professionally without starting from scratch. | Given a verified holder, When they click "Create Proposal", Then template options appear: Chain Selection, Tokenomics Change, Treasury Allocation, Community Guideline, Technical Spec, General Discussion. Selecting a template pre-fills the form structure. |
 | E4-US2 | As a **Whale Watcher**, I want to set a custom voting period and quorum threshold, so that I can calibrate the proposal's governance requirements. | Given a proposer filling out the form, When they reach "Voting Settings", Then they can set: voting period (72h / 7d / 14d from defaults) and quorum (% of total supply, minimum 5%, maximum 50%). System warns if settings deviate significantly from defaults. |
-| E4-US3 | As a **Fish First-Timer**, I want clear character limits and preview before submitting, so that I don't make formatting mistakes. | Given a proposer filling the form, When they type in any field, Then a live character counter appears (Title: max 120 chars, TL;DR: max 280 chars, Description: max 10,000 chars). A "Preview" button renders the proposal as it will appear to voters. |
+| E4-US3 | As a **Seahorse First-Timer**, I want clear character limits and preview before submitting, so that I don't make formatting mistakes. | Given a proposer filling the form, When they type in any field, Then a live character counter appears (Title: max 120 chars, TL;DR: max 280 chars, Description: max 10,000 chars). A "Preview" button renders the proposal as it will appear to voters. |
 | E4-US4 | As a **Community Dolphin**, I want to save a draft and continue later, so that I don't lose work if I can't finish in one session. | Given a proposer with unsaved changes, When they click "Save Draft", Then the proposal is persisted to their account, accessible from the dashboard. Drafts auto-save every 30 seconds. |
 | E4-US5 | As a **Whale Watcher**, I want to attach links and references to my proposal, so that I can provide supporting evidence. | Given a proposer filling the description, When they paste a URL, Then the system auto-detects links and renders them as clickable. Markdown formatting is supported (headers, bold, lists, code blocks, images via URL). |
-| E4-US6 | As a **Fish First-Timer**, I want to see what happens after I submit (the review process), so that I know what to expect. | Given a proposer about to submit, When they click "Submit for Review", Then a confirmation modal explains: "Your proposal will enter Pending Review status. Moderators will review within 48 hours. You'll be notified when it goes live." |
+| E4-US6 | As a **Seahorse First-Timer**, I want to see what happens after I submit (the review process), so that I know what to expect. | Given a proposer about to submit, When they click "Submit for Review", Then a confirmation modal explains: "Your proposal will enter Pending Review status. Moderators will review within 48 hours. You'll be notified when it goes live." |
 | E4-US7 | As a **Whale Watcher**, I want to edit my proposal after submission (before voting begins), so that I can refine it based on community feedback. | Given a proposal in Draft or Pending Review status, When the proposer clicks "Edit", Then they can modify any field. Changes are logged with a visible "Edited [timestamp]" badge and a revision history accessible to voters. |
 | E4-US8 | As a **Community Dolphin**, I want to understand minimum requirements for creating proposals, so that I don't waste time on an attempt that will be rejected. | Given a user viewing the Create Proposal page, When the page loads, Then a requirements card clearly states: must be verified holder, minimum holding of [X] $OMNOM (TBD — see Open Questions), and any other prerequisites. |
 
@@ -252,10 +261,10 @@ Any voting system must acknowledge this reality. Pure token-weighted voting mean
 |---|---|---|
 | E5-US1 | As a **Community Dolphin**, I want to cast a vote (For/Against/Abstain) with one click, so that I can participate quickly and confidently. | Given a verified holder on an active proposal, When they select a vote option and click "Cast Vote", Then a confirmation modal shows: vote choice, voting power being cast, and "This action cannot be changed." On confirm, the vote is recorded with a signature. |
 | E5-US2 | As a **Whale Watcher**, I want to see the impact of my vote before casting, so that I can make an informed decision. | Given a whale viewing an active proposal, When they hover over a vote option, Then a preview shows: "Your vote would represent X% of the current tally" and "Y% of total voting power." |
-| E5-US3 | As a **Fish First-Timer**, I want to understand what For/Against/Abstain means, so that I don't vote incorrectly. | Given any voter on an active proposal, When the voting interface loads, Then each option has a tooltip: "For = Support this proposal," "Against = Oppose this proposal," "Abstain = Participate without affecting outcome (counts toward quorum)." |
-| E5-US4 | As a **Whale Watcher**, I want to change my vote before the proposal closes, so that I can revise my position if new information emerges. | Given a voter who has already cast, When they view the proposal, Then a "Change Vote" button appears (disappears in the final 12 hours of voting). Changing requires a new signature confirmation. |
+| E5-US3 | As a **Seahorse First-Timer**, I want to understand what For/Against/Abstain means, so that I don't vote incorrectly. | Given any voter on an active proposal, When the voting interface loads, Then each option has a tooltip: "For = Support this proposal," "Against = Oppose this proposal," "Abstain = Participate without affecting outcome (counts toward quorum)." |
+| E5-US4 | As a **Whale Watcher**, I want to change my vote before the proposal closes, so that I can revise my position if new information emerges. | Given a voter who has already cast, When they view the proposal, Then a "Change Vote" button appears (available until voting closes). Changing requires a new signature confirmation. |
 | E5-US5 | As a **Community Dolphin**, I want to see real-time vote updates after I cast, so that I know the current state of the proposal. | Given a voter who just cast, When they return to the proposal, Then vote tallies update live (poll every 10 seconds, optimistic UI updates). A toast notification confirms "Vote recorded successfully." |
-| E5-US6 | As a **Fish First-Timer**, I want to receive a reminder if an important proposal is about to close and I haven't voted, so that I don't miss deadlines. | Given a verified holder with notifications enabled, When an active proposal has <24 hours remaining and the user hasn't voted, Then a notification is sent via configured channel (Telegram/email). |
+| E5-US6 | As a **Seahorse First-Timer**, I want to receive a reminder if an important proposal is about to close and I haven't voted, so that I don't miss deadlines. | Given a verified holder with notifications enabled, When an active proposal has <24 hours remaining and the user hasn't voted, Then a notification is sent via configured channel (Telegram/email). |
 | E5-US7 | As a **Whale Watcher**, I want to vote with delegated tokens, so that if others have delegated to me, their weight is included. | Given a holder with incoming delegations, When they vote, Then the voting power display includes both their own tokens AND delegated tokens. The vote receipt shows a breakdown. |
 | E5-US8 | As a **Lost Wallet Holder**, I want to see which proposals I would have been eligible to vote on, so that I understand what I'm missing. | Given an unverified user searching their address, When they view the dashboard, Then a section shows "Proposals Your Holdings Could Vote On" with a message about wallet recovery and delegation options. |
 
@@ -265,7 +274,7 @@ Any voting system must acknowledge this reality. Pure token-weighted voting mean
 |---|---|---|
 | E6-US1 | As a **Community Dolphin**, I want to set a display name, so that I'm identifiable in proposals and comments instead of just a 0x address. | Given a verified holder, When they navigate to Settings, Then they can set a unique display name (3-30 chars, alphanumeric + underscores). Display name appears on proposals, comments, and the voter list. |
 | E6-US2 | As a **Whale Watcher**, I want to toggle privacy settings for my votes and holdings, so that I can control what's publicly visible. | Given a verified holder, When they navigate to Privacy Settings, Then toggles exist for: "Show my holdings publicly" (default: ON), "Show my individual votes" (default: ON), "Show in voter rankings" (default: ON). Each toggle has clear explanation. |
-| E6-US3 | As a **Fish First-Timer**, I want to connect multiple wallets, so that if my $OMNOM is spread across addresses, all holdings count toward my voting power. | Given a verified holder, When they click "Add Wallet" in Settings, Then they can connect additional addresses. Each address is verified against the snapshot independently. Voting power aggregates across all linked addresses. |
+| E6-US3 | As a **Seahorse First-Timer**, I want to connect multiple wallets, so that if my $OMNOM is spread across addresses, all holdings count toward my voting power. | Given a verified holder, When they click "Add Wallet" in Settings, Then they can connect additional addresses. Each address is verified against the snapshot independently. Voting power aggregates across all linked addresses. |
 | E6-US4 | As a **Community Dolphin**, I want to manage notification preferences, so that I only receive alerts that matter to me. | Given a verified holder, When they navigate to Notifications, Then they can toggle: Telegram DMs, Email, In-App. Granular controls for: New Proposals, Proposal Closing Soon, Vote Results, Delegation Changes, Comments on My Proposals. |
 | E6-US5 | As a **Whale Watcher**, I want to manage delegations from a settings page, so that I can bulk-update delegation in one place. | Given a holder with delegations, When they navigate to Delegations, Then a table shows all incoming/outgoing delegations with: address (masked), amount, date set, and Revoke/Edit actions. |
 | E6-US6 | As a **New Observer**, I want to view any public holder's profile, so that I can see their governance participation record. | Given a public profile, When a visitor clicks on a display name, Then the profile shows: holder class badge, number of proposals created, votes cast, participation rate, and public voting history (if privacy allows). |
@@ -275,11 +284,11 @@ Any voting system must acknowledge this reality. Pure token-weighted voting mean
 | ID | User Story | Acceptance Criteria |
 |---|---|---|
 | E7-US1 | As a **Community Dolphin**, I want to receive a Telegram notification when a new proposal goes live, so that I can review and vote promptly. | Given a holder with Telegram notifications enabled, When a proposal transitions to Active status, Then a message is sent to their Telegram via @DBOT_DC_BOT containing: proposal title, TL;DR, type, voting deadline, and a deep link to vote. |
-| E7-US2 | As a **Fish First-Timer**, I want an in-app notification bell, so that I don't need to enable external channels to stay informed. | Given any logged-in holder, When they receive a notification, Then a bell icon in the nav bar shows an unread count badge. Clicking opens a dropdown with all recent notifications, sorted by timestamp. |
+| E7-US2 | As a **Seahorse First-Timer**, I want an in-app notification bell, so that I don't need to enable external channels to stay informed. | Given any logged-in holder, When they receive a notification, Then a bell icon in the nav bar shows an unread count badge. Clicking opens a dropdown with all recent notifications, sorted by timestamp. |
 | E7-US3 | As a **Whale Watcher**, I want to receive alerts when a proposal is about to close without reaching quorum, so that I can rally community participation. | Given a holder with alerts enabled, When an active proposal has <24 hours remaining and quorum is not met, Then an alert is sent: "⚠️ Proposal [Title] may not reach quorum. [X]% needed, [Y]% current." |
 | E7-US4 | As a **Community Dolphin**, I want to receive results when a proposal closes, so that I know the outcome even if I didn't vote. | Given a holder with results notifications enabled, When a proposal transitions to Closed/Passed/Failed, Then a notification includes: proposal title, final vote counts, quorum status, and a link to the full results. |
 | E7-US5 | As a **Whale Watcher**, I want to be notified if someone delegates tokens to me, so that I'm aware of increased responsibility. | Given a holder with delegation alerts enabled, When a new incoming delegation is confirmed, Then a notification shows: delegator address (masked), token amount, and a link to manage delegations. |
-| E7-US6 | As a **Fish First-Timer**, I want a weekly digest email summarizing DAO activity, so that I can catch up even if I miss individual notifications. | Given a holder with email enabled, When the weekly digest fires (configurable day/time), Then an email includes: new proposals this week, active proposals closing soon, passed/failed results, and participation statistics. |
+| E7-US6 | As a **Seahorse First-Timer**, I want a weekly digest email summarizing DAO activity, so that I can catch up even if I miss individual notifications. | Given a holder with email enabled, When the weekly digest fires (configurable day/time), Then an email includes: new proposals this week, active proposals closing soon, passed/failed results, and participation statistics. |
 
 ---
 
@@ -312,11 +321,15 @@ Any voting system must acknowledge this reality. Pure token-weighted voting mean
 ### FR-3: Holder Dashboard
 
 - **FR-3.1** Display **exact token balance** from snapshot (18-decimal precision, formatted to human-readable values).
-- **FR-3.2** Display **holder rank** (e.g., "#347 of 25,431").
-- **FR-3.3** Display **holder class badge:**
-  - 🐋 **Whale:** ≥1% of total supply (at snapshot, post-burn)
-  - 🐬 **Dolphin:** ≥0.01% and <1% of total supply
-  - 🐟 **Fish:** <0.01% of total supply
+- **FR-3.2** Display **holder rank** (e.g., "#347 of 25,686").
+- **FR-3.3** Display **holder class badge** (7-tier model):
+  - 🦑 **Kraken:** ≥ 10% of total supply
+  - 🐋 **Whale:** ≥ 1% and < 10% of total supply
+  - 🐬 **Dolphin:** ≥ 0.1% and < 1% of total supply
+  - 🦈 **Shark:** ≥ 0.01% and < 0.1% of total supply
+  - 🐙 **Octopus:** ≥ 0.001% and < 0.01% of total supply
+  - 🦀 **Crab:** ≥ 0.0001% and < 0.001% of total supply
+  - 🦄 **Seahorse:** < 0.0001% of total supply
 - **FR-3.4** Display **voting power** (see FR-5 for calculation method).
 - **FR-3.5** Display **voting history** (proposals voted on, choices made, timestamps).
 - **FR-3.6** Display **participation rate** (votes cast / proposals eligible to vote on).
@@ -329,7 +342,7 @@ Any voting system must acknowledge this reality. Pure token-weighted voting mean
 - **FR-4.1** **Create:** Verified holders can create proposals using templates or from scratch. Minimum holding threshold TBD (see Open Questions).
 - **FR-4.2** **Edit:** Proposers can edit proposals in Draft or Pending Review status. All edits are logged with timestamps.
 - **FR-4.3** **Comment:** Any verified holder can comment on proposals. Comments support Markdown formatting and threaded replies.
-- **FR-4.4** **Vote:** Verified holders can cast one vote per proposal (For/Against/Abstain). Vote changes allowed until final 12 hours.
+- **FR-4.4** **Vote:** Verified holders can cast one vote per proposal (For/Against/Abstain). Vote changes allowed any time while voting is open (until voting closes).
 - **FR-4.5** **Delegate:** Holders can delegate their voting power to any other verified holder. Delegation is revocable at any time.
 - **FR-4.6** **Moderate:** Moderators can flag, hide, or remove spam/abusive comments and proposals. Actions are logged.
 - **FR-4.7** **Search:** Full-text search across proposal titles, descriptions, and comments.
@@ -343,20 +356,21 @@ Any voting system must acknowledge this reality. Pure token-weighted voting mean
 
 The voting mechanism is the single most consequential design decision for this platform. After thorough analysis of the supply distribution, we recommend a **hybrid approach** that balances influence proportionality with anti-whale safeguards:
 
-- **Base voting power = sqrt(token_balance) × 10⁹** (normalized so that even Fish holders have meaningful votes)
+- **Base voting power = sqrt(token_balance) × 10⁹** (normalized so that even Seahorse holders have meaningful votes)
 - This means:
   - A Whale with 10,000,000 tokens gets voting power of **~3,162**
   - A Dolphin with 100,000 tokens gets voting power of **~316**
-  - A Fish with 1,000 tokens gets voting power of **~31.6**
-  - A Fish with 100 tokens gets voting power of **~10**
+  - A Shark with 10,000 tokens gets voting power of **~100**
+  - A Seahorse with 1,000 tokens gets voting power of **~31.6**
+  - A Seahorse with 100 tokens gets voting power of **~10**
 - **Delegated tokens are NOT square-rooted** — they transfer voting power directly (prevents delegation gaming)
 - **Quorum = 20% of total supply** (in raw tokens, not voting power) must participate for a result to be binding. If quorum is not met, the proposal is marked "Failed — Quorum Not Met."
 - **Pass threshold = 60% of voting power cast** must be "For" (simple majority is insufficient given whale concentration)
 
 **Rationale:**
-- Pure 1-token-1-vote gives 4 whales absolute control (77% of supply). This is mathematically democratic but practically oligarchic.
-- Pure one-person-one-vote gives 25,105 Fish 99.98% of votes, which may not align with the economic interests of the project.
-- Quadratic voting preserves the *direction* of token-weighted influence (whales still have the most power) while dramatically compressing the ratio (from 100,000:1 to ~1,000:1). A coalition of dolphins can meaningfully challenge a whale.
+- Pure 1-token-1-vote gives the top 4 wallets (1 kraken + 3 whales) absolute control (~87.2% of supply). This is mathematically democratic but practically oligarchic.
+- Pure one-person-one-vote gives 22,547 Seahorses ~99.98% of votes, which may not align with the economic interests of the project.
+- Quadratic voting preserves the *direction* of token-weighted influence (whales still have the most power) while dramatically compressing the ratio (from 100,000:1 to ~1,000:1). A coalition of sharks/dolphins can meaningfully challenge a whale.
 
 **See Section 8 for full analysis and comparison.**
 
@@ -492,9 +506,9 @@ STEP 7: Three possible outcomes:
 
 | Criteria | 1-Token-1-Vote | Quadratic Voting | One-Person-One-Vote | **Recommended: Hybrid QTV** |
 |---|---|---|---|---|
-| **Whale influence** | 🐋 4 holders = 77% of votes | 🐋 4 holders = ~50% of effective votes | 🐋 4 holders = 0.016% of votes | 🐋 4 holders = ~40-50% of effective votes |
-| **Dolphin influence** | 🐬 322 holders = ~15% of votes | 🐬 322 holders = ~30% of effective votes | 🐬 322 holders = ~1.3% of votes | 🐬 322 holders = ~30% of effective votes |
-| **Fish influence** | 🐟 25K holders = ~8% of votes | 🐟 25K holders = ~20% of effective votes | 🐟 25K holders = ~98.7% of votes | 🐟 25K holders = ~20% of effective votes |
+| **Whale influence** | 🐋 3 whales = ~18% of supply (~87.2% circulating with kraken) | 🐋 3 whales = ~40% of effective votes | 🐋 3 whales = 0.012% of votes | 🐋 3 whales = ~35-45% of effective votes |
+| **Shark influence** | 🦈 326 holders = ~6% of supply | 🦈 326 holders = ~25% of effective votes | 🦈 326 holders = ~1.3% of votes | 🦈 326 holders = ~25% of effective votes |
+| **Seahorse influence** | 🦄 22,547 holders = ~8% of supply | 🦄 22,547 holders = ~20% of effective votes | 🦄 22,547 holders = ~98.7% of votes | 🦄 22,547 holders = ~20% of effective votes |
 | **Economic alignment** | ✅ High — voting scales with stake | ⚠️ Medium — diluted but directional | ❌ Low — decoupled from holdings | ✅ High — direction preserved, ratio compressed |
 | **Anti-plutocracy** | ❌ None | ✅ Significant | ✅ Total | ✅ Moderate to Strong |
 | **Sybil resistance** | ✅ High (tokens cost money) | ⚠️ Moderate (splitting wallets reduces power) | ❌ None (splitting = more votes) | ✅ High (sqrt + delegation rules prevent gaming) |
@@ -516,12 +530,13 @@ where:
 
 | Holder | Raw Balance | Voting Power (QTV) | Share of Total Voting Power |
 |---|---|---|---|
-| 🐋 Whale #1 | ~5,000,000,000 | 70,710 | ~29% |
-| 🐋 Whale #2 | ~2,000,000,000 | 44,721 | ~18% |
-| 🐋 Whale #3 | ~1,500,000,000 | 38,729 | ~16% |
-| 🐋 Whale #4 | ~500,000,000 | 22,360 | ~9% |
-| 🐬 All Dolphins (322) | ~600,000,000 total | ~24,494 each | ~24% total |
-| 🐟 All Fish (25,105) | ~400,000,000 total | ~126 each | ~8% total |
+| 🦑 Kraken #1 | ~44,630,000,000 | 211,235 | ~44% |
+| 🐋 Whale #2 | ~5,470,000,000 | 73,960 | ~15% |
+| 🐋 Whale #3 | ~5,280,000,000 | 72,660 | ~15% |
+| 🐋 Whale #4 | ~1,030,000,000 | 32,090 | ~7% |
+| 🐬 All Dolphins (30) | ~80,000,000 total | ~8,944 each | ~6% total |
+| 🦈 All Sharks (326) | ~90,000,000 total | ~1,660 each | ~6% total |
+| 🦄 All Seahorses (22,547) | ~320,000,000 total | ~119 each | ~7% total |
 
 *(Approximate figures for illustration — exact distribution requires snapshot analysis)*
 
@@ -626,11 +641,11 @@ Each proposal type has a pre-structured template:
 
 | Proposal Type | Minimum Holding | Rationale |
 |---|---|---|
-| Chain Selection | ≥0.01% supply (🐬 Dolphin+) | High-impact decisions should be proposed by stakeholders |
-| Tokenomics Change | ≥0.01% supply (🐬 Dolphin+) | Economic decisions require meaningful stake |
+| Chain Selection | ≥0.01% supply (🦈 Shark+) | High-impact decisions should be proposed by stakeholders |
+| Tokenomics Change | ≥0.01% supply (🦈 Shark+) | Economic decisions require meaningful stake |
 | Treasury Allocation | Any verified holder | Community should be able to propose resource needs freely |
 | Community Guideline | Any verified holder | Inclusive governance for community norms |
-| Technical Specification | ≥0.01% supply (🐬 Dolphin+) | Technical proposals need some domain credibility |
+| Technical Specification | ≥0.01% supply (🦈 Shark+) | Technical proposals need some domain credibility |
 | General Discussion | Any verified holder | Lowest barrier for sentiment gathering |
 
 ---
@@ -740,8 +755,8 @@ Each proposal type has a pre-structured template:
 
 ### Q1: Minimum Holding to Create Proposals
 
-**Current proposal:** 🐬 Dolphin+ (≥0.01% supply) for high-impact types, any verified holder for low-impact types.
-**Needs:** Community vote on whether this threshold is appropriate. Some Fish holders may feel excluded from proposal creation. Alternative: any verified holder can create any type, but Dolphin+ proposals get "Priority Review" status.
+**Current proposal:** 🦈 Shark+ (≥0.01% supply) for high-impact types, any verified holder for low-impact types.
+**Needs:** Community vote on whether this threshold is appropriate. Some Seahorse holders may feel excluded from proposal creation. Alternative: any verified holder can create any type, but Shark+ proposals get "Priority Review" status.
 
 ### Q2: Non-Holder Viewing Permissions
 
@@ -786,7 +801,7 @@ Each proposal type has a pre-structured template:
 ### Q10: Emergency Decisions
 
 **Current proposal:** No emergency decision mechanism in v1.
-**Needs:** What if a critical time-sensitive decision arises (e.g., a chain offers a migration window that closes in 48 hours)? Consider an "emergency proposal" type with 24-hour voting and 35% quorum, triggerable by 3+ Whale signatures or a moderator vote.
+**Needs:** What if a critical time-sensitive decision arises (e.g., a chain offers a migration window that closes in 48 hours)? Consider an "emergency proposal" type with 24-hour voting and 35% quorum, triggerable by 3+ Whale/Kraken signatures or a moderator vote.
 
 ---
 
@@ -802,18 +817,22 @@ Each proposal type has a pre-structured template:
 | **Decimals** | 18 |
 | **Snapshot Block** | 59,922,100 |
 | **Snapshot Timestamp** | June 7, 2026 23:59:58 UTC |
-| **Total Holders** | 25,431 |
-| **Total Supply (at snapshot)** | TBD (verify from chain data) |
-| **Burned by Vitalik** | 68.9% of total supply |
+| **Total Holders** | 25,686 (ever-held) |
+| **Total Supply (at snapshot)** | ~64,734,666,666 OMNOM (pre-burn) |
+| **Burned by Vitalik** | 68.9% of total supply (Kraken alone) |
 | **Circulating Supply (post-burn)** | ~31.1% of total supply |
 
-### Holder Distribution (Post-Burn)
+### Holder Distribution (7-Tier Model)
 
-| Class | Threshold | Count | Est. % of Circulating Supply |
+| Tier | Threshold | Count | Est. % of Circulating Supply |
 |---|---|---|---|
-| 🐋 Whale | ≥1% of supply | 4 | ~77% |
-| 🐬 Dolphin | ≥0.01% and <1% | 322 | ~15% |
-| 🐟 Fish | <0.01% | 25,105 | ~8% |
+| 🦑 Kraken | ≥ 10% of supply | 1 | ~69% |
+| 🐋 Whale | ≥ 1% and < 10% | 3 | ~18% |
+| 🐬 Dolphin | ≥ 0.1% and < 1% | 30 | ~6% |
+| 🦈 Shark | ≥ 0.01% and < 0.1% | 326 | ~6% |
+| 🐙 Octopus | ≥ 0.001% and < 0.01% | 1,078 | ~4% |
+| 🦀 Crab | ≥ 0.0001% and < 0.001% | 1,701 | ~2% |
+| 🦄 Seahorse | < 0.0001% | 22,547 | ~8% |
 
 ### Top Holders (Post-Burn)
 

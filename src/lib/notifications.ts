@@ -1,8 +1,6 @@
 import { db } from "@/lib/db";
 import { getProposalById } from "@/lib/proposal-service";
 import { getUserSettings, getUserIdByAddress } from "@/lib/user-settings";
-import { notifyUserTelegram } from "@/lib/telegram";
-import { sendNotificationEmail } from "@/lib/email";
 import { NOTIFICATION_TYPE_CONFIG } from "@/lib/constants";
 import {
   NotificationType,
@@ -13,10 +11,8 @@ import {
 /**
  * Notification service (GOVERNANCE_MECHANICS.md §14, TECHNICAL_ARCHITECTURE.md §4).
  *
- * Three channels:
- *   1. In-app  — a row in the `notifications` table (always written).
- *   2. Telegram — sent via @DBOT_DC_BOT when the user has Telegram enabled.
- *   3. Email    — sent via Resend when the user has email enabled.
+ * In-app only — a row in the `notifications` table is always written on each
+ * notification. Push channels (Telegram, Email) have been removed.
  *
  * CRITICAL — graceful degradation: every public helper here swallows delivery
  * errors. Telegram / Email failures are logged but never re-thrown, so a
@@ -86,29 +82,6 @@ export async function createNotification(params: CreateParams): Promise<void> {
   } catch (err) {
     console.error("[notifications] failed to write in-app row:", err);
     return;
-  }
-
-  // 2. Telegram fan-out (best-effort).
-  if (settings.telegram.enabled && settings.telegram.chatId) {
-    await notifyUserTelegram(
-      settings.telegram.chatId,
-      params.title,
-      params.body,
-    ).catch((err) =>
-      console.error("[notifications] telegram dispatch error:", err),
-    );
-  }
-
-  // 3. Email fan-out (best-effort).
-  if (settings.email.enabled && settings.email.address) {
-    await sendNotificationEmail(
-      settings.email.address,
-      params.type,
-      params.title,
-      params.body,
-    ).catch((err) =>
-      console.error("[notifications] email dispatch error:", err),
-    );
   }
 }
 

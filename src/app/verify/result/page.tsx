@@ -187,7 +187,7 @@ function NotFoundState() {
     },
     {
       label: "Blockscout Explorer",
-      href: "https://github.com/DBOT-DC/omnom-token",
+      href: "https://github.com/DBOT-DC/omnom-snapshot",
       icon: <Search className="h-4 w-4" aria-hidden />,
       external: true,
     },
