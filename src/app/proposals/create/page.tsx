@@ -426,39 +426,62 @@ export default function CreateProposalPage() {
         on whether to ratify.
       </p>
 
-      {/* ── Draft controls row: status indicator + drafts picker */}
+      {/* ── Draft controls row: status indicator + manual save + drafts picker */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-bg-elevated/40 px-4 py-2.5 text-xs">
         <DraftStatusIndicator
           state={autosave.autoSaveState}
           savedAgoSeconds={savedAgoSeconds}
           enabled={Boolean(me)}
         />
-        {autosave.drafts.length > 0 && (
-          <div className="relative">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setDraftsOpen((v) => !v)}
-              aria-expanded={draftsOpen}
-              aria-haspopup="menu"
-              className="h-7 px-2 text-xs"
-            >
-              <FolderOpen className="h-3.5 w-3.5" aria-hidden />
-              {autosave.drafts.length} saved draft{autosave.drafts.length === 1 ? "" : "s"}
-            </Button>
-            {draftsOpen && (
-              <DraftsMenu
-                drafts={autosave.drafts}
-                onLoad={(d) => loadDraftIntoWizard(d)}
-                onDelete={async (id) => {
-                  await autosave.deleteDraft(id);
-                }}
-                onClose={() => setDraftsOpen(false)}
-              />
+        <div className="flex items-center gap-2">
+          {/* Manual "Save draft" — kicks off an immediate save bypassing the
+              debounce. Useful before navigating away or refreshing the page. */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={async () => {
+              await autosave.saveDraftNow();
+            }}
+            disabled={!Boolean(me) || autosave.autoSaveState === "saving"}
+            className="h-7 px-2 text-xs"
+            data-testid="save-draft-button"
+            aria-label="Save draft now"
+          >
+            {autosave.autoSaveState === "saving" ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+            ) : (
+              <Save className="h-3.5 w-3.5" aria-hidden />
             )}
-          </div>
-        )}
+            Save draft
+          </Button>
+          {autosave.drafts.length > 0 && (
+            <div className="relative">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setDraftsOpen((v) => !v)}
+                aria-expanded={draftsOpen}
+                aria-haspopup="menu"
+                className="h-7 px-2 text-xs"
+              >
+                <FolderOpen className="h-3.5 w-3.5" aria-hidden />
+                {autosave.drafts.length} saved draft{autosave.drafts.length === 1 ? "" : "s"}
+              </Button>
+              {draftsOpen && (
+                <DraftsMenu
+                  drafts={autosave.drafts}
+                  onLoad={(d) => loadDraftIntoWizard(d)}
+                  onDelete={async (id) => {
+                    await autosave.deleteDraft(id);
+                  }}
+                  onClose={() => setDraftsOpen(false)}
+                />
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Step indicator */}
