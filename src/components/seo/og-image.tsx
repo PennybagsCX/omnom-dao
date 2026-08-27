@@ -1,38 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const OG_SIZE = { width: 1200, height: 630 } as const;
-export const OG_RUNTIME = "edge" as const;
 export const OG_CONTENT_TYPE = "image/png" as const;
-
-/**
- * Loads Inter from Google Fonts at edge runtime. Cached aggressively
- * (`force-cache`) so the first request after deploy pays the network cost
- * once and every subsequent request hits Vercel's edge cache.
- *
- * Only weights 400 + 800 are bundled — keeps the edge payload small while
- * matching the live site's typography (`src/app/layout.tsx`).
- */
-async function loadInterFonts(): Promise<
-  { regular: ArrayBuffer; bold: ArrayBuffer }
-> {
-  const fetchAsArrayBuffer = async (url: string): Promise<ArrayBuffer> => {
-    const res = await fetch(url, { cache: "force-cache" });
-    if (!res.ok) {
-      throw new Error(`Failed to fetch font ${url}: ${res.status}`);
-    }
-    return res.arrayBuffer();
-  };
-
-  const [regular, bold] = await Promise.all([
-    fetchAsArrayBuffer(
-      "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZhrib2Bg-4.woff2",
-    ),
-    fetchAsArrayBuffer(
-      "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuFuYMZhrib2Bg-4.woff2",
-    ),
-  ]);
-  return { regular, bold };
-}
 
 /**
  * Build the canonical OMNOM DAO social-share card.
@@ -41,11 +10,20 @@ async function loadInterFonts(): Promise<
  * `/opengraph-image` (Facebook, LinkedIn, Discord, Slack, Telegram, iMessage)
  * and `/twitter-image` (X / Twitter card).
  *
+ * Note on fonts: we deliberately use the edge default sans-serif stack
+ * instead of fetching Inter from Google Fonts. The cross-origin fetch
+ * from `fonts.gstatic.com` is unreliable in some Vercel edge regions and
+ * caused 500s on first deploy. The system fallback (`-apple-system,
+ * BlinkMacSystemFont, "Segoe UI", ...`) renders very close to Inter on
+ * every platform that consumes these cards (Apple devices use SF Pro,
+ * Windows uses Segoe UI, Linux uses Inter if installed — all close enough
+ * to be indistinguishable on social previews).
+ *
  * Layout (top → bottom):
- *   1. Brand mark — "OMNOM" (gold) · "DAO" (white), Inter 700
- *   2. Election tagline — "Foundational Governance Election" (uppercase, dim)
- *   3. Headline — "Pick the Voting Math" (gold, Inter 800)
- *   4. Choices — "Linear · 1W1V · Tiered · Quadratic" (white, Inter 400)
+ *   1. Brand mark — "OMNOM" (gold) · "DAO" (white), bold
+ *   2. Election tagline — uppercase, dim
+ *   3. Headline — gold
+ *   4. Choices — white
  *   5. Window + eligibility + canonical URL
  *
  * Color tokens mirror `src/app/globals.css`:
@@ -54,11 +32,7 @@ async function loadInterFonts(): Promise<
  *   --color-text-dim    (#A1A1AA) — muted labels
  *   --color-foreground  (#FAFAFA) — body text
  */
-export async function buildOgCard(
-  altText: string,
-): Promise<ImageResponse> {
-  const { regular, bold } = await loadInterFonts();
-
+export function buildOgCard(): ImageResponse {
   return new ImageResponse(
     (
       <div
@@ -72,7 +46,8 @@ export async function buildOgCard(
           backgroundColor: "#000000",
           backgroundImage:
             "linear-gradient(135deg, #000000 0%, #0f0f0f 50%, #000000 100%)",
-          fontFamily: '"Inter"',
+          fontFamily:
+            '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
           padding: "64px 80px",
           position: "relative",
         }}
@@ -199,12 +174,6 @@ export async function buildOgCard(
         </div>
       </div>
     ),
-    {
-      ...OG_SIZE,
-      fonts: [
-        { name: "Inter", data: regular, weight: 400, style: "normal" },
-        { name: "Inter", data: bold, weight: 800, style: "normal" },
-      ],
-    },
+    OG_SIZE,
   );
 }

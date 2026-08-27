@@ -1,5 +1,3 @@
-import type { ImageResponse } from "next/og";
-
 import { buildOgCard, OG_SIZE, OG_CONTENT_TYPE } from "@/components/seo/og-image";
 
 // Next.js requires `runtime` to be a literal string in the route file
@@ -13,11 +11,9 @@ export const contentType = OG_CONTENT_TYPE;
 /**
  * Dynamic Open Graph image for Facebook, LinkedIn, Discord, Slack,
  * Telegram, iMessage, Farcaster, and any other platform that consumes
- * the Open Graph protocol. Uses Inter (matching the live site) via the
- * shared `buildOgCard` helper.
+ * the Open Graph protocol. See `src/components/seo/og-image.tsx` for the
+ * shared layout helper.
  */
-export default async function OpenGraphImage(): Promise<ImageResponse> {
-  return buildOgCard(
-    "OMNOM DAO Foundational Governance Election — vote now at dao.omnom.dog",
-  );
+export default function OpenGraphImage() {
+  return buildOgCard();
 }
