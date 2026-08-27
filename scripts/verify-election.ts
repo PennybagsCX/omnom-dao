@@ -148,19 +148,29 @@ async function main(): Promise<void> {
     currentlyHolds: boolean;
   };
   type HoldersFile = {
-    totalHolders: number;
-    distribution: Record<string, number>;
+    sortedAddresses: string[];
     holders: Record<string, Holder>;
+    metadata: {
+      totalHolders: number;
+      distribution: Record<string, number>;
+      blockNumber: number;
+    };
   };
   const snapshot = JSON.parse(bytes.toString("utf-8")) as HoldersFile;
 
   assert(
-    `snapshot.totalHolders = ${REQUIRED_TOTAL}`,
-    snapshot.totalHolders === REQUIRED_TOTAL,
-    `got ${snapshot.totalHolders}`,
+    `snapshot.metadata.totalHolders = ${REQUIRED_TOTAL}`,
+    snapshot.metadata?.totalHolders === REQUIRED_TOTAL,
+    `got ${snapshot.metadata?.totalHolders}`,
   );
 
-  const dist = snapshot.distribution;
+  assert(
+    `snapshot metadata.blockNumber = 59922100`,
+    snapshot.metadata?.blockNumber === 59_922_100,
+    `got ${snapshot.metadata?.blockNumber}`,
+  );
+
+  const dist = snapshot.metadata?.distribution ?? {};
   let distOk = true;
   for (const [tier, expected] of Object.entries(REQUIRED_TIER_DIST)) {
     const got = dist[tier];
@@ -170,6 +180,11 @@ async function main(): Promise<void> {
     }
   }
   assert("tier distribution matches EXPECTED_DIST", distOk);
+
+  assert(
+    `holders map has ${REQUIRED_TOTAL} entries`,
+    Object.keys(snapshot.holders ?? {}).length === REQUIRED_TOTAL,
+  );
 
   // ── Summary ─────────────────────────────────────────────────────
   console.log();

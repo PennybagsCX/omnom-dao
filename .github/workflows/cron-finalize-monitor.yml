@@ -1,0 +1,84 @@
+name: cron-finalize-monitor
+
+# Verifies the daily /api/v1/cron/finalize sweep runs successfully.
+#
+# Schedule: 00:10 UTC daily — runs 5 minutes after the Vercel cron at 00:05 UTC
+# to give the sweep time to complete. If the sweep returns non-200, the job
+# fails and creates a GitHub issue so the operator is paged.
+#
+# Required repo secrets:
+#   CRON_HEALTH_URL    — production URL (e.g. https://dao.omnom.dog)
+#   CRON_HEALTH_SECRET — must match Vercel env CRON_SECRET
+
+on:
+  schedule:
+    - cron: "10 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  verify-cron:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Verify cron sweep fired and returned 200
+        id: ping
+        env:
+          CRON_URL: ${{ vars.CRON_HEALTH_URL || secrets.CRON_HEALTH_URL }}
+          CRON_SECRET: ${{ secrets.CRON_HEALTH_SECRET }}
+        run: |
+          if [ -z "$CRON_URL" ]; then
+            echo "::error::CRON_HEALTH_URL not configured (set as repo variable or secret)"
+            exit 1
+          fi
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_HEALTH_SECRET not configured"
+            exit 1
+          fi
+
+          # POST with the CRON_SECRET bearer token (matches src/app/api/v1/cron/finalize/route.ts)
+          HTTP_CODE=$(curl -sS -o /tmp/cron-response.json -w "%{http_code}" \
+            -X POST "$CRON_URL/api/v1/cron/finalize" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            --max-time 30)
+
+          echo "HTTP status: $HTTP_CODE"
+          echo "Response body:"
+          cat /tmp/cron-response.json
+          echo ""
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Cron sweep returned HTTP $HTTP_CODE (expected 200)"
+            exit 1
+          fi
+
+          echo "✅ Cron sweep verified — HTTP 200"
+
+      - name: Open issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 cron-finalize failed on ${yesterday}`,
+              body: [
+                'The daily `/api/v1/cron/finalize` sweep did not return HTTP 200.',
+                '',
+                '- Check Vercel logs for the corresponding cron run',
+                '- Verify `CRON_SECRET` matches between Vercel env and this workflow secret',
+                '- Manually curl the endpoint to debug',
+                '',
+                '```',
+                `POST ${process.env.CRON_HEALTH_URL || 'https://dao.omnom.dog'}/api/v1/cron/finalize`,
+                'Authorization: Bearer <CRON_SECRET>',
+                '```',
+              ].join('\n'),
+              labels: ['bug', 'cron'],
+            });

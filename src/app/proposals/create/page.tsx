@@ -269,6 +269,15 @@ export default function CreateProposalPage() {
         </Link>
       </Button>
 
+      <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        Submit a Proposal
+      </h1>
+      <p className="mb-6 text-sm text-muted-foreground">
+        Draft a new governance proposal for OMNOM DAO. Choose a template, fill in
+        the details, and submit for admin review. After approval, holders vote
+        on whether to ratify.
+      </p>
+
       {/* Step indicator */}
       <div className="mb-6">
         <div className="mb-2 flex items-center justify-between text-sm">

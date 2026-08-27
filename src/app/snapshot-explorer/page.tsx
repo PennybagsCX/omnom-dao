@@ -605,7 +605,11 @@ function SnapshotExplorer({ seed }: { seed: string | null }) {
           Source: {summary?.sourceRepository}/{summary?.sourceFile} @ {summary?.sourceCommit?.slice(0, 7)}
           {" · "}
           <a
-            href={`https://github.com/${summary?.sourceRepository}/tree/${summary?.sourceCommit}`}
+            href={
+              summary?.sourceRepository && summary?.sourceCommit
+                ? `https://github.com/${summary.sourceRepository}/tree/${summary.sourceCommit}`
+                : "https://github.com/PennybagsCX/omnom-dao"
+            }
             target="_blank"
             rel="noopener noreferrer"
             className="text-gold underline decoration-gold/40 underline-offset-2 hover:decoration-gold"
