@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Submit a Proposal",
+  title: "Submit a Proposal · OMNOM DAO",
   description:
     "Submit a new governance proposal to OMNOM DAO. Six templates, gasless submission, admin review before activation.",
   alternates: { canonical: "/proposals/create" },

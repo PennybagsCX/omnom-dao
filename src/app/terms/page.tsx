@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — Advisory Governance, No Fiduciary Duty",
+  title: "Terms of Service",
   description:
-    "Terms governing use of the OMNOM DAO platform — advisory governance, no on-chain execution, no fiduciary duty. NSW Australia jurisdiction.",
+    "Terms governing use of the OMNOM DAO platform — advisory governance, no on-chain execution, no fiduciary duty.",
   alternates: { canonical: "/terms" },
   openGraph: {
     title: "Terms of Service · OMNOM DAO",

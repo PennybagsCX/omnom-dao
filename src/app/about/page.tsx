@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "About OMNOM DAO — Mission, Team & Technology",
+  title: "About OMNOM DAO — Mission, Team & Tech",
   description:
-    "OMNOM DAO is an off-chain, snapshot-based governance platform for $OMNOM token holders, anchored to Dogechain block 59,922,100 (captured 2026-06-07). Open source, gasless, and verifiable.",
+    "OMNOM DAO is an off-chain, snapshot-based governance platform for $OMNOM holders, anchored to Dogechain block 59,922,100.",
   alternates: { canonical: "/about" },
   openGraph: {
     title: "About OMNOM DAO",

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — How OMNOM DAO Handles Your Data",
+  title: "Privacy Policy",
   description:
     "How OMNOM DAO collects, stores, and uses data — SIWE messages, JWT sessions, IP addresses, and analytics. GDPR-aligned.",
   alternates: { canonical: "/privacy" },
