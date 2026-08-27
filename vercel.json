@@ -3,7 +3,7 @@
   "crons": [
     {
       "path": "/api/v1/cron/finalize",
-      "schedule": "*/15 * * * *"
+      "schedule": "5 0 * * *"
     }
   ]
 }
