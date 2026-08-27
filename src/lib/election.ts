@@ -9,6 +9,16 @@
 export const ELECTION_KEY = "foundational-2026";
 export const ELECTION_DURATION_DAYS = 14;
 
+/**
+ * FGE timing — pinned at deploy time so the homepage countdown doesn't need
+ * an extra API call (homepage is public; the live endpoint is auth-gated).
+ * These MUST stay in lockstep with the values pinned in the prod Turso
+ * `governance_election` row by `scripts/seed-db.ts`. If the election is
+ * ever rebalanced, redeploy with updated values.
+ */
+export const FGE_VOTING_STARTS_AT = "2026-08-29T00:00:00.000Z";
+export const FGE_VOTING_ENDS_AT = "2026-09-12T00:00:00.000Z";
+
 export const ELECTION_CHOICES = [
   "QUADRATIC",
   "ONE_WALLET_ONE_VOTE",

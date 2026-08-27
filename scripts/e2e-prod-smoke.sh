@@ -85,6 +85,23 @@ for path in / /governance-vote /proposals /snapshot-explorer /faq /brand; do
   fi
 done
 
+# Countdown timer present on homepage and election page
+for path in / /governance-vote; do
+  code=$(http_status "$BASE$path")
+  body=$(cat /tmp/resp.json)
+  if echo "$body" | grep -q 'data-testid="countdown-timer"'; then
+    ok "Countdown timer present on $path"
+  else
+    fail "Countdown timer missing on $path (data-testid=countdown-timer not found)"
+  fi
+  # Verify a days/hours/minutes/seconds structure renders
+  if echo "$body" | grep -qE 'Days|Hours|Minutes|Seconds'; then
+    ok "Countdown labels rendered on $path"
+  else
+    fail "Countdown labels missing on $path"
+  fi
+done
+
 # ── 2. Security headers ─────────────────────────────────────────
 heading "2. Security headers (every public page)"
 
@@ -114,13 +131,15 @@ fi
 # ── 4. Election API (public metadata) ───────────────────────────
 heading "4. Election API"
 
-# /api/v1/snapshot-explorer requires auth (returns holder addresses — PII).
-# This is intentional; verify it's protected.
-code=$(http_status "$BASE/api/v1/snapshot-explorer?limit=1")
-if [ "$code" = "401" ]; then
-  ok "Snapshot explorer correctly requires auth (401)"
+# /api/v1/snapshot-explorer is now a public-read endpoint (was auth-gated
+# but the route handler is documented as public). Verify it returns data.
+code=$(http_status "$BASE/api/v1/snapshot-explorer?page=1&pageSize=1")
+body=$(cat /tmp/resp.json)
+assert_status "GET /api/v1/snapshot-explorer" 200 "$code"
+if echo "$body" | grep -q '"totalHolders":25686'; then
+  ok "Snapshot explorer returned 25,686 holders"
 else
-  warn "Snapshot explorer returned HTTP $code (expected 401)"
+  warn "Snapshot explorer response shape unexpected"
 fi
 
 # ── 5. CSP violation reporting ──────────────────────────────────

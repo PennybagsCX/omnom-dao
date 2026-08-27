@@ -20,9 +20,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { CountdownTimer } from "@/components/shared/countdown-timer";
 import { ConnectCta } from "@/components/wallet/connect-cta";
 import { apiGet, fetchApi, useCurrentUser } from "@/lib/api";
-import { type ElectionChoice } from "@/lib/election";
+import { type ElectionChoice, FGE_VOTING_STARTS_AT, FGE_VOTING_ENDS_AT } from "@/lib/election";
 import { ELECTION_EXPLANATIONS, ELECTION_FAQ } from "@/lib/election-explanations";
 import { cn } from "@/lib/utils";
 
@@ -139,6 +140,32 @@ export default function GovernanceVotePage() {
           Decide how future OMNOMDAO proposals should be counted. Every wallet in
           the verified ever-held snapshot gets one ballot, changeable until close.
         </p>
+      </motion.div>
+
+      {/* Countdown — between title and stats. Uses API target if available, */}
+      {/* else falls back to the pinned FGE constants. */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05, duration: 0.4, ease: EASE }}
+        className="mx-auto mt-6 max-w-xl"
+      >
+        <CountdownTimer
+          target={data?.startsAt ?? FGE_VOTING_STARTS_AT}
+          label={
+            data?.phase === "OPEN"
+              ? "Voting closes in"
+              : data?.phase === "CLOSED"
+                ? "Voting closed"
+                : "Voting opens in"
+          }
+          closedText={data?.phase === "CLOSED" ? "Voting closed — results are final" : undefined}
+          ariaLabel={
+            data?.phase === "OPEN"
+              ? "Countdown to Foundational Governance Election closing"
+              : "Countdown to Foundational Governance Election opening"
+          }
+        />
       </motion.div>
 
       {/* Stats - Centered on all breakpoints */}

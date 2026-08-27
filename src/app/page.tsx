@@ -18,11 +18,13 @@ import { HolderStatsBar } from "@/components/shared/holder-stats-bar";
 import { ProposalCard } from "@/components/shared/proposal-card";
 import { ProposalRow } from "@/components/shared/proposal-row";
 import { EmptyState } from "@/components/shared/empty-state";
+import { CountdownTimer } from "@/components/shared/countdown-timer";
 import type { ReactNode } from "react";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { ConnectCta } from "@/components/wallet/connect-cta";
 import { useProposals, useCurrentUser } from "@/lib/api";
 import { ProposalStatus } from "@/types";
+import { FGE_VOTING_STARTS_AT, FGE_VOTING_ENDS_AT } from "@/lib/election";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -166,6 +168,15 @@ export default function HomePage() {
           <span>·</span>
           <span>Voting model TBD by community</span>
         </motion.p>
+      </section>
+
+      {/* ── FGE countdown (between hero CTA and stats bar) ───── */}
+      <section className="mx-auto w-full max-w-2xl px-4 pb-10 sm:px-6 lg:px-8">
+        <CountdownTimer
+          target={FGE_VOTING_STARTS_AT}
+          label={`Voting opens in · ends ${new Date(FGE_VOTING_ENDS_AT).toISOString().slice(0, 10)}`}
+          ariaLabel="Countdown to Foundational Governance Election opening"
+        />
       </section>
 
       {/* ── Stats bar ───────────────────────────────────────── */}
