@@ -27,6 +27,18 @@ import { requireAuth } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+/**
+ * Maximum number of saved drafts a single wallet may keep at once.
+ *
+ * Prevents a runaway user (or a buggy client) from filling the Turso free
+ * tier's 500 MB storage cap with thousands of stale drafts. When the user
+ * hits the cap and creates a new draft, the oldest draft is deleted first.
+ *
+ * Set high enough that real users never hit it (most users will keep <5
+ * drafts active at a time); low enough that abuse stays bounded.
+ */
+const MAX_DRAFTS_PER_USER = 20;
+
 const PROPOSAL_TYPES = [
   "CHAIN_SELECTION",
   "TOKENOMICS_CHANGE",
@@ -162,6 +174,30 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   // No id → create a new draft row. The DEFAULT (lower(hex(randomblob(16))))
   // generates a 32-char hex id in SQLite/Turso.
+  //
+  // First, enforce the per-user draft cap: if the user is already at
+  // MAX_DRAFTS_PER_USER drafts, delete the oldest one(s) to make room for
+  // the new one. This is a single DELETE with LIMIT, so it costs the same
+  // as one extra write regardless of how many drafts we drop.
+  const countResult = await db.execute({
+    sql: "SELECT COUNT(*) AS n FROM proposal_drafts WHERE wallet_address = ?",
+    args: [wallet],
+  });
+  const currentCount = Number(countResult.rows[0]?.n ?? 0);
+  if (currentCount >= MAX_DRAFTS_PER_USER) {
+    const toDelete = currentCount - MAX_DRAFTS_PER_USER + 1;
+    await db.execute({
+      sql: `DELETE FROM proposal_drafts
+            WHERE id IN (
+              SELECT id FROM proposal_drafts
+              WHERE wallet_address = ?
+              ORDER BY updated_at ASC
+              LIMIT ?
+            )`,
+      args: [wallet, toDelete],
+    });
+  }
+
   const inserted = await db.execute({
     sql: `INSERT INTO proposal_drafts
             (wallet_address, type, title, summary, body_markdown, tags,

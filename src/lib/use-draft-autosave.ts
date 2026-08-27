@@ -60,7 +60,10 @@ export type AutoSaveState = "idle" | "saving" | "saved" | "error";
 interface UseDraftAutosaveOptions {
   /** Initial state — used to seed the first auto-save. */
   initial: DraftInput;
-  /** Debounce delay (ms) between last change and the auto-save POST. */
+  /** Debounce delay (ms) between last change and the auto-save POST.
+   *  Default 4000ms — short enough to feel responsive, long enough to
+   *  cut ~25% of writes vs. 3s without affecting UX. Increase further
+   *  if Turso free-tier write budget becomes tight. */
   debounceMs?: number;
   /** Disable auto-save (e.g. when the user is in a guest state). */
   enabled?: boolean;
@@ -89,7 +92,7 @@ const QUERY_KEY = ["proposals", "drafts"] as const;
 
 export function useDraftAutosave({
   initial,
-  debounceMs = 3000,
+  debounceMs = 4000,
   enabled = true,
 }: UseDraftAutosaveOptions): UseDraftAutosaveReturn {
   const qc = useQueryClient();
