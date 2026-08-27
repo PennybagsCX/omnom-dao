@@ -220,6 +220,8 @@ export interface Proposal {
   status: ProposalStatus;
   /** Checksummed EVM address of the proposal author */
   authorAddress: string;
+  /** Author's snapshot holder class (null when the author never held $OMNOM) */
+  authorHolderClass?: HolderClass | null;
   /** ISO 8601 creation timestamp */
   createdAt: string;
   /** ISO 8601 — when voting opens (null until approved) */

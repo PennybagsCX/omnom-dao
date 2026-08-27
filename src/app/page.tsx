@@ -275,31 +275,31 @@ export default function HomePage() {
             <LoadingSkeleton variant="rows" count={4} />
           </div>
         ) : recentProposals.length > 0 ? (
-          <div className="space-y-3">
-            {/* Featured: newest proposal as a full card */}
-            <div>
-              <p className="mb-2 text-xs uppercase tracking-wider text-text-dim">Newest</p>
-              {/* Hide the VoteBar when no votes have been cast — an all-zero
-                  bar is visual clutter on Pending Review / Failed items. */}
-              <ProposalCard
-                proposal={recentProposals[0]}
-                hideVoteBar={
-                  recentProposals[0].votesFor +
-                    recentProposals[0].votesAgainst +
-                    recentProposals[0].votesAbstain ===
-                  0
-                }
-              />
-            </div>
-            {/* Remaining proposals as compact rows */}
-            {recentProposals.length > 1 && (
-              <div className="overflow-hidden rounded-lg border border-border bg-bg-surface/40">
-                {recentProposals.slice(1, 5).map((p) => (
-                  <ProposalRow key={p.id} proposal={p} />
-                ))}
+          (() => {
+            const newest = recentProposals[0];
+            if (!newest) return null;
+            const newestTotalVotes =
+              newest.votesFor + newest.votesAgainst + newest.votesAbstain;
+            return (
+              <div className="space-y-3">
+                {/* Featured: newest proposal as a full card */}
+                <div>
+                  <p className="mb-2 text-xs uppercase tracking-wider text-text-dim">Newest</p>
+                  {/* Hide the VoteBar when no votes have been cast — an all-zero
+                      bar is visual clutter on Pending Review / Failed items. */}
+                  <ProposalCard proposal={newest} hideVoteBar={newestTotalVotes === 0} />
+                </div>
+                {/* Remaining proposals as compact rows */}
+                {recentProposals.length > 1 && (
+                  <div className="overflow-hidden rounded-lg border border-border bg-bg-surface/40">
+                    {recentProposals.slice(1, 5).map((p) => (
+                      <ProposalRow key={p.id} proposal={p} />
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })()
         ) : (
           <EmptyState
             icon={<ClipboardList className="h-12 w-12" />}
