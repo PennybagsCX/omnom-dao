@@ -42,6 +42,14 @@ function isPublicSnapshotExplorerRead(method: string, pathname: string): boolean
   return method === "GET" && pathname === "/api/v1/snapshot-explorer";
 }
 
+// GET /api/v1/governance-vote is a public read — election timing,
+// eligibility counts, and tally are public knowledge. Viewer-specific
+// fields (userChoice / userEligible) require the `?me=true` flag, and
+// the route handler enforces that internally. POST remains auth-gated.
+function isPublicGovernanceVoteRead(method: string, pathname: string): boolean {
+  return method === "GET" && pathname === "/api/v1/governance-vote";
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method.toUpperCase();
@@ -60,6 +68,10 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isPublicSnapshotExplorerRead(method, pathname)) {
+    return NextResponse.next();
+  }
+
+  if (isPublicGovernanceVoteRead(method, pathname)) {
     return NextResponse.next();
   }
 
