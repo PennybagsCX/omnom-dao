@@ -1,8 +1,8 @@
 import type { ImageResponse } from "next/og";
 
-import { buildOgCard, OG_SIZE, OG_RUNTIME, OG_CONTENT_TYPE } from "@/components/seo/og-image";
+import { buildOgCard, OG_SIZE, OG_CONTENT_TYPE } from "@/components/seo/og-image";
 
-export const runtime = OG_RUNTIME;
+export const runtime = "edge";
 export const alt = "OMNOM DAO Foundational Governance Election";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
