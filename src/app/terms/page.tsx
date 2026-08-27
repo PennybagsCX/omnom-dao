@@ -24,7 +24,7 @@ export default function TermsPage() {
 
       <Section title="1. Scope">
         <p className="text-foreground/90">
-          OMNOM DAO (the "Platform") is an off-chain, advisory governance
+          OMNOM DAO (the &ldquo;Platform&rdquo;) is an off-chain, advisory governance
           platform for holders of the $OMNOM token. By using the Platform you
           agree to these terms. The Platform is open-source software provided
           as-is; nothing here constitutes investment, legal, or tax advice.
@@ -101,7 +101,7 @@ export default function TermsPage() {
 
       <Section title="7. Disclaimers">
         <p className="text-foreground/90">
-          The Platform is provided "as is" without warranty of any kind. The
+          The Platform is provided &ldquo;as is&rdquo; without warranty of any kind. The
           Core Team is not liable for any losses arising from Platform
           downtime, snapshot disputes, third-party wallet failures, or
           regulatory actions affecting $OMNOM in any jurisdiction.

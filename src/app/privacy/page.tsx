@@ -26,7 +26,7 @@ export default function PrivacyPage() {
         This policy explains what data OMNOM DAO collects, why, and how long we
         keep it. The short version: we collect the minimum necessary to verify
         your snapshot eligibility and record your ballot; we never sell data; we
-        delete what we don't need.
+        delete what we don&apos;t need.
       </p>
 
       <Section title="1. What we collect">
