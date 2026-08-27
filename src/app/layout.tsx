@@ -31,20 +31,23 @@ export const metadata: Metadata = {
     template: "%s · $OMNOM DAO",
   },
   description:
-    "Off-chain, snapshot-based governance for $OMNOM token holders. Connect your wallet, verify your holdings, and vote on what happens next.",
+    "The OMNOM DAO Foundational Governance Election is live Aug 29 → Sep 12, 2026. 25,686 eligible $OMNOM wallets pick the voting math: linear, one-wallet-one-vote, tiered, or quadratic. Gasless, off-chain, verifiable.",
   applicationName: "$OMNOM DAO",
-  keywords: ["OMNOM", "DAO", "governance", "Dogechain", "snapshot", "SIWE"],
+  keywords: ["OMNOM", "DAO", "governance", "Dogechain", "snapshot", "SIWE", "election", "FGE", "foundational"],
   authors: [{ name: "OMNOM DAO Core Team" }],
   openGraph: {
-    title: "$OMNOM DAO — Community Governance",
-    description: "Snapshot-based governance for $OMNOM token holders.",
+    title: "OMNOM DAO — Foundational Governance Election (Aug 29 → Sep 12)",
+    description:
+      "25,686 eligible $OMNOM wallets pick the voting math: linear, one-wallet-one-vote, tiered, or quadratic. Gasless, off-chain, verifiable.",
     type: "website",
     url: siteUrl,
+    siteName: "OMNOM DAO",
   },
   twitter: {
     card: "summary_large_image",
-    title: "$OMNOM DAO — Community Governance",
-    description: "Snapshot-based governance for $OMNOM | token holders.",
+    title: "OMNOM DAO — Foundational Governance Election",
+    description:
+      "25,686 eligible $OMNOM wallets pick the voting math: linear, 1W1V, tiered, or quadratic. Live Aug 29 → Sep 12, 2026.",
   },
   robots: { index: true, follow: true },
 };
