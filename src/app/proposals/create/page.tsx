@@ -324,7 +324,7 @@ export default function CreateProposalPage() {
   if (!me) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 sm:px-6">
-        <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl text-center">
           Submit a Proposal
         </h1>
         <p className="mb-6 text-sm text-muted-foreground">
@@ -345,7 +345,7 @@ export default function CreateProposalPage() {
   if (!me.votingPower) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 sm:px-6">
-        <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl text-center">
           Submit a Proposal
         </h1>
         <p className="mb-6 text-sm text-muted-foreground">
@@ -384,7 +384,7 @@ export default function CreateProposalPage() {
   if (!proposalsUnlocked && !election) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 text-center sm:px-6">
-        <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl text-center">
           Submit a Proposal
         </h1>
         <p className="text-sm text-muted-foreground">Loading election status…</p>
@@ -393,7 +393,7 @@ export default function CreateProposalPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-3xl px-4 py-8 text-center sm:px-6 lg:px-8">
       <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground">
         <Link href="/proposals">
           <ArrowLeft className="h-4 w-4" aria-hidden /> Cancel
@@ -432,10 +432,10 @@ export default function CreateProposalPage() {
         </motion.div>
       )}
 
-      <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+      <h1 className="mb-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl text-center">
         Submit a Proposal
       </h1>
-      <p className="mb-4 text-sm text-muted-foreground">
+      <p className="mb-4 text-sm text-muted-foreground text-center">
         Draft a new governance proposal for OMNOM DAO. Choose a template, fill in
         the details, and submit for admin review. After approval, holders vote
         on whether to ratify.
@@ -660,7 +660,7 @@ function StepType({
   return (
     <div>
       <h2 className="text-lg font-semibold text-foreground">Choose a proposal type</h2>
-      <p className="mt-1 text-sm text-muted-foreground text-center sm:text-left">
+      <p className="mt-1 text-sm text-muted-foreground text-center">
         Each type has its own quorum, voting period, and minimum holder tier.
       </p>
 
@@ -693,7 +693,7 @@ function StepType({
                 className={cn("h-6 w-6", cfg.accentClass)}
               />
               <h3 className={cn("mt-2 font-semibold", cfg.accentClass)}>{cfg.label}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">{cfg.description}</p>
+              <p className="mt-1 text-xs text-muted-foreground text-center">{cfg.description}</p>
               <div className="mt-3 flex flex-wrap justify-center gap-1.5">
                 <span className="rounded bg-bg-elevated px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                   Quorum {def.quorum}%
@@ -730,10 +730,10 @@ function StepContent({
   const titleError = showValidation && title.trim().length < 10;
   const bodyError = showValidation && body.trim().length < 50;
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 text-left">
       <div>
-        <h2 className="text-lg font-semibold text-foreground text-center sm:text-left">Write your proposal</h2>
-        <p className="mt-1 text-sm text-muted-foreground text-center sm:text-left">
+        <h2 className="text-lg font-semibold text-foreground text-center">Write your proposal</h2>
+        <p className="mt-1 text-sm text-muted-foreground text-center">
           Title must be 10–200 characters. Body must be at least 50 characters.
           Markdown is supported.
         </p>
@@ -777,7 +777,10 @@ function StepContent({
       </div>
 
       {/* Tags */}
-      <TagInput value={tags} onChange={onTags} />
+      <div className="space-y-1.5">
+        <Label className="text-left">Tags (optional)</Label>
+        <TagInput value={tags} onChange={onTags} />
+      </div>
     </div>
   );
 }
@@ -833,8 +836,7 @@ function TagInput({
   };
 
   return (
-    <div className="space-y-1.5">
-      <Label>Tags (optional)</Label>
+    <>
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-bg-elevated/30 p-2.5">
         {currentTags.map((tag) => (
           <span
@@ -886,10 +888,10 @@ function TagInput({
         </div>
       )}
 
-      <p className="text-xs text-text-dim">
+      <p className="text-xs text-text-dim text-left">
         Press Enter or comma to add a tag. Click a tag to remove it.
       </p>
-    </div>
+    </>
   );
 }
 
@@ -909,14 +911,14 @@ function StepParameters({
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-lg font-semibold text-foreground">Voting parameters</h2>
-        <p className="mt-1 text-sm text-muted-foreground text-center sm:text-left">
+        <h2 className="text-lg font-semibold text-foreground text-center">Voting parameters</h2>
+        <p className="mt-1 text-sm text-muted-foreground text-center">
           Configure how long voting stays open. Quorum is set per proposal type.
         </p>
       </div>
 
       {type && (
-        <div className="flex items-center gap-2 rounded-lg border border-border bg-bg-elevated/40 p-3">
+        <div className="flex items-center justify-center gap-2 rounded-lg border border-border bg-bg-elevated/40 p-3 text-center">
           <ProposalTypeBadge type={type} />
           <span className="text-sm text-muted-foreground">Selected type</span>
         </div>
@@ -929,13 +931,13 @@ function StepParameters({
           value={String(durationHours)}
           onValueChange={(v) => onDuration(Number(v))}
         >
-          <SelectTrigger aria-label="Voting duration">
-            <SelectValue />
+          <SelectTrigger aria-label="Voting duration" className="justify-center">
+            <SelectValue className="text-center" />
           </SelectTrigger>
           <SelectContent>
             {DURATION_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
+              <SelectItem key={opt.value} value={opt.value} className="justify-center">
+                <span className="flex-1 text-center">{opt.label}</span>
               </SelectItem>
             ))}
           </SelectContent>
@@ -946,11 +948,11 @@ function StepParameters({
       <div className="space-y-1.5">
         <Label>Quorum requirement</Label>
         <div className="rounded-md border border-border bg-bg-elevated/40 p-3">
-          <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline justify-center gap-2">
             <span className="text-2xl font-bold text-gold">{effectiveQuorum}%</span>
             <span className="text-xs text-text-dim">of total supply</span>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-xs text-muted-foreground text-center">
             Minimum participation required for the result to be valid. This is the
             default for the selected type.
           </p>
@@ -958,18 +960,18 @@ function StepParameters({
       </div>
 
       {/* Pass threshold info */}
-      <div className="rounded-lg border border-amber-600/30 bg-amber-500/5 p-3 text-xs text-muted-foreground">
+      <div className="rounded-lg border border-amber-600/30 bg-amber-500/5 p-3 text-xs text-muted-foreground text-center">
         <AlertTriangle className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden />
         Lower quorum thresholds make proposals easier to pass but reduce
         legitimacy. The default reflects community standards for this type.
       </div>
 
       {/* Summary */}
-      <div className="rounded-lg border border-border p-3">
-        <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-foreground">
+      <div className="rounded-lg border border-border p-3 text-center">
+        <p className="mb-2 flex items-center justify-center gap-1.5 text-sm font-medium text-foreground">
           <ClipboardList className="h-3.5 w-3.5" aria-hidden /> Summary
         </p>
-        <ul className="space-y-1 text-xs text-muted-foreground">
+        <ul className="space-y-1 text-xs text-muted-foreground text-center">
           <li>Duration: {humanizeHours(durationHours)}</li>
           <li>Quorum: {effectiveQuorum}% of total supply</li>
           <li>1 token = 1 vote (linear)</li>
@@ -1000,7 +1002,7 @@ function StepReview({
     <div className="space-y-5">
       <div>
         <h2 className="text-lg font-semibold text-foreground">Review & submit</h2>
-        <p className="mt-1 text-sm text-muted-foreground text-center sm:text-left">
+        <p className="mt-1 text-sm text-muted-foreground text-center">
           Please review carefully. Once submitted, your proposal enters a review
           queue and cannot be edited after approval.
         </p>
@@ -1070,7 +1072,7 @@ function StepReview({
 
 function ReviewBlock({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-border p-3">
+    <div className="rounded-lg border border-border p-3 text-center">
       <p className="mb-1 text-xs font-medium uppercase tracking-wide text-text-dim">
         {label}
       </p>
