@@ -106,9 +106,11 @@ export default function CreateProposalPage() {
   const { data: election } = useQuery({
     queryKey: ["election", "phase"],
     queryFn: () =>
-      fetchApi<{ phase: "UPCOMING" | "OPEN" | "CLOSED"; endsAt: string }>(
-        "/api/v1/governance-vote",
-      ),
+      fetchApi<{
+        phase: "UPCOMING" | "OPEN" | "CLOSED";
+        startsAt: string;
+        endsAt: string;
+      }>("/api/v1/governance-vote"),
     // Refresh every minute; cheap (small JSON payload).
     refetchInterval: 60_000,
     staleTime: 30_000,
@@ -398,8 +400,11 @@ export default function CreateProposalPage() {
         </Link>
       </Button>
 
-      {/* ── Locked banner — shown above the wizard when FGE is not closed */}
-      {showLockedBanner && election?.endsAt && (
+      {/* ── Locked banner — phase-aware countdown. Target depends on phase: */}
+      {/*   • UPCOMING → counting down to voting opens (Aug 29) */}
+      {/*   • OPEN     → counting down to voting closes (Sep 12) */}
+      {/*   • CLOSED   → hidden (proposals are unlocked, no banner needed) */}
+      {showLockedBanner && election && (
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
@@ -407,11 +412,20 @@ export default function CreateProposalPage() {
           className="mb-6"
           data-testid="proposals-locked-banner"
         >
-          <CountdownTimer
-            target={election.endsAt}
-            label="Submission unlocks in"
-            ariaLabel="Countdown to proposal submission unlock"
-          />
+          {election.phase === "UPCOMING" && election.startsAt && (
+            <CountdownTimer
+              target={election.startsAt}
+              label="Voting opens in"
+              ariaLabel="Countdown to voting opening"
+            />
+          )}
+          {election.phase === "OPEN" && election.endsAt && (
+            <CountdownTimer
+              target={election.endsAt}
+              label="Voting closes in"
+              ariaLabel="Countdown to voting closing"
+            />
+          )}
           <p className="mt-3 text-center text-xs text-text-dim">
             Drafts auto-save below. Submit activates after the election closes.
           </p>
