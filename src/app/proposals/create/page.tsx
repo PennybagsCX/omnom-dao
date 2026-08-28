@@ -44,6 +44,7 @@ import { CountdownTimer } from "@/components/shared/countdown-timer";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ConnectCta } from "@/components/wallet/connect-cta";
 import { useCreateProposal, useCurrentUser, useTags, fetchApi } from "@/lib/api";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useDraftAutosave, type DraftRecord } from "@/lib/use-draft-autosave";
 import { PROPOSAL_TYPE_CONFIG } from "@/lib/constants";
@@ -441,7 +442,22 @@ export default function CreateProposalPage() {
             variant="ghost"
             size="sm"
             onClick={async () => {
-              await autosave.saveDraftNow();
+              try {
+                const id = await autosave.saveDraftNow();
+                if (id) {
+                  toast.success("Draft saved", {
+                    description: "Your draft is safe and synced across devices.",
+                  });
+                } else {
+                  toast.error("Couldn't save draft", {
+                    description: "Please check your connection and try again.",
+                  });
+                }
+              } catch {
+                toast.error("Couldn't save draft", {
+                  description: "Please check your connection and try again.",
+                });
+              }
             }}
             disabled={!Boolean(me) || autosave.autoSaveState === "saving"}
             className="h-7 px-2 text-xs"
@@ -1145,7 +1161,13 @@ function DraftsMenu({
           >
             <button
               type="button"
-              onClick={() => onLoad(d)}
+              onClick={() => {
+                onLoad(d);
+                toast.success("Draft loaded", {
+                  description:
+                    d.title || "(untitled) — you can keep editing.",
+                });
+              }}
               className="min-w-0 flex-1 text-left"
             >
               <p className="truncate text-sm font-medium text-foreground">
@@ -1160,7 +1182,14 @@ function DraftsMenu({
               aria-label={`Delete draft "${d.title || "(untitled)"}"`}
               onClick={async (e) => {
                 e.stopPropagation();
-                await onDelete(d.id);
+                try {
+                  await onDelete(d.id);
+                  toast.success("Draft deleted", {
+                    description: d.title || "(untitled)",
+                  });
+                } catch {
+                  toast.error("Couldn't delete draft");
+                }
               }}
               className="rounded p-1 text-text-dim opacity-0 transition-opacity hover:bg-danger/15 hover:text-danger group-hover:opacity-100"
             >

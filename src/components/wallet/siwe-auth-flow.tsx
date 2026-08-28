@@ -81,12 +81,20 @@ export function SiweAuthFlow({ children }: { children: ReactNode }) {
 
   // Auto-open the verify dialog on a fresh wallet connection (not on the very
   // first mount, so returning authenticated users aren't prompted).
+  //
+  // Critical: skip the auto-open while `me` is still undefined (loading).
+  // On page reload with a valid JWT cookie, `address` becomes set (wagmi
+  // reconnects to the Ledger) BEFORE `me` has resolved from /api/v1/me.
+  // Without this guard, an authenticated Ledger user gets the
+  // "Check your wallet to sign" modal on every reload.
   useEffect(() => {
     if (!mountedRef.current) {
       mountedRef.current = true;
       prevAddressRef.current = address;
       return;
     }
+    // Wait for the auth probe to settle — don't auto-open mid-loading.
+    if (me === undefined) return;
     if (address && address !== prevAddressRef.current && !me) {
       setOpen(true);
     }

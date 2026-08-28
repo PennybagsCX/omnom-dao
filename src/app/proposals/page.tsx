@@ -32,7 +32,7 @@ import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { useCurrentUser, useProposals, fetchApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { FGE_VOTING_ENDS_AT } from "@/lib/election";
+import { FGE_VOTING_ENDS_AT, FGE_VOTING_STARTS_AT } from "@/lib/election";
 import {
   ProposalStatus,
   ProposalType,
@@ -154,9 +154,11 @@ function ProposalsList({ seed }: { seed: ProposalsUrlSeed | null }) {
   const { data: election } = useQuery({
     queryKey: ["election", "phase"],
     queryFn: () =>
-      fetchApi<{ phase: "UPCOMING" | "OPEN" | "CLOSED"; endsAt: string }>(
-        "/api/v1/governance-vote",
-      ),
+      fetchApi<{
+        phase: "UPCOMING" | "OPEN" | "CLOSED";
+        startsAt: string;
+        endsAt: string;
+      }>("/api/v1/governance-vote"),
     refetchInterval: 5 * 60_000,
     staleTime: 60_000,
   });
@@ -331,8 +333,8 @@ function ProposalsList({ seed }: { seed: ProposalsUrlSeed | null }) {
           )}
         </header>
 
-        {/* ── Unlock banner — visible only until FGE closes ── */}
-        {!proposalsUnlocked && election?.endsAt && (
+        {/* ── Unlock banner — phase-aware countdown ── */}
+        {!proposalsUnlocked && election && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -340,11 +342,20 @@ function ProposalsList({ seed }: { seed: ProposalsUrlSeed | null }) {
             className="mx-auto mt-6 max-w-xl"
             data-testid="proposals-unlock-banner"
           >
-            <CountdownTimer
-              target={election.endsAt}
-              label="Proposal submission unlocks in"
-              ariaLabel="Countdown to proposal submission unlock"
-            />
+            {election.phase === "UPCOMING" && election.startsAt && (
+              <CountdownTimer
+                target={election.startsAt}
+                label="Voting opens in · unlock after election"
+                ariaLabel="Countdown to voting opening"
+              />
+            )}
+            {election.phase === "OPEN" && election.endsAt && (
+              <CountdownTimer
+                target={election.endsAt}
+                label="Voting closes in · unlock after election"
+                ariaLabel="Countdown to voting closing"
+              />
+            )}
           </motion.div>
         )}
 

@@ -72,7 +72,7 @@ interface UseDraftAutosaveOptions {
 export interface UseDraftAutosaveReturn {
   drafts: DraftRecord[];
   draftsLoading: boolean;
-  /** Current draft id (null until the first successful save). */
+  /** Current draft id (null until a draft is created or loaded). */
   currentDraftId: string | null;
   /** Live indicator: idle (no changes), saving (POST in flight), saved (synced), error. */
   autoSaveState: AutoSaveState;
@@ -80,7 +80,9 @@ export interface UseDraftAutosaveReturn {
   lastSavedAt: number | null;
   /** Manually save (skip the debounce). */
   saveDraftNow: () => Promise<string | null>;
-  /** Load a saved draft into the wizard. Caller wires this to setState. */
+  /** Load a saved draft into the wizard. Returns the typed input so the
+   *  caller can populate its own state, AND primes the autosave to UPDATE
+   *  this draft on subsequent edits (rather than creating a new one). */
   loadDraft: (draft: DraftRecord) => DraftInput;
   /** Delete a saved draft. */
   deleteDraft: (id: string) => Promise<void>;
@@ -204,15 +206,22 @@ export function useDraftAutosave({
     autoSaveState,
     lastSavedAt,
     saveDraftNow,
-    loadDraft: (draft: DraftRecord) => ({
-      type: draft.type as ProposalType,
-      title: draft.title,
-      summary: draft.summary,
-      bodyMarkdown: draft.bodyMarkdown,
-      tags: draft.tags,
-      durationHours: draft.durationHours,
-      quorumRequired: draft.quorumRequired,
-    }),
+    loadDraft: (draft: DraftRecord) => {
+      // Prime the autosave so subsequent edits UPDATE this draft row
+      // instead of creating a new one. Without this, every save after
+      // loading a draft would silently spawn a new draft (cluttering the
+      // user's saved drafts list).
+      setCurrentDraftId(draft.id);
+      return {
+        type: draft.type as ProposalType,
+        title: draft.title,
+        summary: draft.summary,
+        bodyMarkdown: draft.bodyMarkdown,
+        tags: draft.tags,
+        durationHours: draft.durationHours,
+        quorumRequired: draft.quorumRequired,
+      };
+    },
     deleteDraft: async (id: string) => {
       await deleteMutation.mutateAsync(id);
     },
