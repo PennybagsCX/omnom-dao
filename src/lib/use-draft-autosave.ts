@@ -12,7 +12,7 @@ import { ProposalType } from "@/types";
  * Architecture:
  *   - Each keystroke (or wizard step change) updates the local state.
  *   - A debounced effect (3 seconds) POSTs the draft to
- *     `/api/v1/proposals/drafts` with the current state.
+ *     `/api/v1/proposal-drafts` with the current state.
  *   - On the first save for a session, the API returns a new `id`.
  *     Subsequent saves use that id (upsert).
  *   - On any subsequent page load, `useDrafts()` lists the user's drafts;
@@ -115,7 +115,7 @@ export function useDraftAutosave({
   const draftsQuery = useQuery({
     queryKey: QUERY_KEY,
     queryFn: () =>
-      fetchApi<{ drafts: DraftRecord[] }>("/api/v1/proposals/drafts").then(
+      fetchApi<{ drafts: DraftRecord[] }>("/api/v1/proposal-drafts").then(
         (r) => r.drafts,
       ),
     enabled,
@@ -127,7 +127,7 @@ export function useDraftAutosave({
   // ── Mutation: upsert ──────────────────────────────────────────
   const upsertMutation = useMutation({
     mutationFn: (input: { id?: string; data: DraftInput }) =>
-      fetchApi<{ id: string }>("/api/v1/proposals/drafts", {
+      fetchApi<{ id: string }>("/api/v1/proposal-drafts", {
         method: "POST",
         body: input.id ? { id: input.id, ...input.data } : input.data,
       }),
@@ -146,7 +146,7 @@ export function useDraftAutosave({
   // ── Mutation: delete ──────────────────────────────────────────
   const deleteMutation = useMutation({
     mutationFn: (id: string) =>
-      fetchApi(`/api/v1/proposals/drafts/${id}`, { method: "DELETE" }),
+      fetchApi(`/api/v1/proposal-drafts/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       // If we just deleted the draft we're currently editing, reset the id.
       void qc.invalidateQueries({ queryKey: QUERY_KEY });

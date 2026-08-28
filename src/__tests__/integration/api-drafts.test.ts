@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { NextResponse } from "next/server";
 
 /**
- * Integration tests for GET / POST / DELETE /api/v1/proposals/drafts.
+ * Integration tests for GET / POST / DELETE /api/v1/proposal-drafts.
  *
  * Covers the full draft lifecycle:
  *   - List user's drafts (auth-gated, owner-scoped)
@@ -143,8 +143,8 @@ function sessionFor(wallet: string) {
 
 function buildReq(body: unknown, method: "GET" | "POST" | "DELETE" = "GET", id?: string) {
   const url = id
-    ? `http://localhost/api/v1/proposals/drafts/${id}`
-    : "http://localhost/api/v1/proposals/drafts";
+    ? `http://localhost/api/v1/proposal-drafts/${id}`
+    : "http://localhost/api/v1/proposal-drafts";
   return {
     method,
     url,
@@ -153,7 +153,7 @@ function buildReq(body: unknown, method: "GET" | "POST" | "DELETE" = "GET", id?:
     json: vi.fn(async () => body),
     text: vi.fn(),
     cookies: { get: vi.fn(), getAll: vi.fn(() => []) },
-  } as unknown as Parameters<typeof import("@/app/api/v1/proposals/drafts/route").GET>[0];
+  } as unknown as Parameters<typeof import("@/app/api/v1/proposal-drafts/route").GET>[0];
 }
 
 interface DraftResponse {
@@ -182,7 +182,7 @@ interface ApiResponse {
 
 async function listDrafts(wallet: string): Promise<{ status: number; body: ApiResponse }> {
   hoisted.requireAuth.mockResolvedValue(sessionFor(wallet));
-  const mod = await import("@/app/api/v1/proposals/drafts/route");
+  const mod = await import("@/app/api/v1/proposal-drafts/route");
   const res = (await mod.GET(buildReq(null, "GET"))) as NextResponse;
   return { status: res.status, body: (await res.json()) as ApiResponse };
 }
@@ -192,7 +192,7 @@ async function createDraft(
   data: Record<string, unknown>,
 ): Promise<{ status: number; body: ApiResponse; id: string | null }> {
   hoisted.requireAuth.mockResolvedValue(sessionFor(wallet));
-  const mod = await import("@/app/api/v1/proposals/drafts/route");
+  const mod = await import("@/app/api/v1/proposal-drafts/route");
   const res = (await mod.POST(buildReq(data, "POST"))) as NextResponse;
   const body = (await res.json()) as ApiResponse;
   return { status: res.status, body, id: body.data?.id ?? null };
@@ -204,7 +204,7 @@ async function updateDraft(
   data: Record<string, unknown>,
 ): Promise<{ status: number; body: ApiResponse }> {
   hoisted.requireAuth.mockResolvedValue(sessionFor(wallet));
-  const mod = await import("@/app/api/v1/proposals/drafts/route");
+  const mod = await import("@/app/api/v1/proposal-drafts/route");
   const res = (await mod.POST(buildReq({ id, ...data }, "POST"))) as NextResponse;
   return { status: res.status, body: (await res.json()) as ApiResponse };
 }
@@ -214,21 +214,21 @@ async function deleteDraft(
   id: string,
 ): Promise<{ status: number; body: ApiResponse }> {
   hoisted.requireAuth.mockResolvedValue(sessionFor(wallet));
-  const mod = await import("@/app/api/v1/proposals/drafts/[id]/route");
+  const mod = await import("@/app/api/v1/proposal-drafts/[id]/route");
   const res = (await mod.DELETE(buildReq(null, "DELETE", id), {
     params: Promise.resolve({ id }),
   })) as NextResponse;
   return { status: res.status, body: (await res.json()) as ApiResponse };
 }
 
-describe("GET /api/v1/proposals/drafts", () => {
+describe("GET /api/v1/proposal-drafts", () => {
   it("returns 401 when unauthenticated", async () => {
     // Set the mock to reject BEFORE the request (don't use the helper,
     // which would overwrite the mock with a resolved session).
     hoisted.requireAuth.mockRejectedValue(
       Object.assign(new Error("unauth"), { code: "UNAUTHORIZED", statusCode: 401 }),
     );
-    const mod = await import("@/app/api/v1/proposals/drafts/route");
+    const mod = await import("@/app/api/v1/proposal-drafts/route");
     const res = (await mod.GET(buildReq(null, "GET"))) as NextResponse;
     expect(res.status).toBe(401);
   });
@@ -253,7 +253,7 @@ describe("GET /api/v1/proposals/drafts", () => {
   });
 });
 
-describe("POST /api/v1/proposals/drafts", () => {
+describe("POST /api/v1/proposal-drafts", () => {
   it("creates a new draft when no id is supplied", async () => {
     const r = await createDraft(ALICE, { title: "New draft", bodyMarkdown: "x" });
     expect(r.status).toBe(200);
@@ -316,7 +316,7 @@ describe("POST /api/v1/proposals/drafts", () => {
   });
 });
 
-describe("DELETE /api/v1/proposals/drafts/[id]", () => {
+describe("DELETE /api/v1/proposal-drafts/[id]", () => {
   it("deletes a draft owned by the caller", async () => {
     const r = await createDraft(ALICE, { title: "To delete" });
     const del = await deleteDraft(ALICE, r.id!);

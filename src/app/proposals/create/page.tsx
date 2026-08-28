@@ -131,7 +131,7 @@ export default function CreateProposalPage() {
   });
 
   // ── Draft autosave (Phase 10) ─────────────────────────────────
-  // Saves the wizard state to /api/v1/proposals/drafts every 3 seconds of
+  // Saves the wizard state to /api/v1/proposal-drafts every 3 seconds of
   // inactivity. Cross-device sync: signed-in users see the same drafts on
   // any device because they're keyed to the SIWE-verified wallet.
   const initialQuorum = state.type
