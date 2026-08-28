@@ -1,37 +1,12 @@
 import { ImageResponse } from "next/og";
 
+import {
+  INTER_REGULAR_400_B64,
+  INTER_BOLD_800_B64,
+} from "./og-image-fonts";
+
 export const OG_SIZE = { width: 1200, height: 630 } as const;
 export const OG_CONTENT_TYPE = "image/png" as const;
-
-/**
- * Inter font, fetched once at module load from a stable CDN. Next.js edge
- * runtime caches the response, so this hits the network once per cold start
- * — every subsequent request reuses the cached ArrayBuffer.
- *
- * Source: jsDelivr CDN (`@fontsource/inter` v5). Stable, CORS-friendly,
- * works inside Vercel edge runtimes. Weights 400 + 800 are bundled so
- * the visual matches the live site (`src/app/layout.tsx`).
- */
-async function loadInterFonts(): Promise<
-  { regular: ArrayBuffer; bold: ArrayBuffer }
-> {
-  const fetchAsArrayBuffer = async (url: string): Promise<ArrayBuffer> => {
-    const res = await fetch(url, { cache: "force-cache" });
-    if (!res.ok) throw new Error(`Font fetch failed ${res.status} for ${url}`);
-    return res.arrayBuffer();
-  };
-
-  const FONTS_BASE =
-    "https://cdn.jsdelivr.net/npm/@fontsource/inter@5.1.0/files";
-
-  // Latin subset woff2 — smallest payload, supports the English copy used
-  // in the card. Next.js ImageResponse inlines these into the rendered PNG.
-  const [regular, bold] = await Promise.all([
-    fetchAsArrayBuffer(`${FONTS_BASE}/inter-latin-400-normal.woff2`),
-    fetchAsArrayBuffer(`${FONTS_BASE}/inter-latin-800-normal.woff2`),
-  ]);
-  return { regular, bold };
-}
 
 /**
  * Build the canonical OMNOM DAO social-share card.
@@ -39,7 +14,14 @@ async function loadInterFonts(): Promise<
  * Returns an `ImageResponse` rendered at the edge — used by both
  * `/opengraph-image` (Facebook, LinkedIn, Discord, Slack, Telegram, iMessage)
  * and `/twitter-image` (X / Twitter card). Inter typography matches the
- * live site so the share preview looks like part of the same product.
+ * live site (`src/app/layout.tsx`) so the share preview looks like part
+ * of the same product.
+ *
+ * Font strategy: Inter is inlined as base64-encoded woff2 in
+ * `og-image-fonts.ts`. We previously tried fetching from Google Fonts /
+ * jsDelivr at edge runtime, but the response came back empty in some
+ * Vercel regions. Inlining guarantees the bytes are present without a
+ * network round-trip — at the cost of ~48 KB extra in the bundle.
  *
  * Color tokens mirror `src/app/globals.css`:
  *   --color-bg-deep     (#000000) — page background
@@ -47,8 +29,14 @@ async function loadInterFonts(): Promise<
  *   --color-text-dim    (#A1A1AA) — muted labels
  *   --color-foreground  (#FAFAFA) — body text
  */
-export async function buildOgCard(): Promise<ImageResponse> {
-  const { regular, bold } = await loadInterFonts();
+export function buildOgCard(): ImageResponse {
+  // Decode base64 → ArrayBuffer once per build (cheap; runs at edge cold-start).
+  const regular = Uint8Array.from(atob(INTER_REGULAR_400_B64), (c) =>
+    c.charCodeAt(0),
+  ).buffer;
+  const bold = Uint8Array.from(atob(INTER_BOLD_800_B64), (c) =>
+    c.charCodeAt(0),
+  ).buffer;
 
   return new ImageResponse(
     (
