@@ -647,7 +647,7 @@ export default function BrandPage() {
           </div>
           <Button asChild>
             <Link
-              href="https://github.com/omnom-dao/omnom-dao/blob/main/DOCS/BRAND_STANDARDS.md"
+              href="https://github.com/PennybagsCX/omnom-dao/blob/main/DOCS/BRAND_STANDARDS.md"
               target="_blank"
               rel="noopener noreferrer"
             >

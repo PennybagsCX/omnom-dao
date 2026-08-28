@@ -20,7 +20,7 @@ export function SiteFooter() {
             <span><span className="text-gold">OMNOM</span><span className="text-foreground">DAO</span> — Community Governance</span>
             <span className="text-text-dim">·</span>
             <a
-              href="https://github.com/DBOT-DC/omnom-dao"
+              href="https://github.com/PennybagsCX/omnom-dao"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-gold"
