@@ -156,25 +156,27 @@ function buildReq(body: unknown, method: "GET" | "POST" | "DELETE" = "GET", id?:
   } as unknown as Parameters<typeof import("@/app/api/v1/proposals/drafts/route").GET>[0];
 }
 
+interface DraftResponse {
+  id?: string;
+  created?: boolean;
+  deleted?: boolean;
+  drafts?: Array<{
+    id: string;
+    type: string;
+    title: string;
+    summary: string;
+    bodyMarkdown: string;
+    tags: string[];
+    durationHours: number;
+    quorumRequired: number;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+}
+
 interface ApiResponse {
   success: boolean;
-  data?: {
-    id?: string;
-    created?: boolean;
-    deleted?: boolean;
-    drafts?: Array<{
-      id: string;
-      type: string;
-      title: string;
-      summary: string;
-      bodyMarkdown: string;
-      tags: string[];
-      durationHours: number;
-      quorumRequired: number;
-      createdAt: string;
-      updatedAt: string;
-    }>;
-  };
+  data: DraftResponse;
   error?: { code: string; message: string };
 }
 
@@ -234,7 +236,7 @@ describe("GET /api/v1/proposals/drafts", () => {
   it("returns an empty list for a fresh user", async () => {
     const { status, body } = await listDrafts(ALICE);
     expect(status).toBe(200);
-    expect(body.data.drafts).toEqual([]);
+    expect(body.data.drafts!).toEqual([]);
   });
 
   it("returns only the caller's drafts (owner isolation)", async () => {
@@ -244,10 +246,10 @@ describe("GET /api/v1/proposals/drafts", () => {
 
     const alice = await listDrafts(ALICE);
     const bob = await listDrafts(BOB);
-    expect(alice.body.data.drafts).toHaveLength(2);
-    expect(bob.body.data.drafts).toHaveLength(1);
-    expect(alice.body.data.drafts.every((d) => d.title.startsWith("Alice"))).toBe(true);
-    expect(bob.body.data.drafts[0].title).toBe("Bob 1");
+    expect(alice.body.data.drafts!).toHaveLength(2);
+    expect(bob.body.data.drafts!).toHaveLength(1);
+    expect(alice.body.data.drafts!.every((d) => d.title.startsWith("Alice"))).toBe(true);
+    expect(bob.body.data.drafts![0]!.title).toBe("Bob 1");
   });
 });
 
@@ -255,7 +257,7 @@ describe("POST /api/v1/proposals/drafts", () => {
   it("creates a new draft when no id is supplied", async () => {
     const r = await createDraft(ALICE, { title: "New draft", bodyMarkdown: "x" });
     expect(r.status).toBe(200);
-    expect(r.body.data.created).toBe(true);
+    expect(r.body.data.created!).toBe(true);
     expect(r.id).toBeTruthy();
   });
 
@@ -263,11 +265,11 @@ describe("POST /api/v1/proposals/drafts", () => {
     const created = await createDraft(ALICE, { title: "Original" });
     const r = await updateDraft(ALICE, created.id!, { title: "Updated" });
     expect(r.status).toBe(200);
-    expect(r.body.data.created).toBe(false);
+    expect(r.body.data.created!).toBe(false);
     // The list should still have 1 row (updated in place, not duplicated).
     const list = await listDrafts(ALICE);
-    expect(list.body.data.drafts).toHaveLength(1);
-    expect(list.body.data.drafts[0].title).toBe("Updated");
+    expect(list.body.data.drafts!).toHaveLength(1);
+    expect(list.body.data.drafts![0]!.title).toBe("Updated");
   });
 
   it("rejects updates to a non-existent draft with 404", async () => {
@@ -282,7 +284,7 @@ describe("POST /api/v1/proposals/drafts", () => {
     expect(r.status).toBe(404);
     // Confirm Bob's draft is unchanged.
     const list = await listDrafts(BOB);
-    expect(list.body.data.drafts[0].title).toBe("Bob's draft");
+    expect(list.body.data.drafts![0]!.title).toBe("Bob's draft");
   });
 
   it("rejects invalid payload (title too long) with 400", async () => {
@@ -299,16 +301,16 @@ describe("POST /api/v1/proposals/drafts", () => {
       ids.push(r.id!);
     }
     let list = await listDrafts(ALICE);
-    expect(list.body.data.drafts).toHaveLength(20);
+    expect(list.body.data.drafts!).toHaveLength(20);
 
     // Create one more — should evict the oldest.
     const newOne = await createDraft(ALICE, { title: "Draft 20" });
     expect(newOne.status).toBe(200);
 
     list = await listDrafts(ALICE);
-    expect(list.body.data.drafts).toHaveLength(20);
+    expect(list.body.data.drafts!).toHaveLength(20);
     // The oldest ("Draft 0") should be gone.
-    const titles = list.body.data.drafts.map((d) => d.title).sort();
+    const titles = list.body.data.drafts!.map((d) => d.title).sort();
     expect(titles).not.toContain("Draft 0");
     expect(titles).toContain("Draft 20");
   });
@@ -319,25 +321,25 @@ describe("DELETE /api/v1/proposals/drafts/[id]", () => {
     const r = await createDraft(ALICE, { title: "To delete" });
     const del = await deleteDraft(ALICE, r.id!);
     expect(del.status).toBe(200);
-    expect(del.body.data.deleted).toBe(true);
+    expect(del.body.data.deleted!).toBe(true);
     const list = await listDrafts(ALICE);
-    expect(list.body.data.drafts).toHaveLength(0);
+    expect(list.body.data.drafts!).toHaveLength(0);
   });
 
   it("returns success (deleted:false) when draft doesn't exist", async () => {
     const r = await deleteDraft(ALICE, "nope");
     expect(r.status).toBe(200);
-    expect(r.body.data.deleted).toBe(false);
+    expect(r.body.data.deleted!).toBe(false);
   });
 
   it("returns success (deleted:false) when deleting another wallet's draft", async () => {
     const bobsDraft = await createDraft(BOB, { title: "Bob" });
     const r = await deleteDraft(ALICE, bobsDraft.id!);
     expect(r.status).toBe(200);
-    expect(r.body.data.deleted).toBe(false);
+    expect(r.body.data.deleted!).toBe(false);
     // Confirm Bob's draft is still there.
     const list = await listDrafts(BOB);
-    expect(list.body.data.drafts).toHaveLength(1);
+    expect(list.body.data.drafts!).toHaveLength(1);
   });
 
   it("rejects malformed id with 400", async () => {
