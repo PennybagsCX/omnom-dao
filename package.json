@@ -8,7 +8,7 @@
     "dev": "next dev",
     "dev:clean": "rm -rf .next && npm run dev",
     "dev:safe": "next dev --no-turbopack",
-    "build": "next build",
+    "build": "npm run fetch:snapshot && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
