@@ -50,6 +50,17 @@ function isPublicGovernanceVoteRead(method: string, pathname: string): boolean {
   return method === "GET" && pathname === "/api/v1/governance-vote";
 }
 
+// GET /api/v1/elections/[key]/comments is a public read — discussion
+// threads are part of the election record. The route handler internally
+// tries `requireAuth()` for `myReaction` enrichment (anonymous readers
+// get `myReaction: null`). POST/DELETE/reactions remain auth-gated.
+function isPublicElectionCommentsRead(method: string, pathname: string): boolean {
+  return (
+    method === "GET" &&
+    /^\/api\/v1\/elections\/[^/]+\/comments\/?$/.test(pathname)
+  );
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method.toUpperCase();
@@ -72,6 +83,10 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isPublicGovernanceVoteRead(method, pathname)) {
+    return NextResponse.next();
+  }
+
+  if (isPublicElectionCommentsRead(method, pathname)) {
     return NextResponse.next();
   }
 
