@@ -71,6 +71,17 @@ export const createCommentSchema = z.object({
   parentId: z.string().min(1).nullable().optional(),
 });
 
+/**
+ * Foundational Governance Election comments share the same anti-spam rules
+ * as proposal comments (2000 char ceiling, 30s minimum interval, etc.) but
+ * are keyed by `electionKey` instead of `proposalId`.
+ */
+export const createElectionCommentSchema = z.object({
+  electionKey: z.string().min(1),
+  content: z.string().min(1, "Comment cannot be empty").max(2000),
+  parentId: z.string().min(1).nullable().optional(),
+});
+
 // ── Users ────────────────────────────────────────────────────
 
 export const updateDisplayNameSchema = z.object({

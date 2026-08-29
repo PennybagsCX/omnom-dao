@@ -313,6 +313,59 @@ async function main() {
       sql: `CREATE INDEX IF NOT EXISTS idx_election_ballot_events_voter
             ON governance_election_ballot_events (voter_address, recorded_at)`,
     },
+
+    // ── 12. Election comments (Foundational Governance Election) ─
+    //    Threaded discussion keyed by `election_key`. Self-ref `parent_id`
+    //    powers replies; `deleted_at` is the soft-delete flag. Eligibility
+    //    to comment (snapshot membership) is enforced at the API layer; the
+    //    table itself is keyed only by `election_key` for audit simplicity.
+    {
+      sql: `CREATE TABLE IF NOT EXISTS election_comments (
+        id              TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        election_key    TEXT NOT NULL,
+        author_address  TEXT NOT NULL,
+        content         TEXT NOT NULL CHECK (length(content) <= 2000),
+        created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at      TEXT NOT NULL DEFAULT (datetime('now')),
+        parent_id       TEXT,
+        deleted_at      TEXT,
+        FOREIGN KEY (election_key) REFERENCES governance_election (election_key) ON DELETE CASCADE,
+        FOREIGN KEY (author_address) REFERENCES users (wallet_address),
+        FOREIGN KEY (parent_id) REFERENCES election_comments (id) ON DELETE CASCADE
+      )`,
+    },
+    {
+      sql: `CREATE INDEX IF NOT EXISTS idx_election_comments_election_created
+            ON election_comments (election_key, created_at DESC)`,
+    },
+    {
+      sql: `CREATE INDEX IF NOT EXISTS idx_election_comments_parent
+            ON election_comments (parent_id)`,
+    },
+    {
+      sql: `CREATE INDEX IF NOT EXISTS idx_election_comments_author
+            ON election_comments (author_address)`,
+    },
+
+    // ── 13. Election comment reactions ─────────────────────────
+    //    Same shape as `comment_reactions` (proposal surface): one row per
+    //    (comment, voter) pair; toggling replaces / removes.
+    {
+      sql: `CREATE TABLE IF NOT EXISTS election_comment_reactions (
+        id              TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        comment_id      TEXT NOT NULL,
+        user_address    TEXT NOT NULL,
+        type            TEXT NOT NULL CHECK (type IN ('up', 'down')),
+        created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+        CONSTRAINT uq_election_comment_reactions UNIQUE (comment_id, user_address),
+        FOREIGN KEY (comment_id) REFERENCES election_comments (id) ON DELETE CASCADE,
+        FOREIGN KEY (user_address) REFERENCES users (wallet_address)
+      )`,
+    },
+    {
+      sql: `CREATE INDEX IF NOT EXISTS idx_election_comment_reactions_comment
+            ON election_comment_reactions (comment_id)`,
+    },
   ];
 
   console.log("🚀 Running OMNOM DAO migrations...");

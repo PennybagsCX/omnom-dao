@@ -30,6 +30,7 @@ import {
   type ApiError as ApiErrorShape,
   type ApiResponse,
   type CreateProposalRequest,
+  type ElectionComment,
   type HolderClass,
   type Proposal,
   type ProposalComment,
@@ -250,6 +251,8 @@ export const queryKeys = {
   proposalDetail: (id: string) => ["proposal-detail", id] as const,
   comments: (proposalId: string, page = 1) =>
     ["comments", proposalId, page] as const,
+  electionComments: (electionKey: string, page = 1) =>
+    ["election-comments", electionKey, page] as const,
   tags: (query?: string) => ["tags", query ?? ""] as const,
 };
 
@@ -342,6 +345,21 @@ export function useComments(proposalId: string, page = 1, enabled = true) {
       ),
     enabled: enabled && proposalId.length > 0,
     // Fail fast: never retry so a failing DB surfaces the error state promptly.
+    retry: false,
+  });
+}
+
+/** GET /api/v1/elections/[electionKey]/comments — paginated election comments. */
+export function useElectionComments(electionKey: string, page = 1, enabled = true) {
+  return useQuery<{ comments: ElectionComment[] }, ApiRequestError>({
+    queryKey: queryKeys.electionComments(electionKey, page),
+    queryFn: ({ signal }) =>
+      apiGet<{ comments: ElectionComment[] }>(
+        `/api/v1/elections/${electionKey}/comments`,
+        { page: String(page) },
+        signal,
+      ),
+    enabled: enabled && electionKey.length > 0,
     retry: false,
   });
 }
@@ -469,6 +487,48 @@ export function useToggleReaction(proposalId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["comments", proposalId] });
       qc.invalidateQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+    },
+  });
+}
+
+/** POST /api/v1/elections/[electionKey]/comments — create an election comment. */
+export function useCreateElectionComment(electionKey: string) {
+  const qc = useQueryClient();
+  return useMutation<
+    { comment: ElectionComment },
+    ApiRequestError,
+    { content: string; parentId?: string }
+  >({
+    mutationFn: (input) =>
+      fetchApi<{ comment: ElectionComment }>(
+        `/api/v1/elections/${electionKey}/comments`,
+        { method: "POST", body: input },
+      ),
+    onSuccess: () => {
+      toast.success("Comment posted");
+      qc.invalidateQueries({ queryKey: ["election-comments", electionKey] });
+    },
+    onError: (error) => {
+      toast.error("Could not post comment", { description: error.message });
+    },
+  });
+}
+
+/** POST /api/v1/elections/[electionKey]/comments/[commentId]/reactions — toggle reaction. */
+export function useToggleElectionReaction(electionKey: string) {
+  const qc = useQueryClient();
+  return useMutation<
+    { reaction: { type: string } | null },
+    ApiRequestError,
+    { commentId: string; type: "up" | "down" }
+  >({
+    mutationFn: ({ commentId, type }) =>
+      fetchApi<{ reaction: { type: string } | null }>(
+        `/api/v1/elections/${electionKey}/comments/${commentId}/reactions`,
+        { method: "POST", body: { type } },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["election-comments", electionKey] });
     },
   });
 }

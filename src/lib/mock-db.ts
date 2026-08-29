@@ -67,6 +67,10 @@ function tableFor(store: MockStore, name: string): Table | undefined {
       return store.governance_election_ballots as unknown as Table;
     case "governance_election_ballot_events":
       return store.governance_election_ballot_events as unknown as Table;
+    case "election_comments":
+      return store.election_comments as unknown as Table;
+    case "election_comment_reactions":
+      return store.election_comment_reactions as unknown as Table;
     default:
       return undefined;
   }

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 
 import { Providers } from "@/components/providers";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -11,16 +11,43 @@ import { SNAPSHOT } from "@/lib/constants";
 import "@/app/globals.css";
 import { Analytics } from "@vercel/analytics/next";
 
-const inter = Inter({
-  subsets: ["latin"],
+/**
+ * Self-hosted Inter + JetBrains Mono (latin subset, weights 400/500/600/700).
+ *
+ * Why local instead of `next/font/google`:
+ *   - Air-gapped / restricted networks: builds and `next dev` would otherwise
+ *     fail to download Google Fonts at runtime (or hang on the first request).
+ *   - Production consistency: avoids the surprise of an OCR page falling back
+ *     to Arial/SF Mono on a different deploy environment.
+ *
+ * Files live under `public/fonts/{inter,jetbrains-mono}/`. Sourced from
+ * @fontsource (a re-bundled, versioned mirror of the Google Fonts files) so
+ * the project doesn't take a runtime dependency on Google's CDN.
+ */
+const inter = localFont({
+  src: [
+    { path: "../../public/fonts/inter/inter-400.woff2", weight: "400", style: "normal" },
+    { path: "../../public/fonts/inter/inter-500.woff2", weight: "500", style: "normal" },
+    { path: "../../public/fonts/inter/inter-600.woff2", weight: "600", style: "normal" },
+    { path: "../../public/fonts/inter/inter-700.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-inter",
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
+const jetbrainsMono = localFont({
+  src: [
+    { path: "../../public/fonts/jetbrains-mono/jetbrains-mono-400.woff2", weight: "400", style: "normal" },
+    { path: "../../public/fonts/jetbrains-mono/jetbrains-mono-500.woff2", weight: "500", style: "normal" },
+    { path: "../../public/fonts/jetbrains-mono/jetbrains-mono-600.woff2", weight: "600", style: "normal" },
+    { path: "../../public/fonts/jetbrains-mono/jetbrains-mono-700.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-jetbrains-mono",
   display: "swap",
+  // Skip preload hints — most pages only use weight 700 (the timer + stat
+  // values). Preloading weight 600 produced a noisy "preloaded but not used"
+  // console warning in Chrome when it sat idle past the load event.
+  preload: false,
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";

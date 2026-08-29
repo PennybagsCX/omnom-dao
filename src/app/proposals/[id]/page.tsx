@@ -7,29 +7,22 @@ import { motion } from "framer-motion";
 import {
   AlertTriangle,
   ArrowLeft,
-  ArrowBigDown,
-  ArrowBigUp,
   BarChart3,
   CheckCircle2,
-  CornerUpLeft,
   Clock,
   FileText,
-  Ghost,
   HelpCircle,
   Loader2,
   MessageSquare,
-  MessagesSquare,
   PenLine,
   Scale,
-  Send,
-  User as UserIcon,
   XCircle,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { CountdownTimer } from "@/components/shared/countdown-timer";
+import { CommentsSection } from "@/components/shared/comments-section";
 import { DynamicIcon } from "@/components/shared/dynamic-icon";
 import { EmptyState } from "@/components/shared/empty-state";
 import { HolderBadge } from "@/components/shared/holder-badge";
@@ -50,12 +43,10 @@ import {
   type ProposalDetailData,
 } from "@/lib/api";
 import {
-  cn,
   formatCompact,
   formatDate,
   formatDateTime,
   shortenAddress,
-  timeAgo,
 } from "@/lib/utils";
 import { VOTE_CHOICE_CONFIG } from "@/lib/constants";
 import { ConnectCta } from "@/components/wallet/connect-cta";
@@ -85,6 +76,8 @@ export default function ProposalDetailPage() {
   const { data: me } = useCurrentUser({ retry: false });
   const castVote = useCastVote(proposalId);
   const changeVote = useChangeVote(proposalId);
+  const createComment = useCreateComment(proposalId);
+  const toggleReaction = useToggleReaction(proposalId);
 
   // Track the user's vote. The detail payload now includes the current user's
   // ballot (C2.1) so returning voters see their choice on load; we also update
@@ -315,12 +308,22 @@ export default function ProposalDetailPage() {
           {/* Timeline */}
           <Timeline proposal={proposal} />
 
-          {/* Comments */}
-          <CommentsSection
-            proposalId={proposalId}
+          {/* Comments — shared <CommentsSection> in src/components/shared. */}
+          <CommentsSection<ProposalComment>
             comments={comments}
             isAuthenticated={Boolean(me)}
             myAddress={me?.address}
+            onSubmit={async (content) => {
+              await createComment.mutateAsync({ content });
+            }}
+            onReply={async (parentId, content) => {
+              await createComment.mutateAsync({ content, parentId });
+            }}
+            onReact={(commentId, type) =>
+              toggleReaction.mutate({ commentId, type })
+            }
+            isSubmitting={createComment.isPending}
+            isReacting={toggleReaction.isPending}
           />
         </div>
 
@@ -743,353 +746,5 @@ function Timeline({ proposal }: { proposal: Proposal }) {
         </ol>
       </CardContent>
     </Card>
-  );
-}
-
-/* ── Comments (threaded) ──────────────────────────────────────── */
-
-interface CommentNode extends ProposalComment {
-  replies: CommentNode[];
-  upvotes: number;
-  downvotes: number;
-  myReaction: string | null;
-}
-
-function buildCommentTree(comments: ProposalComment[]): CommentNode[] {
-  const byId = new Map<string, CommentNode>();
-  const roots: CommentNode[] = [];
-  // First pass: create nodes
-  for (const c of comments) {
-    byId.set(c.id, { ...c, replies: [] });
-  }
-  // Second pass: link parents
-  for (const c of comments) {
-    const node = byId.get(c.id)!;
-    if (c.parentId && byId.has(c.parentId)) {
-      byId.get(c.parentId)!.replies.push(node);
-    } else {
-      roots.push(node);
-    }
-  }
-  return roots;
-}
-
-function CommentsSection({
-  proposalId,
-  comments,
-  isAuthenticated,
-  myAddress,
-}: {
-  proposalId: string;
-  comments: ProposalComment[];
-  isAuthenticated: boolean;
-  myAddress?: string;
-}) {
-  const createComment = useCreateComment(proposalId);
-  const [draft, setDraft] = useState("");
-  const [replyTo, setReplyTo] = useState<string | null>(null);
-  const [replyDraft, setReplyDraft] = useState("");
-  const activeComments = comments.filter((c) => !c.deletedAt);
-  const tree = useMemo(() => buildCommentTree(comments), [comments]);
-
-  const onSubmit = useCallback(async () => {
-    const trimmed = draft.trim();
-    if (!trimmed || createComment.isPending) return;
-    try {
-      await createComment.mutateAsync({ content: trimmed });
-      setDraft("");
-    } catch {
-      // toast handled by hook
-    }
-  }, [draft, createComment]);
-
-  const onReply = useCallback(
-    async (parentId: string) => {
-      const trimmed = replyDraft.trim();
-      if (!trimmed || createComment.isPending) return;
-      try {
-        await createComment.mutateAsync({ content: trimmed, parentId });
-        setReplyDraft("");
-        setReplyTo(null);
-      } catch {
-        // toast handled by hook
-      }
-    },
-    [replyDraft, createComment],
-  );
-
-  return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-center space-y-0">
-        <CardTitle className="inline-flex items-center justify-center gap-2 text-base">
-          <MessagesSquare className="h-4 w-4" aria-hidden /> Comments{" "}
-          <span className="ml-1 text-muted-foreground">({activeComments.length})</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        {/* Composer */}
-        {isAuthenticated ? (
-          <div className="space-y-2">
-            <Textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value.slice(0, 2000))}
-              placeholder="Share your thoughts… (Markdown supported)"
-              aria-label="Add a comment"
-              rows={3}
-            />
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-text-dim">{draft.length}/2000</span>
-              <Button
-                size="sm"
-                onClick={onSubmit}
-                disabled={!draft.trim() || createComment.isPending}
-              >
-                {createComment.isPending ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                ) : (
-                  <Send className="h-3.5 w-3.5" aria-hidden />
-                )}
-                Post Comment
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
-            <ConnectCta size="sm">
-              Connect wallet to comment
-            </ConnectCta>
-          </div>
-        )}
-
-        {/* Thread list */}
-        {tree.length === 0 ? (
-          <EmptyState
-            icon={<MessagesSquare className="h-12 w-12" />}
-            title="No comments yet"
-            description="Start the discussion — be the first to comment."
-          />
-        ) : (
-          <ul className="space-y-4">
-            {tree.map((node) => (
-              <CommentItem
-                key={node.id}
-                node={node}
-                depth={0}
-                myAddress={myAddress}
-                isAuthenticated={isAuthenticated}
-                proposalId={proposalId}
-                replyTo={replyTo}
-                replyDraft={replyDraft}
-                onReplyToggle={(cid) => {
-                  setReplyTo(replyTo === cid ? null : cid);
-                  setReplyDraft("");
-                }}
-                onReplyDraftChange={setReplyDraft}
-                onReplySubmit={onReply}
-                isReplyPending={createComment.isPending}
-              />
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-interface CommentItemProps {
-  node: CommentNode;
-  depth: number;
-  myAddress?: string;
-  isAuthenticated: boolean;
-  proposalId: string;
-  replyTo: string | null;
-  replyDraft: string;
-  onReplyToggle: (id: string) => void;
-  onReplyDraftChange: (v: string) => void;
-  onReplySubmit: (parentId: string) => void;
-  isReplyPending: boolean;
-}
-
-function CommentItem({
-  node,
-  depth,
-  myAddress,
-  isAuthenticated,
-  proposalId,
-  replyTo,
-  replyDraft,
-  onReplyToggle,
-  onReplyDraftChange,
-  onReplySubmit,
-  isReplyPending,
-}: CommentItemProps) {
-  const isMine = myAddress && node.authorAddress.toLowerCase() === myAddress.toLowerCase();
-  const isDeleted = node.deletedAt !== null;
-  const toggleReaction = useToggleReaction(proposalId);
-  const [showReplies, setShowReplies] = useState(true);
-
-  const onReact = (type: "up" | "down") => {
-    if (!isAuthenticated) return;
-    toggleReaction.mutate({ commentId: node.id, type });
-  };
-
-  const isReplying = replyTo === node.id;
-  const myReaction = node.myReaction;
-
-  return (
-    <li>
-      <div
-        className="rounded-lg border border-border bg-bg-elevated/40 p-3"
-        style={{ marginLeft: depth > 0 ? Math.min(depth, 3) * 16 : 0 }}
-      >
-        <div className="mb-1.5 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm">
-              <span aria-hidden className="mr-1 inline-flex align-[-2px]">
-                {isDeleted ? (
-                  <Ghost className="h-3.5 w-3.5 text-text-dim" />
-                ) : (
-                  <UserIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                )}
-              </span>
-              {isDeleted ? (
-                <span className="text-text-dim">[deleted]</span>
-              ) : (
-                <>
-                  <Link
-                    href={`/snapshot-explorer?address=${node.authorAddress.toLowerCase()}`}
-                    title={node.authorAddress}
-                    className="font-mono text-xs text-muted-foreground underline-offset-2 hover:underline hover:text-foreground"
-                  >
-                    {shortenAddress(node.authorAddress)}
-                  </Link>
-                  {node.authorHolderClass && (
-                    <HolderBadge holderClass={node.authorHolderClass} size="sm" plain />
-                  )}
-                </>
-              )}
-              {isMine && !isDeleted && (
-                <span className="ml-1.5 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-medium text-gold">
-                  you
-                </span>
-              )}
-            </span>
-          </div>
-          <span className="text-xs text-text-dim">{timeAgo(node.createdAt)}</span>
-        </div>
-        {isDeleted ? (
-          <p className="text-sm italic text-text-dim">[comment deleted]</p>
-        ) : (
-          <Markdown className="text-sm">{node.content}</Markdown>
-        )}
-
-        {/* Actions bar */}
-        {!isDeleted && (
-          <div className="mt-2 flex items-center gap-3">
-            {/* Upvote */}
-            <button
-              type="button"
-              onClick={() => onReact("up")}
-              disabled={!isAuthenticated || toggleReaction.isPending}
-              className={cn(
-                "inline-flex items-center gap-0.5 text-xs transition-colors disabled:opacity-50",
-                myReaction === "up" ? "text-success" : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <ArrowBigUp className="h-3.5 w-3.5" aria-hidden />
-              {node.upvotes > 0 && node.upvotes}
-            </button>
-            {/* Downvote */}
-            <button
-              type="button"
-              onClick={() => onReact("down")}
-              disabled={!isAuthenticated || toggleReaction.isPending}
-              className={cn(
-                "inline-flex items-center gap-0.5 text-xs transition-colors disabled:opacity-50",
-                myReaction === "down" ? "text-danger" : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <ArrowBigDown className="h-3.5 w-3.5" aria-hidden />
-              {node.downvotes > 0 && node.downvotes}
-            </button>
-            {/* Reply */}
-            {isAuthenticated && depth < 3 && (
-              <button
-                type="button"
-                onClick={() => onReplyToggle(node.id)}
-                className={cn(
-                  "inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground",
-                  isReplying && "text-gold",
-                )}
-              >
-                <CornerUpLeft className="h-3.5 w-3.5" aria-hidden /> Reply
-              </button>
-            )}
-            {/* Toggle replies */}
-            {node.replies.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowReplies(!showReplies)}
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {showReplies ? "Hide" : `Show ${node.replies.length}`} {node.replies.length === 1 ? "reply" : "replies"}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Reply composer */}
-        {isReplying && (
-          <div className="mt-3 space-y-2">
-            <Textarea
-              value={replyDraft}
-              onChange={(e) => onReplyDraftChange(e.target.value.slice(0, 2000))}
-              placeholder={`Reply to ${shortenAddress(node.authorAddress)}…`}
-              aria-label={`Reply to ${shortenAddress(node.authorAddress)}`}
-              rows={2}
-              className="text-sm"
-            />
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={() => onReplySubmit(node.id)}
-                disabled={!replyDraft.trim() || isReplyPending}
-              >
-                {isReplyPending ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                ) : (
-                  <Send className="h-3.5 w-3.5" aria-hidden />
-                )}
-                Reply
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => onReplyToggle(node.id)}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {node.replies.length > 0 && showReplies && (
-        <ul className="mt-2 space-y-2">
-          {node.replies.map((reply) => (
-            <CommentItem
-              key={reply.id}
-              node={reply}
-              depth={depth + 1}
-              myAddress={myAddress}
-              isAuthenticated={isAuthenticated}
-              proposalId={proposalId}
-              replyTo={replyTo}
-              replyDraft={replyDraft}
-              onReplyToggle={onReplyToggle}
-              onReplyDraftChange={onReplyDraftChange}
-              onReplySubmit={onReplySubmit}
-              isReplyPending={isReplyPending}
-            />
-          ))}
-        </ul>
-      )}
-    </li>
   );
 }

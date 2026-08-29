@@ -11,7 +11,21 @@
 
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  /* Mono fallback chain — when next/font/google can't reach the CDN (offline
+     dev, restricted CI), the browser should still land on a *monospaced*
+     system font, not Arial. SF Mono / Menlo / Monaco cover macOS; Consolas
+     covers Windows; DejaVu / Liberation cover Linux. */
+  --font-mono:
+    var(--font-jetbrains-mono),
+    ui-monospace,
+    SFMono-Regular,
+    "SF Mono",
+    Menlo,
+    Monaco,
+    Consolas,
+    "DejaVu Sans Mono",
+    "Liberation Mono",
+    monospace;
 
   /* ── Brand colors (DESIGN.md §6.1) ──────────────────────── */
   --color-gold: #ffd700;

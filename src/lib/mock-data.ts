@@ -75,6 +75,28 @@ export interface MockReactionRow {
   created_at: string;
 }
 
+/** Mirror of the `election_comments` table — used by the dev-mode mock DB
+ *  so POST /api/v1/elections/[key]/comments works without a real Turso
+ *  connection. Shape matches the migration in scripts/migrate.ts. */
+export interface MockElectionCommentRow {
+  id: string;
+  election_key: string;
+  author_address: string;
+  content: string;
+  created_at: string;
+  parent_id: string | null;
+  deleted_at: string | null;
+}
+
+/** Mirror of the `election_comment_reactions` table. */
+export interface MockElectionReactionRow {
+  id: string;
+  comment_id: string;
+  user_address: string;
+  type: string;
+  created_at: string;
+}
+
 export interface MockNotificationRow {
   id: string;
   user_id: string;
@@ -181,6 +203,8 @@ export interface MockStore {
   governance_election: MockElectionRow[];
   governance_election_ballots: MockElectionBallotRow[];
   governance_election_ballot_events: MockElectionBallotEventRow[];
+  election_comments: MockElectionCommentRow[];
+  election_comment_reactions: MockElectionReactionRow[];
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -678,6 +702,8 @@ function buildSeed(): MockStore {
     governance_election: [...governanceElectionSeed],
     governance_election_ballots: [...governanceElectionBallotsSeed],
     governance_election_ballot_events: [...governanceElectionBallotEventsSeed],
+    election_comments: [] as MockElectionCommentRow[],
+    election_comment_reactions: [] as MockElectionReactionRow[],
   };
 }
 

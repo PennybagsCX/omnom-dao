@@ -298,6 +298,32 @@ export interface ProposalComment {
   myReaction: string | null;
 }
 
+/** A threaded comment on a Foundational Governance Election. */
+export interface ElectionComment {
+  /** Internal UUID */
+  id: string;
+  /** FK to governance_election.election_key */
+  electionKey: string;
+  /** Checksummed EVM address of commenter */
+  authorAddress: string;
+  /** Commenter's snapshot holder class (null when they never held $OMNOM) */
+  authorHolderClass?: HolderClass | null;
+  /** Comment body (Markdown, max 2000 chars) */
+  content: string;
+  /** ISO 8601 timestamp */
+  createdAt: string;
+  /** Parent comment ID for threaded replies (null = top-level) */
+  parentId: string | null;
+  /** Soft-delete flag timestamp (null = active) */
+  deletedAt: string | null;
+  /** Upvote count */
+  upvotes: number;
+  /** Downvote count */
+  downvotes: number;
+  /** The current user's reaction type ("up" | "down" | null) */
+  myReaction: string | null;
+}
+
 // ─────────────────────────────────────────────────────────────
 // 4. Vote Model
 // ─────────────────────────────────────────────────────────────

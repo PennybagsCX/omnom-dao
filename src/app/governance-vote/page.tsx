@@ -21,9 +21,15 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { CountdownTimer } from "@/components/shared/countdown-timer";
+import { ElectionCommentsSection } from "@/components/shared/election-comments-section";
 import { ConnectCta } from "@/components/wallet/connect-cta";
 import { apiGet, fetchApi, useCurrentUser } from "@/lib/api";
-import { type ElectionChoice, FGE_VOTING_STARTS_AT, FGE_VOTING_ENDS_AT } from "@/lib/election";
+import {
+  ELECTION_KEY,
+  type ElectionChoice,
+  FGE_VOTING_STARTS_AT,
+  FGE_VOTING_ENDS_AT,
+} from "@/lib/election";
 import { ELECTION_EXPLANATIONS, ELECTION_FAQ } from "@/lib/election-explanations";
 import { cn } from "@/lib/utils";
 
@@ -104,6 +110,13 @@ export default function GovernanceVotePage() {
   // Loading state — H1 + countdown are rendered here so SSR/SEO crawlers
   // see the page title + countdown before the React Query client-side
   // hydration completes. The rest of the page renders after data loads.
+  //
+  // Phase is unknown during loading, so default to counting down to the
+  // close (the most useful "time remaining" signal once voting has opened,
+  // which is the current state in production). The full phase-aware target
+  // swap kicks in once the API data resolves — for the rare UPCOMING window
+  // we accept a brief countdown-to-close while loading.
+  const loadingTarget = FGE_VOTING_ENDS_AT;
   if (isLoading) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
@@ -116,9 +129,9 @@ export default function GovernanceVotePage() {
         </p>
         <div className="mx-auto mt-6 max-w-xl">
           <CountdownTimer
-            target={FGE_VOTING_STARTS_AT}
-            label="Voting opens in"
-            ariaLabel="Countdown to Foundational Governance Election opening"
+            target={loadingTarget}
+            label="Voting closes in"
+            ariaLabel="Countdown to Foundational Governance Election closing"
           />
         </div>
         <div className="mt-8 flex items-center justify-center" aria-live="polite" aria-busy="true">
@@ -151,7 +164,10 @@ export default function GovernanceVotePage() {
       </motion.div>
 
       {/* Countdown — between title and stats. Uses API target if available, */}
-      {/* else falls back to the pinned FGE constants. */}
+      {/* else falls back to the pinned FGE constants. Target swaps by phase: */}
+      {/*   UPCOMING → startsAt (counting down to open) */}
+      {/*   OPEN     → endsAt   (counting down to close) */}
+      {/*   CLOSED   → endsAt   (already in the past → renders closedText) */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -159,7 +175,11 @@ export default function GovernanceVotePage() {
         className="mx-auto mt-6 max-w-xl"
       >
         <CountdownTimer
-          target={data?.startsAt ?? FGE_VOTING_STARTS_AT}
+          target={
+            data?.phase === "UPCOMING"
+              ? (data?.startsAt ?? FGE_VOTING_STARTS_AT)
+              : (data?.endsAt ?? FGE_VOTING_ENDS_AT)
+          }
           label={
             data?.phase === "OPEN"
               ? "Voting closes in"
@@ -176,7 +196,8 @@ export default function GovernanceVotePage() {
         />
       </motion.div>
 
-      {/* Stats - Centered on all breakpoints */}
+      {/* Stats - Centered on all breakpoints. Values are gold to match the */}
+      {/* page's primary accent (timer label, vote icon, "Selected" badges). */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -184,22 +205,22 @@ export default function GovernanceVotePage() {
         className="mt-6 grid gap-3 rounded-xl border border-border bg-bg-elevated/40 p-4 text-center sm:grid-cols-3"
       >
         <div>
-          <div className="font-mono text-lg font-bold text-foreground">
+          <div className="font-mono text-lg font-bold text-gold">
             {(data?.totalBallots ?? 0).toLocaleString()}
           </div>
           <div className="text-xs text-text-dim">Ballots cast</div>
         </div>
         <div>
-          <div className="font-mono text-lg font-bold text-foreground">
+          <div className="font-mono text-lg font-bold text-gold">
             {(data?.turnoutPercentage ?? 0).toFixed(1)}%
           </div>
-          <div className="text-xs text-text-dim">turnout</div>
+          <div className="text-xs text-text-dim">Turnout</div>
         </div>
         <div>
-          <div className="font-mono text-lg font-bold text-foreground">
+          <div className="font-mono text-lg font-bold text-gold">
             {(data?.eligibleWalletCount ?? 0).toLocaleString()}
           </div>
-          <div className="text-xs text-text-dim">Eligible wallets</div>
+          <div className="text-xs text-text-dim">Eligible Wallets</div>
         </div>
       </motion.div>
 
@@ -353,7 +374,7 @@ export default function GovernanceVotePage() {
                     <div className="flex shrink-0 flex-col items-end gap-2">
                       {data?.results && (
                         <div className="text-center">
-                          <div className="font-mono text-lg font-bold text-foreground">
+                          <div className="font-mono text-lg font-bold text-gold">
                             {data.results.find(r => r.choice === explanation.id)?.percentage.toFixed(1)}%
                           </div>
                           <div className="text-xs text-text-dim">Current results</div>
@@ -407,7 +428,7 @@ export default function GovernanceVotePage() {
                     <span className={cn("font-medium", isSelected && "text-gold")}>
                       {choice?.title}
                     </span>
-                    <span className={cn("font-mono font-bold", isSelected && "text-gold")}>
+                    <span className="font-mono font-bold text-gold">
                       {result.percentage.toFixed(1)}%
                     </span>
                   </div>
@@ -430,6 +451,22 @@ export default function GovernanceVotePage() {
           </div>
         </motion.div>
       )}
+
+      {/* Discussion — shared comments surface, gated by snapshot eligibility
+          (server-enforced) and phase (composer locked after CLOSED). */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.4, ease: EASE }}
+        className="mt-8"
+      >
+        <ElectionCommentsSection
+          electionKey={data?.electionKey ?? ELECTION_KEY}
+          myAddress={me?.address}
+          userEligible={Boolean(data?.userEligible)}
+          phase={data?.phase ?? "UPCOMING"}
+        />
+      </motion.div>
 
       {/* FAQ Section */}
       <motion.div

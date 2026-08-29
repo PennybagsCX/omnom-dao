@@ -290,6 +290,30 @@ function createMockProvider(account: MockAccount, accountKey: MockAccountKey): M
           return [account.address];
         }
 
+        /**
+         * EIP-2255 `wallet_requestPermissions` — the caller is asking which
+         * capabilities the wallet will grant. RainbowKit / wagmi invoke this
+         * during connection. We grant the standard `eth_accounts` capability
+         * scoped to the currently selected mock account, mirroring the
+         * shape a real wallet would return so wagmi's parser is happy.
+         */
+        case "wallet_requestPermissions": {
+          return [
+            {
+              id: "eth_accounts",
+              parentCapability: "eth_accounts",
+              invoker: "http://localhost:3000",
+              caveats: [
+                {
+                  type: "filter",
+                  value: [account.address],
+                },
+              ],
+              date: Date.now(),
+            },
+          ];
+        }
+
         case "eth_chainId": {
           return "0x7d0";
         }
