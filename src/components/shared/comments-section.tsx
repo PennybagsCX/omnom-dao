@@ -31,6 +31,7 @@ import {
   type ThreadedComment,
 } from "@/components/shared/comment-item";
 import { buildCommentTree } from "@/lib/comment-tree";
+import type { EmojiKey } from "@/types";
 
 const MAX_LENGTH = 2000;
 
@@ -52,8 +53,10 @@ export interface CommentsSectionProps<T extends ThreadedComment> {
   onSubmit: (content: string) => Promise<void> | void;
   /** Reply submission for a given parent comment id. */
   onReply: (parentId: string, content: string) => Promise<void> | void;
-  /** Optional reaction toggle. Omit to hide the up/down buttons. */
+  /** Optional up/down reaction toggle. Omit to hide the up/down buttons. */
   onReact?: (commentId: string, type: ReactionType) => void;
+  /** Optional emoji reaction toggle. The parent owns the underlying hook. */
+  onReactEmoji?: (commentId: string, emoji: EmojiKey) => void;
 
   /** Pending flag for top-level submission. */
   isSubmitting?: boolean;
@@ -61,6 +64,8 @@ export interface CommentsSectionProps<T extends ThreadedComment> {
   isReplying?: boolean;
   /** Pending flag for reactions (applied to every CommentItem). */
   isReacting?: boolean;
+  /** Pending flag for emoji reactions (applied to every CommentItem). */
+  isReactingEmoji?: boolean;
 
   /** Empty-state copy. */
   emptyStateTitle?: string;
@@ -79,9 +84,11 @@ export function CommentsSection<T extends ThreadedComment>({
   onSubmit,
   onReply,
   onReact,
+  onReactEmoji,
   isSubmitting = false,
   isReplying = false,
   isReacting = false,
+  isReactingEmoji = false,
   emptyStateTitle = "No comments yet",
   emptyStateDescription = "Start the discussion — be the first to comment.",
   title = "Comments",
@@ -206,6 +213,8 @@ export function CommentsSection<T extends ThreadedComment>({
                 isReplyPending={isReplying}
                 onReact={onReact}
                 isReacting={isReacting}
+                onReactEmoji={onReactEmoji}
+                isReactingEmoji={isReactingEmoji}
               />
             ))}
           </ul>

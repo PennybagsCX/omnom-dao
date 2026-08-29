@@ -60,6 +60,19 @@ describe("proposal-service", () => {
         votesAgainst: 40,
         votesAbstain: 10,
         metadata: { type: "base", links: ["https://x.test"], tags: ["a"] },
+        // Emoji fields default to zero counts + null reaction at the row-only
+        // mapping layer; callers that need hydrated reactions overwrite these.
+        emojiReactionCounts: {
+          thumbs_up: 0,
+          heart: 0,
+          tada: 0,
+          smile: 0,
+          open_mouth: 0,
+          cry: 0,
+          thinking: 0,
+          thumbs_down: 0,
+        },
+        myEmojiReaction: null,
       });
     });
 

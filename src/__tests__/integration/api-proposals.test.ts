@@ -25,6 +25,7 @@ const hoisted = vi.hoisted(() => {
   return {
     UnauthorizedError,
     requireAuth: vi.fn(),
+    getSessionAddress: vi.fn().mockResolvedValue(null),
     canCreateProposalType: vi.fn(),
     listProposals: vi.fn(),
     checkRateLimit: vi.fn(),
@@ -36,6 +37,7 @@ const hoisted = vi.hoisted(() => {
 vi.mock("@/lib/auth", () => ({
   UnauthorizedError: hoisted.UnauthorizedError,
   requireAuth: hoisted.requireAuth,
+  getSessionAddress: hoisted.getSessionAddress,
   canCreateProposalType: hoisted.canCreateProposalType,
   RATE_WINDOWS: {
     proposalPerUser: { limit: 3, windowSeconds: 604800 },

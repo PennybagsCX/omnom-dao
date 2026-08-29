@@ -6,6 +6,16 @@
  * Do not diverge from the spec without updating DATA-MODEL.md first.
  */
 
+import type {
+  EmojiKey as EmojiKeyReexport,
+  EmojiReactionCounts as EmojiReactionCountsReexport,
+} from "@/lib/emoji-reactions";
+
+// Re-export emoji reaction types so consumers can import them from `@/types`
+// alongside other shared types (single import surface for the wire shapes).
+export type EmojiKey = EmojiKeyReexport;
+export type EmojiReactionCounts = EmojiReactionCountsReexport;
+
 // ─────────────────────────────────────────────────────────────
 // 1. Snapshot Data Model
 // ─────────────────────────────────────────────────────────────
@@ -254,6 +264,10 @@ export interface Proposal {
   metadata: ProposalMetadata;
   /** Rejecting admin's snapshot holder class (from metadata.rejectedBy, when set) */
   rejectedByHolderClass?: HolderClass | null;
+  /** Per-emoji reaction counts (always fully populated, zeros for unused). */
+  emojiReactionCounts: EmojiReactionCounts;
+  /** The current user's emoji reaction on this proposal (one of the 8 keys, or null). */
+  myEmojiReaction: EmojiKey | null;
 }
 
 /** Pre-defined template to standardize common proposal types. */
@@ -296,6 +310,10 @@ export interface ProposalComment {
   downvotes: number;
   /** The current user's reaction type ("up" | "down" | null) */
   myReaction: string | null;
+  /** Per-emoji reaction counts (always fully populated, zeros for unused). */
+  emojiReactionCounts: EmojiReactionCounts;
+  /** The current user's emoji reaction on this comment (one of the 8 keys, or null). */
+  myEmojiReaction: EmojiKey | null;
 }
 
 /** A threaded comment on a Foundational Governance Election. */
@@ -322,6 +340,10 @@ export interface ElectionComment {
   downvotes: number;
   /** The current user's reaction type ("up" | "down" | null) */
   myReaction: string | null;
+  /** Per-emoji reaction counts (always fully populated, zeros for unused). */
+  emojiReactionCounts: EmojiReactionCounts;
+  /** The current user's emoji reaction on this comment (one of the 8 keys, or null). */
+  myEmojiReaction: EmojiKey | null;
 }
 
 // ─────────────────────────────────────────────────────────────

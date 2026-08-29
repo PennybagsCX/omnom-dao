@@ -97,6 +97,33 @@ export interface MockElectionReactionRow {
   created_at: string;
 }
 
+/** Mirror of the `proposal_emoji_reactions` table (proposal emoji reactions). */
+export interface MockProposalEmojiReactionRow {
+  id: string;
+  proposal_id: string;
+  user_address: string;
+  emoji: string;
+  created_at: string;
+}
+
+/** Mirror of the `comment_emoji_reactions` table (proposal comment emoji reactions). */
+export interface MockCommentEmojiReactionRow {
+  id: string;
+  comment_id: string;
+  user_address: string;
+  emoji: string;
+  created_at: string;
+}
+
+/** Mirror of the `election_comment_emoji_reactions` table (election comment emoji reactions). */
+export interface MockElectionCommentEmojiReactionRow {
+  id: string;
+  comment_id: string;
+  user_address: string;
+  emoji: string;
+  created_at: string;
+}
+
 export interface MockNotificationRow {
   id: string;
   user_id: string;
@@ -205,6 +232,9 @@ export interface MockStore {
   governance_election_ballot_events: MockElectionBallotEventRow[];
   election_comments: MockElectionCommentRow[];
   election_comment_reactions: MockElectionReactionRow[];
+  proposal_emoji_reactions: MockProposalEmojiReactionRow[];
+  comment_emoji_reactions: MockCommentEmojiReactionRow[];
+  election_comment_emoji_reactions: MockElectionCommentEmojiReactionRow[];
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -704,6 +734,9 @@ function buildSeed(): MockStore {
     governance_election_ballot_events: [...governanceElectionBallotEventsSeed],
     election_comments: [] as MockElectionCommentRow[],
     election_comment_reactions: [] as MockElectionReactionRow[],
+    proposal_emoji_reactions: [] as MockProposalEmojiReactionRow[],
+    comment_emoji_reactions: [] as MockCommentEmojiReactionRow[],
+    election_comment_emoji_reactions: [] as MockElectionCommentEmojiReactionRow[],
   };
 }
 

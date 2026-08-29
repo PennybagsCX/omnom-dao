@@ -27,8 +27,42 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { HolderBadge } from "@/components/shared/holder-badge";
 import { Markdown } from "@/components/shared/markdown";
+import { EmojiBar } from "@/components/shared/emoji-reactions/emoji-bar";
 import { cn, shortenAddress, timeAgo } from "@/lib/utils";
 import type { BaseComment, CommentNode } from "@/lib/comment-tree";
+import type { EmojiKey, EmojiReactionCounts } from "@/types";
+
+/**
+ * Thin visual wrapper for emoji reactions on a comment. The parent component
+ * (`<CommentsSection>` callers) wires the actual React Query mutation hook via
+ * the `onReact` prop — this keeps `<CommentItem>` itself free of hooks and
+ * rules-of-hooks compliant.
+ */
+function CommentEmojiBar({
+  emojiReactionCounts,
+  myEmojiReaction,
+  isAuthenticated,
+  isPending,
+  onReact,
+  commentId,
+}: {
+  emojiReactionCounts: EmojiReactionCounts;
+  myEmojiReaction: EmojiKey | null;
+  isAuthenticated: boolean;
+  isPending: boolean;
+  onReact: (commentId: string, emoji: EmojiKey) => void;
+  commentId: string;
+}) {
+  return (
+    <EmojiBar
+      emojiReactionCounts={emojiReactionCounts}
+      myEmojiReaction={myEmojiReaction}
+      isAuthenticated={isAuthenticated}
+      isPending={isPending}
+      onReact={(emoji) => onReact(commentId, emoji)}
+    />
+  );
+}
 
 /**
  * The shape every threaded-comment consumer must expose. The shared
@@ -44,6 +78,8 @@ export interface ThreadedComment extends BaseComment {
   upvotes: number;
   downvotes: number;
   myReaction: string | null;
+  emojiReactionCounts: EmojiReactionCounts;
+  myEmojiReaction: EmojiKey | null;
 }
 
 export type ReactionType = "up" | "down";
@@ -63,6 +99,10 @@ export interface CommentItemProps<T extends ThreadedComment> {
   /** Side-effects. */
   onReact?: (commentId: string, type: ReactionType) => void;
   isReacting?: boolean;
+  /** Emoji reactions (separate from up/down arrows; additive). The parent
+   *  wires the appropriate React Query hook via this callback. */
+  onReactEmoji?: (commentId: string, emoji: EmojiKey) => void;
+  isReactingEmoji?: boolean;
 }
 
 export function CommentItem<T extends ThreadedComment>({
@@ -78,6 +118,8 @@ export function CommentItem<T extends ThreadedComment>({
   isReplyPending,
   onReact,
   isReacting,
+  onReactEmoji,
+  isReactingEmoji,
 }: CommentItemProps<T>) {
   const isMine =
     myAddress &&
@@ -142,6 +184,20 @@ export function CommentItem<T extends ThreadedComment>({
           <p className="text-sm italic text-text-dim">[comment deleted]</p>
         ) : (
           <Markdown className="text-sm">{node.content}</Markdown>
+        )}
+
+        {/* Emoji reactions (Discord-style) — sits just below the up/down actions */}
+        {!isDeleted && onReactEmoji && (
+          <div className="mt-2">
+            <CommentEmojiBar
+              commentId={node.id}
+              emojiReactionCounts={node.emojiReactionCounts}
+              myEmojiReaction={node.myEmojiReaction}
+              isAuthenticated={isAuthenticated}
+              isPending={Boolean(isReactingEmoji)}
+              onReact={onReactEmoji}
+            />
+          </div>
         )}
 
         {/* Actions bar */}
@@ -273,6 +329,8 @@ export function CommentItem<T extends ThreadedComment>({
               isReplyPending={isReplyPending}
               onReact={onReact}
               isReacting={isReacting}
+              onReactEmoji={onReactEmoji}
+              isReactingEmoji={isReactingEmoji}
             />
           ))}
         </ul>

@@ -7,6 +7,7 @@ import {
 } from "@/lib/auth";
 import { lookupHolder } from "@/lib/snapshot";
 import { ErrorCode, type HolderClass, type Proposal } from "@/types";
+import { emptyEmojiCounts } from "@/lib/emoji-reactions";
 
 /**
  * GET /api/v1/dashboard
@@ -109,6 +110,11 @@ export async function GET() {
     votesAgainst: r.votes_against as number,
     votesAbstain: r.votes_abstain as number,
     metadata: safeMeta(r.metadata as string),
+    // Dashboard surfaces authored proposals with no emoji counts hydrated —
+    // the list page (which fetches the user's authored set) doesn't render the
+    // emoji bar, so zero defaults are correct.
+    emojiReactionCounts: emptyEmojiCounts(),
+    myEmojiReaction: null,
   }));
 
   const unreadRes = await db.execute({

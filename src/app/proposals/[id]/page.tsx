@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CountdownTimer } from "@/components/shared/countdown-timer";
 import { CommentsSection } from "@/components/shared/comments-section";
+import { EmojiReactionsBar } from "@/components/shared/emoji-reactions/emoji-reactions-bar";
 import { DynamicIcon } from "@/components/shared/dynamic-icon";
 import { EmptyState } from "@/components/shared/empty-state";
 import { HolderBadge } from "@/components/shared/holder-badge";
@@ -38,6 +39,7 @@ import {
   useChangeVote,
   useCreateComment,
   useToggleReaction,
+  useToggleCommentEmojiReaction,
   useCurrentUser,
   useProposalDetail,
   type ProposalDetailData,
@@ -78,6 +80,7 @@ export default function ProposalDetailPage() {
   const changeVote = useChangeVote(proposalId);
   const createComment = useCreateComment(proposalId);
   const toggleReaction = useToggleReaction(proposalId);
+  const toggleCommentEmoji = useToggleCommentEmojiReaction(proposalId);
 
   // Track the user's vote. The detail payload now includes the current user's
   // ballot (C2.1) so returning voters see their choice on load; we also update
@@ -241,6 +244,18 @@ export default function ProposalDetailPage() {
             <CardContent>
               <Markdown>{proposal.description}</Markdown>
 
+              {/* Emoji reactions on the proposal itself (separate from up/down
+                  arrows on comments). */}
+              <div className="mt-6 border-t border-border pt-4">
+                <EmojiReactionsBar
+                  surface="proposal"
+                  proposalId={proposal.id}
+                  emojiReactionCounts={proposal.emojiReactionCounts}
+                  myEmojiReaction={proposal.myEmojiReaction}
+                  isAuthenticated={Boolean(me)}
+                />
+              </div>
+
               {/* Parameters */}
               <dl className="mt-6 grid grid-cols-2 gap-3 border-t border-border pt-4 text-center text-sm sm:grid-cols-4">
                 <Param label="Quorum" value={`${proposal.quorumRequired}%`} />
@@ -322,8 +337,12 @@ export default function ProposalDetailPage() {
             onReact={(commentId, type) =>
               toggleReaction.mutate({ commentId, type })
             }
+            onReactEmoji={(commentId, emoji) =>
+              toggleCommentEmoji.mutate({ commentId, emoji })
+            }
             isSubmitting={createComment.isPending}
             isReacting={toggleReaction.isPending}
+            isReactingEmoji={toggleCommentEmoji.isPending}
           />
         </div>
 

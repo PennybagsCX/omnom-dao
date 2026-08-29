@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { lookupHolderClasses } from "@/lib/snapshot";
 import type { Proposal, ProposalStatus } from "@/types";
+import { emptyEmojiCounts } from "@/lib/emoji-reactions";
 
 /**
  * Proposal data-access service.
@@ -46,6 +47,12 @@ export function rowToProposal(row: Record<string, unknown>): Proposal {
     votesAgainst: row.votes_against as number,
     votesAbstain: row.votes_abstain as number,
     metadata: safeParseMetadata(row.metadata as string | null),
+    // The row-only path is used by callers that don't hydrate emoji fields
+    // (e.g. dashboard's "authored proposals"). The list/detail endpoints that
+    // care about reactions overwrite these with hydrated values. Keeping
+    // zero-defaults here is consistent with `emptyEmojiCounts()`.
+    emojiReactionCounts: emptyEmojiCounts(),
+    myEmojiReaction: null,
   };
 }
 

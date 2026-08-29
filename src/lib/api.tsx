@@ -31,11 +31,14 @@ import {
   type ApiResponse,
   type CreateProposalRequest,
   type ElectionComment,
+  type EmojiKey,
+  type EmojiReactionCounts,
   type HolderClass,
   type Proposal,
   type ProposalComment,
   type VoteChoice,
 } from "@/types";
+import { emptyEmojiCounts } from "@/lib/emoji-reactions";
 
 // ─────────────────────────────────────────────────────────────
 // Response payloads (mirror the route handlers)
@@ -632,6 +635,217 @@ function applyOptimisticReaction<
   if (type === "up") upvotes += 1;
   else downvotes += 1;
   return { ...current, upvotes, downvotes, myReaction: type };
+}
+
+/**
+ * Apply an optimistic emoji-reaction toggle to a comment or proposal. Mirrors
+ * the two server branches (DELETE on toggle off / INSERT on first click) so
+ * the `onSettled` invalidation reconciles cleanly. Counts clamped at 0 to
+ * defend against drift if the optimistic state races a recent refetch.
+ *
+ * Note: a user may only hold ONE emoji reaction at a time per target. The
+ * `myEmojiReaction` field is a single `EmojiKey | null`, not a set — clicking
+ * a different emoji replaces the previous one (counts shift by +1 new / −1
+ * old). This mirrors Discord's UX.
+ */
+function applyOptimisticEmojiReaction<
+  T extends {
+    emojiReactionCounts: EmojiReactionCounts;
+    myEmojiReaction: EmojiKey | null;
+  },
+>(current: T, emoji: EmojiKey): T {
+  const prev = current.myEmojiReaction;
+  const counts: EmojiReactionCounts = { ...(current.emojiReactionCounts ?? emptyEmojiCounts()) };
+  if (prev === emoji) {
+    // Same emoji → toggle off.
+    counts[emoji] = Math.max(0, counts[emoji] - 1);
+    return { ...current, emojiReactionCounts: counts, myEmojiReaction: null };
+  }
+  // Switching or first click: decrement previous bucket, increment new bucket.
+  if (prev && counts[prev] !== undefined) {
+    counts[prev] = Math.max(0, counts[prev] - 1);
+  }
+  counts[emoji] = (counts[emoji] ?? 0) + 1;
+  return { ...current, emojiReactionCounts: counts, myEmojiReaction: emoji };
+}
+
+/** POST /api/v1/proposals/[id]/reactions — toggle emoji reaction on proposal. */
+export function useToggleProposalReaction(proposalId: string) {
+  const qc = useQueryClient();
+  return useMutation<
+    { reaction: { emoji: EmojiKey } | null },
+    ApiRequestError,
+    { emoji: EmojiKey },
+    { snapshots: Array<[readonly unknown[], unknown]> }
+  >({
+    mutationFn: ({ emoji }) =>
+      fetchApi<{ reaction: { emoji: EmojiKey } | null }>(
+        `/api/v1/proposals/${proposalId}/reactions`,
+        { method: "POST", body: { emoji } },
+      ),
+    onMutate: async ({ emoji }) => {
+      const snapshots: Array<[readonly unknown[], unknown]> = [];
+
+      // Optimistically update the proposal detail cache.
+      await qc.cancelQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+      const detailSnapshots = qc.getQueriesData<ProposalDetailData>({
+        queryKey: queryKeys.proposalDetail(proposalId),
+      });
+      for (const [key, data] of detailSnapshots) {
+        if (!data || typeof data !== "object" || !data.proposal) {
+          snapshots.push([key, data]);
+          continue;
+        }
+        qc.setQueryData(key, {
+          ...data,
+          proposal: applyOptimisticEmojiReaction(data.proposal, emoji),
+        });
+        snapshots.push([key, data]);
+      }
+
+      // Optimistically update any list-view proposals cache that contains this
+      // proposal (so cards reflect the new count immediately).
+      const listSnapshots = qc.getQueriesData<{ proposals: Proposal[] }>({
+        queryKey: ["proposals"],
+      });
+      for (const [key, data] of listSnapshots) {
+        if (!data) {
+          snapshots.push([key, data]);
+          continue;
+        }
+        qc.setQueryData(key, {
+          ...data,
+          proposals: data.proposals.map((p) =>
+            p.id === proposalId ? applyOptimisticEmojiReaction(p, emoji) : p,
+          ),
+        });
+        snapshots.push([key, data]);
+      }
+      return { snapshots };
+    },
+    onError: (error, _vars, context) => {
+      context?.snapshots.forEach(([key, data]) => qc.setQueryData(key, data));
+      toast.error("Could not register emoji reaction", {
+        description: error.message,
+      });
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+      qc.invalidateQueries({ queryKey: ["proposals"] });
+    },
+  });
+}
+
+/** POST /api/v1/proposals/[id]/comments/[commentId]/emoji-reactions — toggle emoji reaction on proposal comment. */
+export function useToggleCommentEmojiReaction(proposalId: string) {
+  const qc = useQueryClient();
+  return useMutation<
+    { reaction: { emoji: EmojiKey } | null },
+    ApiRequestError,
+    { commentId: string; emoji: EmojiKey },
+    { snapshots: Array<[readonly unknown[], unknown]> }
+  >({
+    mutationFn: ({ commentId, emoji }) =>
+      fetchApi<{ reaction: { emoji: EmojiKey } | null }>(
+        `/api/v1/proposals/${proposalId}/comments/${commentId}/emoji-reactions`,
+        { method: "POST", body: { emoji } },
+      ),
+    onMutate: async ({ commentId, emoji }) => {
+      const snapshots: Array<[readonly unknown[], unknown]> = [];
+
+      // 1. proposal-detail cache embeds comments inline.
+      await qc.cancelQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+      const detailSnapshots = qc.getQueriesData<
+        ProposalDetailData | { comments: ProposalComment[] }
+      >({ queryKey: queryKeys.proposalDetail(proposalId) });
+      for (const [key, data] of detailSnapshots) {
+        if (!data || typeof data !== "object" || !("comments" in data)) {
+          snapshots.push([key, data]);
+          continue;
+        }
+        const d = data as { comments: ProposalComment[] };
+        qc.setQueryData(key, {
+          ...d,
+          comments: d.comments.map((c) =>
+            c.id === commentId ? applyOptimisticEmojiReaction(c, emoji) : c,
+          ),
+        });
+        snapshots.push([key, data]);
+      }
+
+      // 2. direct comments list cache.
+      await qc.cancelQueries({ queryKey: ["comments", proposalId] });
+      const commentsSnapshots = qc.getQueriesData<{ comments: ProposalComment[] }>({
+        queryKey: ["comments", proposalId],
+      });
+      for (const [key, data] of commentsSnapshots) {
+        if (!data) {
+          snapshots.push([key, data]);
+          continue;
+        }
+        qc.setQueryData(key, {
+          ...data,
+          comments: data.comments.map((c) =>
+            c.id === commentId ? applyOptimisticEmojiReaction(c, emoji) : c,
+          ),
+        });
+        snapshots.push([key, data]);
+      }
+      return { snapshots };
+    },
+    onError: (error, _vars, context) => {
+      context?.snapshots.forEach(([key, data]) => qc.setQueryData(key, data));
+      toast.error("Could not register emoji reaction", {
+        description: error.message,
+      });
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["comments", proposalId] });
+      qc.invalidateQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+    },
+  });
+}
+
+/** POST /api/v1/elections/[electionKey]/comments/[commentId]/emoji-reactions — toggle emoji reaction on election comment. */
+export function useToggleElectionCommentEmojiReaction(electionKey: string) {
+  const qc = useQueryClient();
+  return useMutation<
+    { reaction: { emoji: EmojiKey } | null },
+    ApiRequestError,
+    { commentId: string; emoji: EmojiKey },
+    { snapshots: Array<[readonly unknown[], unknown]> }
+  >({
+    mutationFn: ({ commentId, emoji }) =>
+      fetchApi<{ reaction: { emoji: EmojiKey } | null }>(
+        `/api/v1/elections/${electionKey}/comments/${commentId}/emoji-reactions`,
+        { method: "POST", body: { emoji } },
+      ),
+    onMutate: async ({ commentId, emoji }) => {
+      await qc.cancelQueries({ queryKey: queryKeys.electionComments(electionKey) });
+      const snapshots = qc.getQueriesData<{ comments: ElectionComment[] }>({
+        queryKey: ["election-comments", electionKey],
+      });
+      snapshots.forEach(([key, data]) => {
+        if (!data) return;
+        qc.setQueryData(key, {
+          ...data,
+          comments: data.comments.map((c) =>
+            c.id === commentId ? applyOptimisticEmojiReaction(c, emoji) : c,
+          ),
+        });
+      });
+      return { snapshots };
+    },
+    onError: (error, _vars, context) => {
+      context?.snapshots.forEach(([key, data]) => qc.setQueryData(key, data));
+      toast.error("Could not register emoji reaction", {
+        description: error.message,
+      });
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.electionComments(electionKey) });
+    },
+  });
 }
 
 /** PATCH /api/v1/settings — update display name / preferences. */
