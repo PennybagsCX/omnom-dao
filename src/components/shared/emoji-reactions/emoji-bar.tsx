@@ -44,7 +44,7 @@ export function EmojiBar({
   });
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-1", !compact && "mt-2")}>
+    <div className={cn("flex flex-wrap items-center gap-1")}>
       {visible.map((meta) => {
         const count = emojiReactionCounts[meta.key] ?? 0;
         const isActive = myEmojiReaction === meta.key;
@@ -61,8 +61,8 @@ export function EmojiBar({
             aria-pressed={isActive}
             aria-label={ariaLabel}
             className={cn(
-              "inline-flex min-h-[44px] items-center justify-center gap-0.5 rounded-full border px-2 text-xs transition-colors",
-              compact ? "min-w-[44px]" : "min-w-[44px]",
+              "inline-flex h-9 min-h-[44px] items-center justify-center gap-0.5 rounded-full border px-3 text-xs transition-colors",
+              compact ? "min-w-0 px-2" : "min-w-[44px]",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated",
               "disabled:opacity-50",
               isActive

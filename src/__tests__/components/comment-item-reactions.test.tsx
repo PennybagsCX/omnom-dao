@@ -162,4 +162,32 @@ describe("<CommentItem> reaction buttons", () => {
     expect(up.className).toMatch(/focus-visible:ring-2/);
     expect(up.className).toMatch(/focus-visible:ring-gold/);
   });
+
+  it("upvote button uses the rounded-full pill shape (matches emoji chips)", () => {
+    renderItem(makeNode());
+    const btn = screen.getByLabelText(/upvote comment/i);
+    expect(btn.className).toContain("rounded-full");
+    expect(btn.className).toContain("border");
+  });
+
+  it("downvote button uses the rounded-full pill shape (matches emoji chips)", () => {
+    renderItem(makeNode());
+    const btn = screen.getByLabelText(/downvote comment/i);
+    expect(btn.className).toContain("rounded-full");
+    expect(btn.className).toContain("border");
+  });
+
+  it("active upvote applies border-success/40 + bg-success/10 (chip treatment, not just text color)", () => {
+    renderItem(makeNode({ myReaction: "up" }));
+    const btn = screen.getByLabelText(/remove upvote/i);
+    expect(btn.className).toContain("border-success/40");
+    expect(btn.className).toContain("bg-success/10");
+  });
+
+  it("active downvote applies border-danger/40 + bg-danger/10 (chip treatment)", () => {
+    renderItem(makeNode({ myReaction: "down" }));
+    const btn = screen.getByLabelText(/remove downvote/i);
+    expect(btn.className).toContain("border-danger/40");
+    expect(btn.className).toContain("bg-danger/10");
+  });
 });

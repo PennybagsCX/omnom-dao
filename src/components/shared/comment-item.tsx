@@ -186,24 +186,14 @@ export function CommentItem<T extends ThreadedComment>({
           <Markdown className="text-sm">{node.content}</Markdown>
         )}
 
-        {/* Emoji reactions (Discord-style) — sits just below the up/down actions */}
-        {!isDeleted && onReactEmoji && (
-          <div className="mt-2">
-            <CommentEmojiBar
-              commentId={node.id}
-              emojiReactionCounts={node.emojiReactionCounts}
-              myEmojiReaction={node.myEmojiReaction}
-              isAuthenticated={isAuthenticated}
-              isPending={Boolean(isReactingEmoji)}
-              onReact={onReactEmoji}
-            />
-          </div>
-        )}
+        {/* Emoji reactions (Discord-style) — inlined into the actions row below. */}
 
-        {/* Actions bar */}
-        {!isDeleted && (
-          <div className="mt-2 flex items-center gap-1">
-            {/* Upvote */}
+        {/* Actions bar — all reactions (up/down + emoji chips + picker) share
+            one row with a unified pill shape. A vertical divider separates the
+            "react" cluster from the "respond" cluster (Reply / Hide replies). */}
+        {!isDeleted && (onReact || onReactEmoji) && (
+          <div className="mt-2 flex flex-wrap items-center gap-1">
+            {/* Upvote — pill that matches the emoji-chip visual language */}
             {onReact && (
               <button
                 type="button"
@@ -214,19 +204,21 @@ export function CommentItem<T extends ThreadedComment>({
                   myReaction === "up" ? "Remove upvote" : "Upvote comment"
                 }
                 className={cn(
-                  "inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-0.5 rounded px-2 text-xs transition-colors",
+                  "inline-flex h-9 min-h-[44px] min-w-[44px] items-center justify-center gap-0.5 rounded-full border px-3 text-xs transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated",
                   "disabled:opacity-50",
                   myReaction === "up"
-                    ? "text-success"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "border-success/40 bg-success/10 text-success"
+                    : "border-border bg-bg-elevated/40 text-muted-foreground hover:bg-bg-elevated hover:text-foreground",
                 )}
               >
                 <ArrowBigUp className="h-3.5 w-3.5" aria-hidden />
-                {node.upvotes > 0 && <span>{node.upvotes}</span>}
+                {node.upvotes > 0 && (
+                  <span className="font-mono tabular-nums">{node.upvotes}</span>
+                )}
               </button>
             )}
-            {/* Downvote */}
+            {/* Downvote — pill matching the up/emoji language */}
             {onReact && (
               <button
                 type="button"
@@ -239,17 +231,45 @@ export function CommentItem<T extends ThreadedComment>({
                     : "Downvote comment"
                 }
                 className={cn(
-                  "inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-0.5 rounded px-2 text-xs transition-colors",
+                  "inline-flex h-9 min-h-[44px] min-w-[44px] items-center justify-center gap-0.5 rounded-full border px-3 text-xs transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated",
                   "disabled:opacity-50",
                   myReaction === "down"
-                    ? "text-danger"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "border-danger/40 bg-danger/10 text-danger"
+                    : "border-border bg-bg-elevated/40 text-muted-foreground hover:bg-bg-elevated hover:text-foreground",
                 )}
               >
                 <ArrowBigDown className="h-3.5 w-3.5" aria-hidden />
-                {node.downvotes > 0 && <span>{node.downvotes}</span>}
+                {node.downvotes > 0 && (
+                  <span className="font-mono tabular-nums">{node.downvotes}</span>
+                )}
               </button>
+            )}
+
+            {/* Emoji reactions — same pill shape so users see "this is another
+                way to react", not a separate tool. The bar wraps gracefully. */}
+            {onReactEmoji && (
+              <CommentEmojiBar
+                commentId={node.id}
+                emojiReactionCounts={node.emojiReactionCounts}
+                myEmojiReaction={node.myEmojiReaction}
+                isAuthenticated={isAuthenticated}
+                isPending={Boolean(isReactingEmoji)}
+                onReact={onReactEmoji}
+              />
+            )}
+
+            {/* Spacer + divider push the text actions to the right when
+                there's room. On narrow screens the row wraps and the divider
+                hides, so the cluster reads as one unit. */}
+            {((isAuthenticated && depth < 3) || node.replies.length > 0) && (
+              <>
+                <div className="grow" />
+                <span
+                  aria-hidden
+                  className="mx-1 hidden h-5 w-px shrink-0 self-stretch bg-border sm:inline-block"
+                />
+              </>
             )}
             {/* Reply */}
             {isAuthenticated && depth < 3 && (
@@ -257,8 +277,8 @@ export function CommentItem<T extends ThreadedComment>({
                 type="button"
                 onClick={() => onReplyToggle(node.id)}
                 className={cn(
-                  "inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground",
-                  isReplying && "text-gold",
+                  "inline-flex h-9 min-h-[44px] items-center gap-1 rounded-full px-3 text-xs text-muted-foreground transition-colors hover:bg-bg-elevated hover:text-foreground",
+                  isReplying && "bg-gold/10 text-gold",
                 )}
               >
                 <CornerUpLeft className="h-3.5 w-3.5" aria-hidden /> Reply
@@ -269,11 +289,9 @@ export function CommentItem<T extends ThreadedComment>({
               <button
                 type="button"
                 onClick={() => setShowReplies(!showReplies)}
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                className="inline-flex h-9 min-h-[44px] items-center rounded-full px-3 text-xs text-text-dim transition-colors hover:bg-bg-elevated hover:text-foreground"
               >
-                {showReplies
-                  ? "Hide"
-                  : `Show ${node.replies.length}`}{" "}
+                {showReplies ? "Hide" : `Show ${node.replies.length}`}{" "}
                 {node.replies.length === 1 ? "reply" : "replies"}
               </button>
             )}

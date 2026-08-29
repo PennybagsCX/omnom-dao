@@ -38,7 +38,7 @@ export function EmojiPicker({ enabled, onSelect, label = "Add emoji reaction" }:
       <DropdownMenuTrigger
         aria-label={label}
         className={cn(
-          "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-border bg-bg-elevated/40 px-2 text-xs text-muted-foreground transition-colors",
+          "inline-flex h-9 min-h-[44px] items-center justify-center rounded-full border border-border bg-bg-elevated/40 px-3 text-xs text-muted-foreground transition-colors",
           "hover:bg-bg-elevated hover:text-foreground",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated",
           "data-[state=open]:bg-bg-elevated data-[state=open]:text-foreground",
