@@ -4,6 +4,12 @@ import { apiError, apiSuccess } from "@/lib/api-response";
 import { requireAuth, UnauthorizedError } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
+  DISTRIBUTION_KEY,
+  HOLDER_CLASS_CONFIG,
+  HOLDER_CLASS_ORDER,
+  SNAPSHOT,
+} from "@/lib/constants";
+import {
   ELECTION_CHOICES,
   ELECTION_CHOICE_LABELS,
   ELECTION_KEY,
@@ -12,9 +18,13 @@ import {
   percentage,
   type ElectionChoice,
 } from "@/lib/election";
-import { lookupHolder, isSnapshotIntegrityVerified } from "@/lib/snapshot";
+import {
+  isSnapshotIntegrityVerified,
+  lookupHolder,
+  lookupHolderClasses,
+} from "@/lib/snapshot";
 import { checkRateLimit, userActionBucket } from "@/lib/rate-limit";
-import { ErrorCode } from "@/types";
+import { ErrorCode, HolderClass } from "@/types";
 
 /**
  * Foundational Governance Election.
@@ -37,6 +47,28 @@ interface ChoiceResult {
   percentage: number;
 }
 
+/**
+ * Per-holder-class turnout breakdown. Each entry reports how many of the
+ * eligible wallets in that class have voted, the class turnout %, and the
+ * per-method breakdown of those ballots. Excludes the deprecated
+ * `HolderClass.FISH` alias — legacy JWT-classified wallets are bucketed into
+ * SEAHORSE (their rank-equivalent).
+ */
+export interface HolderClassTally {
+  holderClass: HolderClass;
+  label: string;
+  emoji: string;
+  count: number;
+  eligibleCount: number;
+  turnoutPercentage: number;
+  byChoice: Array<{
+    choice: ElectionChoice;
+    label: string;
+    count: number;
+    percentage: number;
+  }>;
+}
+
 interface ElectionData {
   electionKey: string;
   title: string;
@@ -49,6 +81,7 @@ interface ElectionData {
   results: ChoiceResult[];
   userChoice: ElectionChoice | null;
   userEligible: boolean;
+  ballotsByHolderClass: HolderClassTally[];
 }
 
 interface ElectionRow {
@@ -95,6 +128,82 @@ function buildResults(counts: Map<ElectionChoice, number>, total: number): Choic
   }));
 }
 
+/**
+ * Returns one `HolderClassTally` per canonical holder class (KRAKEN →
+ * SEAHORSE). Derives each voter's class from the snapshot via
+ * `lookupHolderClasses` (in-memory O(1) lookups after warm-up) and buckets
+ * ballots by `(class × choice)`. WALL-09 / KRAKEN counts are tiny so we
+ * never log individual voter addresses.
+ *
+ * Defensive fallback: wallets not in the snapshot (which the POST endpoint
+ * already gates on) are bucketed into SEAHORSE with a console warning rather
+ * than dropped — losing ballots silently is worse than a noisy log.
+ */
+async function tallyByHolderClass(): Promise<HolderClassTally[]> {
+  const res = await db.execute({
+    sql: `SELECT voter_address, choice FROM governance_election_ballots
+          WHERE election_key = ?`,
+    args: [ELECTION_KEY],
+  });
+
+  const addresses = res.rows.map((r) => (r.voter_address as string).toLowerCase());
+  const classesByAddress = await lookupHolderClasses(addresses);
+
+  // Initialize 7 buckets (one per canonical class). The deprecated FISH alias
+  // is collapsed into SEAHORSE to avoid surfacing stale rank names.
+  const buckets = new Map<HolderClass, Map<ElectionChoice, number>>();
+  for (const cls of HOLDER_CLASS_ORDER) {
+    buckets.set(cls, new Map(ELECTION_CHOICES.map((c) => [c, 0])));
+  }
+  const seahorseBucket = buckets.get(HolderClass.SEAHORSE)!;
+
+  let orphans = 0;
+  for (const row of res.rows) {
+    const address = (row.voter_address as string).toLowerCase();
+    const choice = row.choice as ElectionChoice;
+    const cls = classesByAddress.get(address) ?? null;
+    if (!isElectionChoice(choice)) continue;
+    if (cls === null || cls === HolderClass.FISH) {
+      // FISH → SEAHORSE (legacy alias); null → defensive SEAHORSE fallback.
+      seahorseBucket.set(choice, (seahorseBucket.get(choice) ?? 0) + 1);
+      if (cls === null) orphans++;
+    } else if (buckets.has(cls)) {
+      buckets.get(cls)!.set(choice, (buckets.get(cls)!.get(choice) ?? 0) + 1);
+    } else {
+      // Unknown enum value (defensive — should not happen).
+      seahorseBucket.set(choice, (seahorseBucket.get(choice) ?? 0) + 1);
+      orphans++;
+    }
+  }
+  if (orphans > 0) {
+    console.warn(
+      `[governance-vote] ${orphans} ballot(s) had addresses not in the snapshot; bucketed into SEAHORSE.`,
+    );
+  }
+
+  return HOLDER_CLASS_ORDER.map((cls) => {
+    const cfg = HOLDER_CLASS_CONFIG[cls];
+    const perChoice = buckets.get(cls)!;
+    const classCount = [...perChoice.values()].reduce((sum, n) => sum + n, 0);
+    const eligibleCount =
+      SNAPSHOT.expectedDistribution[DISTRIBUTION_KEY[cls]] ?? 0;
+    return {
+      holderClass: cls,
+      label: cfg.label,
+      emoji: cfg.emoji,
+      count: classCount,
+      eligibleCount,
+      turnoutPercentage: percentage(classCount, eligibleCount),
+      byChoice: ELECTION_CHOICES.map((choice) => ({
+        choice,
+        label: ELECTION_CHOICE_LABELS[choice],
+        count: perChoice.get(choice) ?? 0,
+        percentage: percentage(perChoice.get(choice) ?? 0, classCount),
+      })),
+    };
+  });
+}
+
 export async function GET(request: NextRequest) {
   const includeViewer = request.nextUrl.searchParams.get("me") === "true";
   const election = await loadElection();
@@ -128,6 +237,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  const ballotsByHolderClass = await tallyByHolderClass();
+
   const data: ElectionData = {
     electionKey: election.election_key,
     title: election.title,
@@ -140,6 +251,7 @@ export async function GET(request: NextRequest) {
     results: buildResults(counts, total),
     userChoice,
     userEligible,
+    ballotsByHolderClass,
   };
   return apiSuccess<ElectionData>(data);
 }
@@ -276,6 +388,7 @@ export async function POST(request: NextRequest) {
 
   const counts = await tally();
   const total = [...counts.values()].reduce((sum, n) => sum + n, 0);
+  const ballotsByHolderClass = await tallyByHolderClass();
   const data: ElectionData = {
     electionKey: election.election_key,
     title: election.title,
@@ -288,6 +401,7 @@ export async function POST(request: NextRequest) {
     results: buildResults(counts, total),
     userChoice: activeChoice,
     userEligible: true,
+    ballotsByHolderClass,
   };
   return apiSuccess<ElectionData>(data);
 }

@@ -9,11 +9,12 @@ import {
   Database,
   HelpCircle,
   Loader2,
+  Users,
   Vote,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Accordion,
   AccordionContent,
@@ -22,6 +23,8 @@ import {
 } from "@/components/ui/accordion";
 import { CountdownTimer } from "@/components/shared/countdown-timer";
 import { ElectionCommentsSection } from "@/components/shared/election-comments-section";
+import { EmptyState } from "@/components/shared/empty-state";
+import { HolderBadge } from "@/components/shared/holder-badge";
 import { ConnectCta } from "@/components/wallet/connect-cta";
 import { apiGet, fetchApi, useCurrentUser } from "@/lib/api";
 import {
@@ -32,12 +35,27 @@ import {
 } from "@/lib/election";
 import { ELECTION_EXPLANATIONS, ELECTION_FAQ } from "@/lib/election-explanations";
 import { cn } from "@/lib/utils";
+import { type HolderClass } from "@/types";
 
 interface ElectionChoiceResult {
   choice: ElectionChoice;
   label: string;
   count: number;
   percentage: number;
+}
+
+/**
+ * Per-holder-class turnout row. Mirrors the API contract from
+ * `tallyByHolderClass()` in `src/app/api/v1/governance-vote/route.ts`.
+ */
+interface HolderClassRow {
+  holderClass: HolderClass;
+  label: string;
+  emoji: string;
+  count: number;
+  eligibleCount: number;
+  turnoutPercentage: number;
+  byChoice: ElectionChoiceResult[];
 }
 
 interface ElectionData {
@@ -52,6 +70,7 @@ interface ElectionData {
   results: ElectionChoiceResult[];
   userChoice: ElectionChoice | null;
   userEligible: boolean;
+  ballotsByHolderClass: HolderClassRow[];
 }
 
 const CHOICE_COLORS: Record<ElectionChoice, string> = {
@@ -452,6 +471,39 @@ export default function GovernanceVotePage() {
         </motion.div>
       )}
 
+      {/* Holder-class turnout breakdown — who has voted, broken down by
+          snapshot tier. Each row shows the class badge, turnout %, and a
+          mini stacked bar with how those ballots broke down across the four
+          voting methods. Mirrors the per-choice Current Results pattern but
+          flipped (rows = classes; segments = methods). */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.55, duration: 0.4, ease: EASE }}
+        className="mt-8"
+      >
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="inline-flex items-center justify-center gap-2 text-base">
+              <Users className="h-4 w-4" aria-hidden /> Who has voted
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {data && data.totalBallots === 0 ? (
+              <EmptyState
+                icon={<Vote className="h-12 w-12" />}
+                title="No ballots yet"
+                description="Check back as holders cast their ballots — this breakdown updates every 15 seconds."
+              />
+            ) : (
+              data?.ballotsByHolderClass?.map((row) => (
+                <HolderClassRow key={row.holderClass} row={row} />
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Discussion — shared comments surface, gated by snapshot eligibility
           (server-enforced) and phase (composer locked after CLOSED). */}
       <motion.div
@@ -472,7 +524,7 @@ export default function GovernanceVotePage() {
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.4, ease: EASE }}
+        transition={{ delay: 0.7, duration: 0.4, ease: EASE }}
         className="mt-8"
       >
         <div className="text-center mb-4">
@@ -500,7 +552,7 @@ export default function GovernanceVotePage() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.7, duration: 0.3, ease: EASE }}
+        transition={{ delay: 0.8, duration: 0.3, ease: EASE }}
         className="mt-8 text-center"
       >
         <Link
@@ -513,6 +565,82 @@ export default function GovernanceVotePage() {
           Snapshot source data and documentation: DBOT-DC/omnom-snapshot
         </Link>
       </motion.div>
+    </div>
+  );
+}
+
+/* ── Holder-class breakdown sub-component ───────────────────────── */
+
+function HolderClassRow({ row }: { row: HolderClassRow }) {
+  // The row's `byChoice` typically sums to `row.count`. The mini stacked bar
+  // is a 100%-of-class-width bar split into 4 choice segments. Even when
+  // counts are zero (no ballots yet in this class), we still render the row
+  // with the bar at 0% so the page never feels empty.
+  const total = row.count;
+
+  return (
+    <div
+      className={cn(
+        "rounded-lg border border-border bg-bg-elevated/30 p-3 transition-colors",
+        row.count > 0 && "border-border/80",
+      )}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <HolderBadge holderClass={row.holderClass} size="sm" plain />
+          <span className="text-xs text-text-dim">
+            {row.count.toLocaleString()} of {row.eligibleCount.toLocaleString()}{" "}
+            wallets voted
+          </span>
+        </div>
+        <div className="text-right">
+          <div className="font-mono font-bold text-gold">
+            {row.turnoutPercentage.toFixed(1)}%
+          </div>
+          <div className="text-[10px] uppercase tracking-widest text-text-dim">
+            turnout
+          </div>
+        </div>
+      </div>
+
+      {/* Mini stacked bar: one segment per choice, widths proportional to
+          the choice's share of this class's ballots. */}
+      <div
+        className="mt-2 flex h-2 w-full overflow-hidden rounded-full bg-bg-elevated"
+        role="img"
+        aria-label={`${row.label} vote breakdown by method`}
+      >
+        {total === 0 ? (
+          <div className="h-full w-full bg-bg-elevated" aria-hidden />
+        ) : (
+          row.byChoice.map((bc) => {
+            const widthPct = total > 0 ? (bc.count / total) * 100 : 0;
+            if (widthPct === 0) return null;
+            return (
+              <div
+                key={bc.choice}
+                className={cn("h-full transition-all duration-500", CHOICE_COLORS[bc.choice])}
+                style={{ width: `${widthPct}%` }}
+                title={`${bc.label}: ${bc.count}`}
+              />
+            );
+          })
+        )}
+      </div>
+
+      {/* Per-choice label strip below the bar — gold counts, dim labels. */}
+      <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-4">
+        {row.byChoice.map((bc) => (
+          <div key={bc.choice} className="flex items-baseline gap-1.5">
+            <span className="font-mono font-bold text-gold tabular-nums">
+              {bc.count}
+            </span>
+            <span className="truncate text-text-dim" title={bc.label}>
+              {bc.label}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
