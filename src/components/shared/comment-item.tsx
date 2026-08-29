@@ -146,22 +146,28 @@ export function CommentItem<T extends ThreadedComment>({
 
         {/* Actions bar */}
         {!isDeleted && (
-          <div className="mt-2 flex items-center gap-3">
+          <div className="mt-2 flex items-center gap-1">
             {/* Upvote */}
             {onReact && (
               <button
                 type="button"
                 onClick={() => handleReact("up")}
                 disabled={!isAuthenticated || isReacting}
+                aria-pressed={myReaction === "up"}
+                aria-label={
+                  myReaction === "up" ? "Remove upvote" : "Upvote comment"
+                }
                 className={cn(
-                  "inline-flex items-center gap-0.5 text-xs transition-colors disabled:opacity-50",
+                  "inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-0.5 rounded px-2 text-xs transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated",
+                  "disabled:opacity-50",
                   myReaction === "up"
                     ? "text-success"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 <ArrowBigUp className="h-3.5 w-3.5" aria-hidden />
-                {node.upvotes > 0 && node.upvotes}
+                {node.upvotes > 0 && <span>{node.upvotes}</span>}
               </button>
             )}
             {/* Downvote */}
@@ -170,15 +176,23 @@ export function CommentItem<T extends ThreadedComment>({
                 type="button"
                 onClick={() => handleReact("down")}
                 disabled={!isAuthenticated || isReacting}
+                aria-pressed={myReaction === "down"}
+                aria-label={
+                  myReaction === "down"
+                    ? "Remove downvote"
+                    : "Downvote comment"
+                }
                 className={cn(
-                  "inline-flex items-center gap-0.5 text-xs transition-colors disabled:opacity-50",
+                  "inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-0.5 rounded px-2 text-xs transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated",
+                  "disabled:opacity-50",
                   myReaction === "down"
                     ? "text-danger"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 <ArrowBigDown className="h-3.5 w-3.5" aria-hidden />
-                {node.downvotes > 0 && node.downvotes}
+                {node.downvotes > 0 && <span>{node.downvotes}</span>}
               </button>
             )}
             {/* Reply */}

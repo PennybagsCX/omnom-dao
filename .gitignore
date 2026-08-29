@@ -11,6 +11,9 @@
 /blob-report
 /playwright/.cache
 
+# Local verification artifacts (visual screenshots taken during manual QA)
+/screenshots
+
 # next.js
 /.next/
 /out/

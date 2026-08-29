@@ -157,6 +157,28 @@ async function main() {
     { sql: `CREATE INDEX IF NOT EXISTS idx_comments_parent ON comments (parent_id)` },
     { sql: `CREATE INDEX IF NOT EXISTS idx_comments_author ON comments (author_address)` },
 
+    // ── 4b. Comment reactions (proposal surface) ─────────────
+    //    One row per (comment, voter) pair. Toggling replaces / removes.
+    //    Mirrors `election_comment_reactions` (§13) so both surfaces
+    //    share the same semantics. Up/down toggle UI lives in
+    //    <CommentItem>; this table backs `POST /api/v1/proposals/[id]/comments/[commentId]/reactions`.
+    {
+      sql: `CREATE TABLE IF NOT EXISTS comment_reactions (
+        id              TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        comment_id      TEXT NOT NULL,
+        user_address    TEXT NOT NULL,
+        type            TEXT NOT NULL CHECK (type IN ('up', 'down')),
+        created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+        CONSTRAINT uq_comment_reactions UNIQUE (comment_id, user_address),
+        FOREIGN KEY (comment_id) REFERENCES comments (id) ON DELETE CASCADE,
+        FOREIGN KEY (user_address) REFERENCES users (wallet_address)
+      )`,
+    },
+    {
+      sql: `CREATE INDEX IF NOT EXISTS idx_comment_reactions_comment
+            ON comment_reactions (comment_id)`,
+    },
+
     // ── 5. Notifications ─────────────────────────────────────
     {
       sql: `CREATE TABLE IF NOT EXISTS notifications (

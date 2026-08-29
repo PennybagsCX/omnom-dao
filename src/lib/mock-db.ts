@@ -49,6 +49,8 @@ function tableFor(store: MockStore, name: string): Table | undefined {
       return store.votes as unknown as Table;
     case "comments":
       return store.comments as unknown as Table;
+    case "comment_reactions":
+      return store.comment_reactions as unknown as Table;
     case "notifications":
       return store.notifications as unknown as Table;
     case "delegations":

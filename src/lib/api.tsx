@@ -477,14 +477,65 @@ export function useToggleReaction(proposalId: string) {
   return useMutation<
     { reaction: { type: string } | null },
     ApiRequestError,
-    { commentId: string; type: "up" | "down" }
+    { commentId: string; type: "up" | "down" },
+    { snapshots: Array<[readonly unknown[], unknown]> }
   >({
     mutationFn: ({ commentId, type }) =>
       fetchApi<{ reaction: { type: string } | null }>(
         `/api/v1/proposals/${proposalId}/comments/${commentId}/reactions`,
         { method: "POST", body: { type } },
       ),
-    onSuccess: () => {
+    onMutate: async ({ commentId, type }) => {
+      // Apply the optimistic update to BOTH caches that serve proposal comments:
+      // 1. ["proposal-detail", proposalId] — the proposal detail page embeds
+      //    comments directly in the GET response, so the page reads from here.
+      // 2. ["comments", proposalId, *] — any page using `useComments()` directly.
+      const snapshots: Array<[readonly unknown[], unknown]> = [];
+
+      await qc.cancelQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+      const detailSnapshots = qc.getQueriesData<
+        ProposalDetailData | { comments: ProposalComment[] }
+      >({ queryKey: queryKeys.proposalDetail(proposalId) });
+      for (const [key, data] of detailSnapshots) {
+        if (!data || typeof data !== "object" || !("comments" in data)) {
+          snapshots.push([key, data]);
+          continue;
+        }
+        const d = data as { comments: ProposalComment[] };
+        qc.setQueryData(key, {
+          ...d,
+          comments: d.comments.map((c) =>
+            c.id === commentId ? applyOptimisticReaction(c, type) : c,
+          ),
+        });
+        snapshots.push([key, data]);
+      }
+
+      await qc.cancelQueries({ queryKey: ["comments", proposalId] });
+      const commentsSnapshots = qc.getQueriesData<{ comments: ProposalComment[] }>({
+        queryKey: ["comments", proposalId],
+      });
+      for (const [key, data] of commentsSnapshots) {
+        if (!data) {
+          snapshots.push([key, data]);
+          continue;
+        }
+        qc.setQueryData(key, {
+          ...data,
+          comments: data.comments.map((c) =>
+            c.id === commentId ? applyOptimisticReaction(c, type) : c,
+          ),
+        });
+        snapshots.push([key, data]);
+      }
+      return { snapshots };
+    },
+    onError: (error, _vars, context) => {
+      context?.snapshots.forEach(([key, data]) => qc.setQueryData(key, data));
+      toast.error("Could not register reaction", { description: error.message });
+    },
+    onSettled: () => {
+      // Reconcile with server truth regardless of success / failure.
       qc.invalidateQueries({ queryKey: ["comments", proposalId] });
       qc.invalidateQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
     },
@@ -520,17 +571,67 @@ export function useToggleElectionReaction(electionKey: string) {
   return useMutation<
     { reaction: { type: string } | null },
     ApiRequestError,
-    { commentId: string; type: "up" | "down" }
+    { commentId: string; type: "up" | "down" },
+    { snapshots: Array<[readonly unknown[], unknown]> }
   >({
     mutationFn: ({ commentId, type }) =>
       fetchApi<{ reaction: { type: string } | null }>(
         `/api/v1/elections/${electionKey}/comments/${commentId}/reactions`,
         { method: "POST", body: { type } },
       ),
-    onSuccess: () => {
+    onMutate: async ({ commentId, type }) => {
+      await qc.cancelQueries({ queryKey: ["election-comments", electionKey] });
+      const snapshots = qc.getQueriesData<{ comments: ElectionComment[] }>({
+        queryKey: ["election-comments", electionKey],
+      });
+      snapshots.forEach(([key, data]) => {
+        if (!data) return;
+        qc.setQueryData(key, {
+          ...data,
+          comments: data.comments.map((c) =>
+            c.id === commentId ? applyOptimisticReaction(c, type) : c,
+          ),
+        });
+      });
+      return { snapshots };
+    },
+    onError: (error, _vars, context) => {
+      context?.snapshots.forEach(([key, data]) => qc.setQueryData(key, data));
+      toast.error("Could not register reaction", { description: error.message });
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ["election-comments", electionKey] });
     },
   });
+}
+
+/**
+ * Compute the next state of a comment after a vote/reaction click, without
+ * waiting for the server. Mirrors the three server branches (DELETE on
+ * toggle, UPDATE on swap, INSERT on first click) so `onSettled`
+ * invalidation reconciles cleanly.
+ *
+ * Counts are clamped at 0 to defend against drift if the optimistic state
+ * races a recent refetch.
+ */
+function applyOptimisticReaction<
+  T extends { upvotes: number; downvotes: number; myReaction: string | null },
+>(current: T, type: "up" | "down"): T {
+  const prev = current.myReaction;
+  let upvotes = current.upvotes;
+  let downvotes = current.downvotes;
+  if (prev === type) {
+    // Same type → toggle off.
+    if (type === "up") upvotes = Math.max(0, upvotes - 1);
+    else downvotes = Math.max(0, downvotes - 1);
+    return { ...current, upvotes, downvotes, myReaction: null };
+  }
+  // Switching or first click: decrement previous bucket, increment new bucket.
+  if (prev === "up") upvotes = Math.max(0, upvotes - 1);
+  if (prev === "down") downvotes = Math.max(0, downvotes - 1);
+  if (type === "up") upvotes += 1;
+  else downvotes += 1;
+  return { ...current, upvotes, downvotes, myReaction: type };
 }
 
 /** PATCH /api/v1/settings — update display name / preferences. */

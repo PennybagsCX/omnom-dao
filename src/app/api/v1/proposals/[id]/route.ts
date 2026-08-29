@@ -12,8 +12,8 @@ import {
   ErrorCode,
   ProposalStatus,
   VoteChoice,
-  type HolderClass,
   type Proposal,
+  type ProposalComment,
 } from "@/types";
 
 /**
@@ -33,22 +33,11 @@ interface MyVoteData {
   votedAt: string;
 }
 
-interface CommentData {
-  id: string;
-  authorAddress: string;
-  /** Commenter's snapshot holder class (null when they never held $OMNOM) */
-  authorHolderClass?: HolderClass | null;
-  content: string;
-  createdAt: string;
-  parentId: string | null;
-  deletedAt: string | null;
-}
-
 interface ProposalDetailData {
   proposal: Proposal;
   votes: VoteResultData;
   voterCount: number;
-  comments: CommentData[];
+  comments: ProposalComment[];
   myVote: MyVoteData | null;
 }
 
@@ -106,16 +95,71 @@ export async function GET(
     const commentClasses = await lookupHolderClasses(
       commentsRes.rows.map((r) => r.author_address as string),
     );
-    const comments: CommentData[] = commentsRes.rows.map((r) => ({
-      id: r.id as string,
-      authorAddress: r.author_address as string,
-      authorHolderClass:
-        commentClasses.get((r.author_address as string).toLowerCase()) ?? null,
-      content: (r.deleted_at ? "[deleted]" : (r.content as string)) ?? "",
-      createdAt: r.created_at as string,
-      parentId: (r.parent_id as string | null) ?? null,
-      deletedAt: (r.deleted_at as string | null) ?? null,
-    }));
+
+    // Batch-fetch reaction counts (upvotes / downvotes) for every comment on this
+    // proposal. The pattern mirrors `/comments` so reaction toggles can update
+    // counts in O(1) extra queries regardless of how many comments exist.
+    const commentIds = commentsRes.rows.map((r) => r.id as string);
+    const reactionMap = new Map<string, { up: number; down: number }>();
+    if (commentIds.length > 0) {
+      const placeholders = commentIds.map(() => "?").join(",");
+      const upRes = await db.execute({
+        sql: `SELECT comment_id, COUNT(*) as cnt FROM comment_reactions WHERE comment_id IN (${placeholders}) AND type = 'up' GROUP BY comment_id`,
+        args: commentIds,
+      });
+      const downRes = await db.execute({
+        sql: `SELECT comment_id, COUNT(*) as cnt FROM comment_reactions WHERE comment_id IN (${placeholders}) AND type = 'down' GROUP BY comment_id`,
+        args: commentIds,
+      });
+      for (const r of upRes.rows) {
+        reactionMap.set(r.comment_id as string, {
+          up: Number(r.cnt),
+          down: reactionMap.get(r.comment_id as string)?.down ?? 0,
+        });
+      }
+      for (const r of downRes.rows) {
+        const prev = reactionMap.get(r.comment_id as string);
+        reactionMap.set(r.comment_id as string, {
+          up: prev?.up ?? 0,
+          down: Number(r.cnt),
+        });
+      }
+    }
+
+    // Hydrate the current user's reaction so the UI can render the active
+    // arrow state without a follow-up request. Auth is optional here; on miss
+    // the map stays empty and every comment reports `myReaction: null`.
+    const myReactions = new Map<string, string>();
+    const sessionAddrForReactions = await getSessionAddress();
+    if (sessionAddrForReactions && commentIds.length > 0) {
+      const placeholders = commentIds.map(() => "?").join(",");
+      const myRes = await db.execute({
+        sql: `SELECT comment_id, type FROM comment_reactions WHERE comment_id IN (${placeholders}) AND user_address = ?`,
+        args: [...commentIds, sessionAddrForReactions.toLowerCase()],
+      });
+      for (const r of myRes.rows) {
+        myReactions.set(r.comment_id as string, r.type as string);
+      }
+    }
+
+    const comments: ProposalComment[] = commentsRes.rows.map((r) => {
+      const cid = r.id as string;
+      const reactions = reactionMap.get(cid) ?? { up: 0, down: 0 };
+      return {
+        id: cid,
+        proposalId: id,
+        authorAddress: r.author_address as string,
+        authorHolderClass:
+          commentClasses.get((r.author_address as string).toLowerCase()) ?? null,
+        content: (r.deleted_at ? "[deleted]" : (r.content as string)) ?? "",
+        createdAt: r.created_at as string,
+        parentId: (r.parent_id as string | null) ?? null,
+        deletedAt: (r.deleted_at as string | null) ?? null,
+        upvotes: reactions.up,
+        downvotes: reactions.down,
+        myReaction: myReactions.get(cid) ?? null,
+      };
+    });
 
     // Resolve the current user's ballot so returning voters see their choice
     // immediately on page load (C2.1). May be null for unauthenticated users.

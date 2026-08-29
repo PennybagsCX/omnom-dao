@@ -72,9 +72,6 @@
   --color-destructive: var(--color-danger);
   --color-destructive-foreground: var(--color-bg-deep);
 
-  --color-success: var(--color-success);
-  --color-warning: var(--color-warning);
-
   --color-input: var(--color-bg-elevated);
   --color-ring: var(--color-gold);
 

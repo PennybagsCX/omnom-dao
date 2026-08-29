@@ -367,6 +367,75 @@ describe("executeMock — degenerate statements", () => {
   });
 });
 
+describe("executeMock — comment_reactions", () => {
+  // Regression for the production bug where the route referenced
+  // comment_reactions but the mock-db switch did not register it; the
+  // interpreter silently returned an empty result instead of throwing,
+  // which made every proposal-comment reaction look successful in dev
+  // mode but never persisted.
+
+  beforeEach(async () => {
+    await q("DELETE FROM comment_reactions");
+  });
+
+  it("INSERT/SELECT/DELETE round-trip on comment_reactions", async () => {
+    const ins = await q(
+      "INSERT INTO comment_reactions (id, comment_id, user_address, type) VALUES ('rxn-1', 'cmt-1', '0xabc', 'up')",
+    );
+    expect(ins.rowsAffected).toBe(1);
+
+    const sel = await q(
+      "SELECT id, type FROM comment_reactions WHERE comment_id = 'cmt-1'",
+    );
+    expect(sel.rows).toEqual([{ id: "rxn-1", type: "up" }]);
+
+    const del = await q("DELETE FROM comment_reactions WHERE id = 'rxn-1'");
+    expect(del.rowsAffected).toBe(1);
+
+    const after = await q("SELECT id FROM comment_reactions");
+    expect(after.rows).toEqual([]);
+  });
+
+  it("UPDATE swaps reaction type in place (used by the SWAP branch)", async () => {
+    await q(
+      "INSERT INTO comment_reactions (id, comment_id, user_address, type) VALUES ('rxn-2', 'cmt-2', '0xabc', 'up')",
+    );
+    await q("UPDATE comment_reactions SET type = 'down' WHERE id = 'rxn-2'");
+    const sel = await q(
+      "SELECT type FROM comment_reactions WHERE id = 'rxn-2'",
+    );
+    expect(sel.rows).toEqual([{ type: "down" }]);
+  });
+
+  it("supports ON CONFLICT (UNIQUE) DO NOTHING on (comment_id, user_address)", async () => {
+    await q(
+      "INSERT INTO comment_reactions (id, comment_id, user_address, type) VALUES ('rxn-3', 'cmt-3', '0xabc', 'up')",
+    );
+    const rs = await q(
+      "INSERT INTO comment_reactions (id, comment_id, user_address, type) VALUES ('rxn-4', 'cmt-3', '0xabc', 'down') ON CONFLICT (comment_id, user_address) DO NOTHING",
+    );
+    expect(rs.rowsAffected).toBe(0);
+    const after = await q(
+      "SELECT type FROM comment_reactions WHERE comment_id = 'cmt-3'",
+    );
+    expect(after.rows).toEqual([{ type: "up" }]);
+  });
+
+  it("filters by user_address to hydrate myReaction", async () => {
+    await q(
+      "INSERT INTO comment_reactions (id, comment_id, user_address, type) VALUES ('rxn-5a', 'cmt-5', '0xaaa', 'up')",
+    );
+    await q(
+      "INSERT INTO comment_reactions (id, comment_id, user_address, type) VALUES ('rxn-5b', 'cmt-5', '0xbbb', 'down')",
+    );
+    const sel = await q(
+      "SELECT id, type FROM comment_reactions WHERE comment_id = 'cmt-5' AND user_address = ?",
+      ["0xaaa"],
+    );
+    expect(sel.rows).toEqual([{ id: "rxn-5a", type: "up" }]);
+  });
+});
+
 describe("getMockDbClient", () => {
   beforeEach(() => {
     delete (globalThis as typeof globalThis & { __omnomMockDbClient?: unknown })
