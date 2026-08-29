@@ -251,6 +251,11 @@ export function makeProposal(overrides: Partial<Proposal> = {}): Proposal {
     votesAgainst: 0,
     votesAbstain: 0,
     metadata: { type: "base", links: [], tags: [] },
+    emojiReactionCounts: {
+      thumbs_up: 0, heart: 0, tada: 0, smile: 0,
+      open_mouth: 0, cry: 0, thinking: 0, thumbs_down: 0,
+    },
+    myEmojiReaction: null,
     ...overrides,
   };
 }
@@ -267,6 +272,11 @@ export function makeComment(overrides: Partial<ProposalComment> = {}): ProposalC
     upvotes: 0,
     downvotes: 0,
     myReaction: null,
+    emojiReactionCounts: {
+      thumbs_up: 0, heart: 0, tada: 0, smile: 0,
+      open_mouth: 0, cry: 0, thinking: 0, thumbs_down: 0,
+    },
+    myEmojiReaction: null,
     ...overrides,
   };
 }

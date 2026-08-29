@@ -17,6 +17,7 @@ import { CommentsSection } from "@/components/shared/comments-section";
 import {
   useCreateElectionComment,
   useElectionComments,
+  useToggleElectionCommentEmojiReaction,
   useToggleElectionReaction,
 } from "@/lib/api";
 import type { ElectionComment } from "@/types";
@@ -42,6 +43,7 @@ export function ElectionCommentsSection({
   const { data } = useElectionComments(electionKey, 1, electionKey.length > 0);
   const createComment = useCreateElectionComment(electionKey);
   const toggleReaction = useToggleElectionReaction(electionKey);
+  const toggleEmoji = useToggleElectionCommentEmojiReaction(electionKey);
 
   const isAuthenticated = Boolean(myAddress) && userEligible;
   const readOnly = phase === "CLOSED";
@@ -69,8 +71,12 @@ export function ElectionCommentsSection({
       onReact={(commentId, type) =>
         toggleReaction.mutate({ commentId, type })
       }
+      onReactEmoji={(commentId, emoji) =>
+        toggleEmoji.mutate({ commentId, emoji })
+      }
       isSubmitting={createComment.isPending}
       isReacting={toggleReaction.isPending}
+      isReactingEmoji={toggleEmoji.isPending}
       emptyStateTitle="No comments yet"
       emptyStateDescription="Start the conversation — discuss the voting methods before you cast your ballot."
       title="Discussion"

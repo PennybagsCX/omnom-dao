@@ -388,6 +388,68 @@ async function main() {
       sql: `CREATE INDEX IF NOT EXISTS idx_election_comment_reactions_comment
             ON election_comment_reactions (comment_id)`,
     },
+
+    // ── 14. Proposal emoji reactions ──────────────────────────
+    //    Discord-style emoji reactions on proposals themselves (not their
+    //    comments). One row per (proposal, voter, emoji) triple. A single
+    //    user may hold many distinct emoji reactions on the same proposal;
+    //    clicking the same emoji toggles it off via DELETE.
+    {
+      sql: `CREATE TABLE IF NOT EXISTS proposal_emoji_reactions (
+        id              TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        proposal_id     TEXT NOT NULL,
+        user_address    TEXT NOT NULL,
+        emoji           TEXT NOT NULL CHECK (emoji IN ('thumbs_up','heart','tada','smile','open_mouth','cry','thinking','thumbs_down')),
+        created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+        CONSTRAINT uq_proposal_emoji_reactions UNIQUE (proposal_id, user_address, emoji),
+        FOREIGN KEY (proposal_id) REFERENCES proposals (id) ON DELETE CASCADE,
+        FOREIGN KEY (user_address) REFERENCES users (wallet_address)
+      )`,
+    },
+    {
+      sql: `CREATE INDEX IF NOT EXISTS idx_proposal_emoji_reactions_proposal
+            ON proposal_emoji_reactions (proposal_id)`,
+    },
+
+    // ── 15. Comment emoji reactions (proposal surface) ───────
+    //    Same shape as `proposal_emoji_reactions`, keyed on comment_id.
+    //    Coexists with `comment_reactions` (up/down) — users can react to
+    //    the same comment with both an arrow AND an emoji independently.
+    {
+      sql: `CREATE TABLE IF NOT EXISTS comment_emoji_reactions (
+        id              TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        comment_id      TEXT NOT NULL,
+        user_address    TEXT NOT NULL,
+        emoji           TEXT NOT NULL CHECK (emoji IN ('thumbs_up','heart','tada','smile','open_mouth','cry','thinking','thumbs_down')),
+        created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+        CONSTRAINT uq_comment_emoji_reactions UNIQUE (comment_id, user_address, emoji),
+        FOREIGN KEY (comment_id) REFERENCES comments (id) ON DELETE CASCADE,
+        FOREIGN KEY (user_address) REFERENCES users (wallet_address)
+      )`,
+    },
+    {
+      sql: `CREATE INDEX IF NOT EXISTS idx_comment_emoji_reactions_comment
+            ON comment_emoji_reactions (comment_id)`,
+    },
+
+    // ── 16. Election comment emoji reactions ──────────────────
+    //    Same as above for election comments. Mirrors comment_emoji_reactions.
+    {
+      sql: `CREATE TABLE IF NOT EXISTS election_comment_emoji_reactions (
+        id              TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        comment_id      TEXT NOT NULL,
+        user_address    TEXT NOT NULL,
+        emoji           TEXT NOT NULL CHECK (emoji IN ('thumbs_up','heart','tada','smile','open_mouth','cry','thinking','thumbs_down')),
+        created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+        CONSTRAINT uq_election_comment_emoji_reactions UNIQUE (comment_id, user_address, emoji),
+        FOREIGN KEY (comment_id) REFERENCES election_comments (id) ON DELETE CASCADE,
+        FOREIGN KEY (user_address) REFERENCES users (wallet_address)
+      )`,
+    },
+    {
+      sql: `CREATE INDEX IF NOT EXISTS idx_election_comment_emoji_reactions_comment
+            ON election_comment_emoji_reactions (comment_id)`,
+    },
   ];
 
   console.log("🚀 Running OMNOM DAO migrations...");
@@ -403,7 +465,7 @@ async function main() {
     }
   }
 
-  console.log(`✅ Applied ${applied} migration statements (9 tables + indexes).`);
+  console.log(`✅ Applied ${applied} migration statements (12 tables + indexes).`);
 }
 
 main().catch((err) => {

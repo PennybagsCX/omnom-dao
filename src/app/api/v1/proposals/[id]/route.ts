@@ -9,6 +9,12 @@ import { lookupHolderClasses } from "@/lib/snapshot";
 import { finalizeProposal } from "@/lib/proposal-finalize";
 import { z } from "zod";
 import {
+  emptyEmojiCounts,
+  EMOJI_KEYS,
+  type EmojiKey,
+  type EmojiReactionCounts,
+} from "@/lib/emoji-reactions";
+import {
   ErrorCode,
   ProposalStatus,
   VoteChoice,
@@ -142,6 +148,59 @@ export async function GET(
       }
     }
 
+    // Emoji reaction hydration (proposal-level + per-comment). Same pattern as
+    // arrows above: batch-fetch counts grouped by emoji, then the current
+    // user's single reaction per comment / proposal.
+    const emojiMap = new Map<string, EmojiReactionCounts>();
+    const proposalEmojiCounts: EmojiReactionCounts = emptyEmojiCounts();
+    if (commentIds.length > 0) {
+      const placeholders = commentIds.map(() => "?").join(",");
+      const emojiRes = await db.execute({
+        sql: `SELECT comment_id, emoji, COUNT(*) AS cnt FROM comment_emoji_reactions WHERE comment_id IN (${placeholders}) GROUP BY comment_id, emoji`,
+        args: commentIds,
+      });
+      for (const r of emojiRes.rows) {
+        const cid = r.comment_id as string;
+        const counts = emojiMap.get(cid) ?? emptyEmojiCounts();
+        const key = r.emoji as EmojiKey;
+        if (EMOJI_KEYS.includes(key)) {
+          counts[key] = Number(r.cnt);
+          emojiMap.set(cid, counts);
+        }
+      }
+    }
+    const proposalEmojiRes = await db.execute({
+      sql: "SELECT emoji, COUNT(*) AS cnt FROM proposal_emoji_reactions WHERE proposal_id = ? GROUP BY emoji",
+      args: [id],
+    });
+    for (const r of proposalEmojiRes.rows) {
+      const key = r.emoji as EmojiKey;
+      if (EMOJI_KEYS.includes(key)) proposalEmojiCounts[key] = Number(r.cnt);
+    }
+
+    const myCommentEmoji = new Map<string, EmojiKey>();
+    let myProposalEmoji: EmojiKey | null = null;
+    if (sessionAddrForReactions) {
+      const me = sessionAddrForReactions.toLowerCase();
+      if (commentIds.length > 0) {
+        const placeholders = commentIds.map(() => "?").join(",");
+        const myEmojiRes = await db.execute({
+          sql: `SELECT comment_id, emoji FROM comment_emoji_reactions WHERE comment_id IN (${placeholders}) AND user_address = ?`,
+          args: [...commentIds, me],
+        });
+        for (const r of myEmojiRes.rows) {
+          myCommentEmoji.set(r.comment_id as string, r.emoji as EmojiKey);
+        }
+      }
+      const myPropEmojiRes = await db.execute({
+        sql: "SELECT emoji FROM proposal_emoji_reactions WHERE proposal_id = ? AND user_address = ?",
+        args: [id, me],
+      });
+      if (myPropEmojiRes.rows.length > 0) {
+        myProposalEmoji = myPropEmojiRes.rows[0]!.emoji as EmojiKey;
+      }
+    }
+
     const comments: ProposalComment[] = commentsRes.rows.map((r) => {
       const cid = r.id as string;
       const reactions = reactionMap.get(cid) ?? { up: 0, down: 0 };
@@ -158,8 +217,14 @@ export async function GET(
         upvotes: reactions.up,
         downvotes: reactions.down,
         myReaction: myReactions.get(cid) ?? null,
+        emojiReactionCounts: emojiMap.get(cid) ?? emptyEmojiCounts(),
+        myEmojiReaction: myCommentEmoji.get(cid) ?? null,
       };
     });
+
+    // Attach emoji fields to the proposal itself.
+    proposal.emojiReactionCounts = proposalEmojiCounts;
+    proposal.myEmojiReaction = myProposalEmoji;
 
     // Resolve the current user's ballot so returning voters see their choice
     // immediately on page load (C2.1). May be null for unauthenticated users.

@@ -8,6 +8,7 @@ import { HolderBadge } from "@/components/shared/holder-badge";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import { ProposalTypeBadge } from "@/components/shared/proposal-type-badge";
 import { VoteBar } from "@/components/shared/vote-bar";
+import { EmojiReactionsBar } from "@/components/shared/emoji-reactions/emoji-reactions-bar";
 import { shortenAddress, timeAgo } from "@/lib/utils";
 import { stripMarkdown } from "@/lib/text";
 import { ProposalStatus, type Proposal } from "@/types";
@@ -31,6 +32,12 @@ export const ProposalCard = memo(function ProposalCard({
 }: ProposalCardProps) {
   const isActive = proposal.status === ProposalStatus.ACTIVE;
   const totalVotes = proposal.votesFor + proposal.votesAgainst + proposal.votesAbstain;
+  // Hide the emoji bar entirely when there's no engagement and the user hasn't
+  // reacted — keeps dense list cards visually quiet.
+  const totalEmojis = proposal.emojiReactionCounts
+    ? Object.values(proposal.emojiReactionCounts).reduce((sum, n) => sum + n, 0)
+    : 0;
+  const showEmojiBar = totalEmojis > 0 || proposal.myEmojiReaction !== null;
 
   return (
     <Link
@@ -86,6 +93,25 @@ export const ProposalCard = memo(function ProposalCard({
               </span>
             )}
           </div>
+
+          {showEmojiBar && (
+            <div
+              className="mt-2"
+              /* Stop propagation so clicking an emoji chip doesn't also trigger
+                 the parent <Link> navigation. The chip is a real button; the
+                 parent link is for the rest of the card surface. */
+              onClick={(e) => e.stopPropagation()}
+            >
+              <EmojiReactionsBar
+                surface="proposal"
+                proposalId={proposal.id}
+                emojiReactionCounts={proposal.emojiReactionCounts}
+                myEmojiReaction={proposal.myEmojiReaction}
+                isAuthenticated={false}
+                compact
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
     </Link>

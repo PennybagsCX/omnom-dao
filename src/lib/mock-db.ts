@@ -73,6 +73,12 @@ function tableFor(store: MockStore, name: string): Table | undefined {
       return store.election_comments as unknown as Table;
     case "election_comment_reactions":
       return store.election_comment_reactions as unknown as Table;
+    case "proposal_emoji_reactions":
+      return store.proposal_emoji_reactions as unknown as Table;
+    case "comment_emoji_reactions":
+      return store.comment_emoji_reactions as unknown as Table;
+    case "election_comment_emoji_reactions":
+      return store.election_comment_emoji_reactions as unknown as Table;
     default:
       return undefined;
   }

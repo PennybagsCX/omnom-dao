@@ -15,6 +15,12 @@ import { levenshtein, normalizeForCompare } from "@/lib/text";
 import { RATE_LIMITS } from "@/lib/constants";
 import { notifyMentionsFromContent } from "@/lib/notifications";
 import { createCommentSchema } from "@/lib/validators";
+import {
+  emptyEmojiCounts,
+  EMOJI_KEYS,
+  type EmojiKey,
+  type EmojiReactionCounts,
+} from "@/lib/emoji-reactions";
 import { ErrorCode, type ProposalComment } from "@/types";
 
 /**
@@ -85,13 +91,15 @@ export async function GET(
 
   // Get the current user's reactions (if authenticated).
   const myReactions = new Map<string, string>();
+  let mySessionAddr: string | null = null;
   try {
     const session = await requireAuth();
+    mySessionAddr = session.sub.toLowerCase();
     if (commentIds.length > 0) {
       const placeholders = commentIds.map(() => "?").join(",");
       const myRes = await db.execute({
         sql: `SELECT comment_id, type FROM comment_reactions WHERE comment_id IN (${placeholders}) AND user_address = ?`,
-        args: [...commentIds, session.sub.toLowerCase()],
+        args: [...commentIds, mySessionAddr],
       });
       for (const r of myRes.rows) {
         myReactions.set(r.comment_id as string, r.type as string);
@@ -99,6 +107,37 @@ export async function GET(
     }
   } catch {
     // Not authenticated — skip.
+  }
+
+  // Batch-fetch emoji reaction counts grouped by emoji for every comment.
+  const emojiMap = new Map<string, EmojiReactionCounts>();
+  if (commentIds.length > 0) {
+    const placeholders = commentIds.map(() => "?").join(",");
+    const emojiRes = await db.execute({
+      sql: `SELECT comment_id, emoji, COUNT(*) AS cnt FROM comment_emoji_reactions WHERE comment_id IN (${placeholders}) GROUP BY comment_id, emoji`,
+      args: commentIds,
+    });
+    for (const r of emojiRes.rows) {
+      const cid = r.comment_id as string;
+      const counts = emojiMap.get(cid) ?? emptyEmojiCounts();
+      const key = r.emoji as EmojiKey;
+      if (EMOJI_KEYS.includes(key)) {
+        counts[key] = Number(r.cnt);
+        emojiMap.set(cid, counts);
+      }
+    }
+  }
+
+  const myEmojiMap = new Map<string, EmojiKey>();
+  if (mySessionAddr && commentIds.length > 0) {
+    const placeholders = commentIds.map(() => "?").join(",");
+    const myEmojiRes = await db.execute({
+      sql: `SELECT comment_id, emoji FROM comment_emoji_reactions WHERE comment_id IN (${placeholders}) AND user_address = ?`,
+      args: [...commentIds, mySessionAddr],
+    });
+    for (const r of myEmojiRes.rows) {
+      myEmojiMap.set(r.comment_id as string, r.emoji as EmojiKey);
+    }
   }
 
   // Batch-resolve commenters' holder classes for inline badges.
@@ -122,6 +161,8 @@ export async function GET(
       upvotes: reactions.up,
       downvotes: reactions.down,
       myReaction: myReactions.get(cid) ?? null,
+      emojiReactionCounts: emojiMap.get(cid) ?? emptyEmojiCounts(),
+      myEmojiReaction: myEmojiMap.get(cid) ?? null,
     };
   });
 
@@ -237,6 +278,8 @@ export async function POST(
     upvotes: 0,
     downvotes: 0,
     myReaction: null,
+    emojiReactionCounts: emptyEmojiCounts(),
+    myEmojiReaction: null,
   };
 
   // Fire-and-forget: notify any @0x… addresses mentioned in the comment.

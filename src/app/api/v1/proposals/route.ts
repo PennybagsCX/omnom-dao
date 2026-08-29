@@ -15,6 +15,13 @@ import { createProposalSchema, getProposalsSchema } from "@/lib/validators";
 import { RATE_LIMITS } from "@/lib/constants";
 import { notifyProposalCreated } from "@/lib/notifications";
 import { lookupHolder } from "@/lib/snapshot";
+import { getSessionAddress } from "@/lib/auth";
+import {
+  emptyEmojiCounts,
+  EMOJI_KEYS,
+  type EmojiKey,
+  type EmojiReactionCounts,
+} from "@/lib/emoji-reactions";
 import {
   ErrorCode,
   ProposalStatus,
@@ -83,6 +90,47 @@ export async function GET(request: NextRequest) {
       limit,
       offset,
     });
+
+    // Batch-hydrate emoji reaction counts for every proposal on this page.
+    // Bounded by page size (max 100) so a single IN(...) query is fine.
+    const proposalIds = proposals.map((p) => p.id);
+    const emojiCountsMap = new Map<string, EmojiReactionCounts>();
+    if (proposalIds.length > 0) {
+      const placeholders = proposalIds.map(() => "?").join(",");
+      const emojiRes = await db.execute({
+        sql: `SELECT proposal_id, emoji, COUNT(*) AS cnt FROM proposal_emoji_reactions WHERE proposal_id IN (${placeholders}) GROUP BY proposal_id, emoji`,
+        args: proposalIds,
+      });
+      for (const r of emojiRes.rows) {
+        const pid = r.proposal_id as string;
+        const counts = emojiCountsMap.get(pid) ?? emptyEmojiCounts();
+        const key = r.emoji as EmojiKey;
+        if (EMOJI_KEYS.includes(key)) {
+          counts[key] = Number(r.cnt);
+          emojiCountsMap.set(pid, counts);
+        }
+      }
+    }
+
+    // Current user's emoji reaction per proposal (optional auth).
+    const myEmojiMap = new Map<string, EmojiKey>();
+    const sessionAddr = await getSessionAddress();
+    if (sessionAddr && proposalIds.length > 0) {
+      const me = sessionAddr.toLowerCase();
+      const placeholders = proposalIds.map(() => "?").join(",");
+      const myRes = await db.execute({
+        sql: `SELECT proposal_id, emoji FROM proposal_emoji_reactions WHERE proposal_id IN (${placeholders}) AND user_address = ?`,
+        args: [...proposalIds, me],
+      });
+      for (const r of myRes.rows) {
+        myEmojiMap.set(r.proposal_id as string, r.emoji as EmojiKey);
+      }
+    }
+
+    for (const p of proposals) {
+      p.emojiReactionCounts = emojiCountsMap.get(p.id) ?? emptyEmojiCounts();
+      p.myEmojiReaction = myEmojiMap.get(p.id) ?? null;
+    }
 
     const totalPages = Math.max(1, Math.ceil(total / limit));
     return apiSuccess<{ proposals: Proposal[] }>(
@@ -228,6 +276,8 @@ export async function POST(request: NextRequest) {
     votesAgainst: row.votes_against as number,
     votesAbstain: row.votes_abstain as number,
     metadata: safeMeta(row.metadata as string),
+    emojiReactionCounts: emptyEmojiCounts(),
+    myEmojiReaction: null,
   };
 
   return apiSuccess<{ proposal: Proposal }>({ proposal }, undefined, 201);

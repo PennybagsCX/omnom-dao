@@ -7,6 +7,7 @@ import { CommentItem, type ReactionType } from "@/components/shared/comment-item
 import type { CommentNode } from "@/lib/comment-tree";
 import { ADDR_DOLPHIN } from "@/__tests__/helpers/mocks";
 import type { ProposalComment } from "@/types";
+import { emptyEmojiCounts } from "@/lib/emoji-reactions";
 
 function makeNode(overrides: Partial<ProposalComment> = {}): CommentNode<ProposalComment> {
   const c: ProposalComment = {
@@ -20,6 +21,8 @@ function makeNode(overrides: Partial<ProposalComment> = {}): CommentNode<Proposa
     upvotes: 3,
     downvotes: 0,
     myReaction: null,
+    emojiReactionCounts: emptyEmojiCounts(),
+    myEmojiReaction: null,
     ...overrides,
   };
   return { ...c, replies: [] };
