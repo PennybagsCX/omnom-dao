@@ -138,7 +138,7 @@ where:
 
 > ⚠️ **Source conflict — voting math.** [`DESIGN.md`](../DESIGN.md) §1.2 and [`DATA-MODEL.md`](../DATA-MODEL.md) specify **linear (1 token = 1 vote)** as the implementation baseline. [`PRD.md`](../PRD.md) §8/FR-5 recommends **quadratic** (`voting_power = floor(sqrt(raw_balance / 10^18)) × multiplier`).
 >
-> **v1 ships linear.** Quadratic is the PRD's recommended future enhancement, **deferred to v2 / post-launch**, pending the community decision recorded in [§14 Open Governance Decisions](#14-open-governance-decisions).
+> **v1 shipped linear.** **v2 (quadratic) IMPLEMENTED 2026-09-12** — the Foundational Governance Election closed with QUADRATIC winning 65.7% (23/35 ballots; see [`ELECTION-RESULTS.md`](ELECTION-RESULTS.md)), and the platform now computes `floor(√(snapshot tokens))` at cast time. Quorum denominators use **total quadratic power** (Σ√balance over the snapshot) so configured thresholds remain meaningful. Ballots cast before the switch retain the power recorded at their cast time.
 
 ---
 

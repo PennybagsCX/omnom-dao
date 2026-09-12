@@ -102,7 +102,7 @@ let integrityVerified: boolean | null = null;
  * In development, a warning is logged but the snapshot is still loaded to
  * keep the dev loop usable before hashes are generated.
  */
-async function loadArtifact(): Promise<SnapshotArtifact> {
+export async function loadArtifact(): Promise<SnapshotArtifact> {
   if (artifact) return artifact;
   if (loadPromise) return loadPromise;
 

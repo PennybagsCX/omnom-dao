@@ -244,36 +244,36 @@ export interface MockStore {
 export const MOCK_HOLDERS = {
   whale1: {
     address: "0x0f2d557587022a8f500d7b9ca099342af796b946",
-    votingPower: 84_689_761_740_325,
+    votingPower: 9_203_782,
   },
   whale2: {
     address: "0x5bf60ea5cf2383f407f09cf38378176298238a6c",
-    votingPower: 28_608_437_074_651,
+    votingPower: 5_348_732,
   },
   dolphin1: {
     address: "0x00fe75619881227b053f6592b0e85b08b9ad6b15",
-    votingPower: 440_003_113_541,
+    votingPower: 663_327,
   },
   dolphin2: {
     address: "0x00595bf5688e19a3cfc999a180b0aaed3c349c71",
-    votingPower: 191_360_013_030,
+    votingPower: 437_447,
   },
   fish1: {
     address: "0x000000006533ecb269f92a09d8541e84e485332f",
-    votingPower: 1_281_436_465,
+    votingPower: 35_796,
   },
   fish2: {
     address: "0x000000000003ebf123909630caed826f160fcb7f",
-    votingPower: 210_952_345,
+    votingPower: 14_524,
   },
   fish3: {
     address: "0x00000450f9d086c78ddd1cff3ef0bdbc53f9c6ce",
-    votingPower: 177_706_674,
+    votingPower: 13_332,
   },
   /** Dev mock wallet (viem test account #0) — used for local testing only. */
   devWallet: {
     address: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-    votingPower: 1_000,
+    votingPower: 31,
   },
 } as const;
 
