@@ -483,8 +483,11 @@ function VotePanel({
                   />
                 </div>
                 {votingPower != null && (
-                  <p className="pt-1 text-center text-xs text-text-dim">
-                    Your voting power:{" "}
+                  <p
+                    className="pt-1 text-center text-xs text-text-dim"
+                    title="Quadratic voting (community-chosen): your power is the square root of your snapshot balance."
+                  >
+                    Your voting power (√ balance):{" "}
                     <span className="font-mono text-muted-foreground">
                       {formatCompact(votingPower)}
                     </span>

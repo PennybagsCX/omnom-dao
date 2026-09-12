@@ -12,6 +12,7 @@ import { apiError, apiSuccess } from "@/lib/api-response";
 import { checkRateLimit, ipBucket } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request";
 import { lookupHolder } from "@/lib/snapshot";
+import { quadraticPower } from "@/lib/voting-power";
 import { SESSION_COOKIE } from "@/lib/constants";
 import { SESSION_COOKIE_ATTRIBUTES } from "@/lib/auth";
 import { verifyWalletSchema } from "@/lib/validators";
@@ -94,15 +95,10 @@ export async function POST(request: NextRequest) {
   // Register / refresh the user row.
   const { user } = await registerVerifiedHolder(result.address);
 
-  // FIX: Handle BigInt balanceRaw properly for voting power calculation
-  let votingPower: number;
-  if (typeof holder.balanceRaw === 'bigint') {
-    // Convert BigInt to number by dividing first, then converting
-    votingPower = Number(holder.balanceRaw / BigInt(1e18));
-  } else {
-    // Fallback for string balanceRaw
-    votingPower = Number(holder.balanceRaw) / 1e18;
-  }
+  // Quadratic voting (v2): the session's display claim is the sqrt-compressed
+  // power, matching what a vote cast would record from the same snapshot
+  // balance. (Cast time always recomputes from the snapshot — display only.)
+  const votingPower = quadraticPower(holder.balanceRaw);
 
   // Issue JWT.
   const token = await signSession({

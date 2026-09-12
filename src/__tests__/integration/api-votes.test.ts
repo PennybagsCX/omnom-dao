@@ -29,7 +29,12 @@ vi.mock("@/lib/auth", () => ({
   RATE_WINDOWS: {},
 }));
 vi.mock("@/lib/proposal-service", () => ({ getProposalById: hoisted.getProposalById }));
-vi.mock("@/lib/snapshot", () => ({ lookupHolder: hoisted.lookupHolder }));
+vi.mock("@/lib/snapshot", () => ({
+  lookupHolder: hoisted.lookupHolder,
+  // voting-power imports loadArtifact for the quorum denominator (total
+  // quadratic power) — give it a tiny artifact.
+  loadArtifact: async () => ({ holders: { h1: { balanceRaw: "100000000000000000000" } } }),
+}));
 vi.mock("@/lib/delegation", () => ({
   getOutgoingDelegation: hoisted.getOutgoingDelegation,
   effectiveStatus: () => "active",
@@ -149,7 +154,7 @@ describe("POST /api/v1/proposals/[id]/votes — duplicate / power", () => {
   it("records voting power recomputed from the immutable snapshot (ignoring the stale JWT session value)", async () => {
     // Session claims 999 — must be IGNORED in favour of the snapshot balance.
     hoisted.requireAuth.mockResolvedValue(sessionFor(999));
-    // 42 * 1e18 raw units -> 42 whole-token voting power.
+    // 42 * 1e18 raw units -> quadratic power floor(sqrt(42)) = 6.
     hoisted.lookupHolder.mockResolvedValue({
       address: ADDR_DOLPHIN,
       balanceRaw: "42000000000000000000",
@@ -157,7 +162,7 @@ describe("POST /api/v1/proposals/[id]/votes — duplicate / power", () => {
     });
     const { status, body } = await callVote("POST", { choice: "AGAINST" });
     expect(status).toBe(201);
-    expect((body.data as { vote: { votingPower: number } }).vote.votingPower).toBe(42);
+    expect((body.data as { vote: { votingPower: number } }).vote.votingPower).toBe(6);
   });
 });
 

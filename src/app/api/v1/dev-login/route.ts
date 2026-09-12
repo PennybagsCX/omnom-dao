@@ -17,49 +17,49 @@ const MOCK_SNAPSHOT_DATA: Record<string, MockSnapshotEntry> = {
     balanceRaw: "1200000000000000000000000000",
     balanceFormatted: "1200000000000.0",
     rank: 1,
-    votingPower: 1200000000000
+    votingPower: 1095445
   },
   "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266": {
     holderClass: HolderClass.WHALE,
     balanceRaw: "250000000000000000000000000",
     balanceFormatted: "250000000000.0",
     rank: 2,
-    votingPower: 250000000000
+    votingPower: 500000
   },
   "0x70997970c51812dc3a010c7d01b50e0d17dc79c8": {
     holderClass: HolderClass.DOLPHIN,
     balanceRaw: "50000000000000000000000000",
     balanceFormatted: "50000000000.0",
     rank: 50,
-    votingPower: 50000000000
+    votingPower: 223606
   },
   "0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc": {
     holderClass: HolderClass.SHARK,
     balanceRaw: "500000000000000000000000",
     balanceFormatted: "500000000.0",
     rank: 500,
-    votingPower: 500000000
+    votingPower: 22360
   },
   "0x976ea74026e726554db657fa54763abd0c3a0aa9": {
     holderClass: HolderClass.OCTOPUS,
     balanceRaw: "50000000000000000000000",
     balanceFormatted: "50000000.0",
     rank: 5000,
-    votingPower: 50000000
+    votingPower: 7071
   },
   "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc": {
     holderClass: HolderClass.CRAB,
     balanceRaw: "5000000000000000000000",
     balanceFormatted: "5000000.0",
     rank: 10000,
-    votingPower: 5000000
+    votingPower: 2236
   },
   "0x90f79bf6eb2c4f870365e785982e1f101e93b906": {
     holderClass: HolderClass.SEAHORSE,
     balanceRaw: "1000000000000000000",
     balanceFormatted: "1000.0",
     rank: 25000,
-    votingPower: 1000
+    votingPower: 31
   },
 };
 

@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { getProposalById } from "@/lib/proposal-service";
-import { getSnapshotMetadataTyped } from "@/lib/snapshot";
+import { totalQuadraticPower } from "@/lib/voting-power";
 import { notifyVoteResult } from "@/lib/notifications";
 import {
   ProposalStatus,
@@ -85,16 +85,16 @@ export async function finalizeProposal(
 
   // Compute quorum achieved.
   const totalVotedPower = votesFor + votesAgainst + votesAbstain;
-  let totalSupply = 0;
+  // Quadratic voting (v2): quorum is the share of total quadratic power that
+  // voted, not of raw token supply.
+  let totalPower = 0;
   try {
-    const meta = await getSnapshotMetadataTyped();
-    // CRITICAL: totalSupply is raw WEI, divide by 1e18 for TOKEN units to match votes
-    totalSupply = Number(meta.totalSupply ? meta.totalSupply / 10n ** 18n : 0n);
+    totalPower = await totalQuadraticPower();
   } catch {
-    totalSupply = 0;
+    totalPower = 0;
   }
-  const quorumAchieved = totalSupply > 0
-    ? (totalVotedPower / totalSupply) * 100
+  const quorumAchieved = totalPower > 0
+    ? (totalVotedPower / totalPower) * 100
     : 0;
 
   const quorumMet = quorumAchieved >= proposal.quorumRequired;

@@ -4,7 +4,8 @@ import { apiError, apiSuccess } from "@/lib/api-response";
 import { db } from "@/lib/db";
 import { getProposalById } from "@/lib/proposal-service";
 import { requireAuth, UnauthorizedError } from "@/lib/auth";
-import { getSnapshotMetadataTyped, lookupHolder } from "@/lib/snapshot";
+import { lookupHolder } from "@/lib/snapshot";
+import { quadraticPower, totalQuadraticPower } from "@/lib/voting-power";
 import { checkRateLimit, userActionBucket } from "@/lib/rate-limit";
 import { finalizeProposal } from "@/lib/proposal-finalize";
 import { castVoteSchema } from "@/lib/validators";
@@ -114,15 +115,15 @@ async function computeQuorumAchieved(
   votesAbstain: number,
 ): Promise<number> {
   const totalVotesPower = votesFor + votesAgainst + votesAbstain;
-  let totalSupply = 0;
+  // Quadratic voting (v2): the denominator is total quadratic power, not raw
+  // token supply — quorum is the share of sqrt-compressed power that voted.
+  let totalPower = 0;
   try {
-    const meta = await getSnapshotMetadataTyped();
-    // CRITICAL: totalSupply is raw WEI, divide by 1e18 for TOKEN units to match votes
-    totalSupply = Number(meta?.totalSupply ? meta.totalSupply / 10n ** 18n : 0n);
+    totalPower = await totalQuadraticPower();
   } catch {
-    totalSupply = 0;
+    totalPower = 0;
   }
-  return totalSupply > 0 ? (totalVotesPower / totalSupply) * 100 : 0;
+  return totalPower > 0 ? (totalVotesPower / totalPower) * 100 : 0;
 }
 
 /** POST /api/v1/proposals/[id]/votes — cast a new vote. */
@@ -179,7 +180,7 @@ export async function POST(
   if (!holder) {
     return apiError(ErrorCode.NOT_IN_SNAPSHOT, "Voter not found in snapshot", 403);
   }
-  const votingPower = Number(BigInt(holder.balanceRaw) / BigInt(1e18));
+  const votingPower = quadraticPower(holder.balanceRaw);
 
   // Check for an existing vote first (the DB UNIQUE constraint is the backstop).
   const existing = await db.execute({
@@ -304,7 +305,7 @@ export async function PUT(
   if (!holder) {
     return apiError(ErrorCode.NOT_IN_SNAPSHOT, "Voter not found in snapshot", 403);
   }
-  const votingPower = Number(BigInt(holder.balanceRaw) / BigInt(1e18));
+  const votingPower = quadraticPower(holder.balanceRaw);
 
   await db.execute({
     sql: "UPDATE votes SET choice = ?, voting_power = ? WHERE id = ?",
