@@ -1,0 +1,41 @@
+name: Governance Archive
+
+# Weekly public-safe export of the governance record (proposals, tallies,
+# election results, public comment threads). Per-wallet votes/ballots are
+# NEVER included here — this repo is public and artifacts are downloadable;
+# the admin runs `npx tsx scripts/export-governance-archive.ts --full`
+# locally for the complete private record.
+
+on:
+  schedule:
+    # Sundays 03:17 UTC — off the top of the hour.
+    - cron: "17 3 * * 0"
+  workflow_dispatch:
+
+jobs:
+  export:
+    name: Export public-safe governance archive
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Export archive
+        run: npx tsx scripts/export-governance-archive.ts
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+
+      - name: Upload archive artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-archive-${{ github.run_id }}
+          path: governance-archive-*.json
+          retention-days: 90
+          if-no-files-found: error
