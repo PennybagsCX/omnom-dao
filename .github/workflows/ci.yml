@@ -61,3 +61,17 @@ jobs:
           CI: true
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           SNAPSHOT_SHA256: ${{ secrets.SNAPSHOT_SHA256 }}
+
+      # Traces (recorded on retries), per-failure page snapshots and the HTML
+      # report — without this, CI failures are undebuggable: the runner's page
+      # state at failure time is otherwise lost.
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore

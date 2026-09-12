@@ -39,10 +39,26 @@ if (RUN_E2E) {
       // Rank search scans the full 25k-holder snapshot server-side; CI's
       // 2-core runners need far longer than local hardware.
       test.setTimeout(150_000);
-      await page
-        .getByRole("textbox", { name: /search snapshot by address or rank/i })
-        .fill("840");
-      await expect(page.getByText("Wallet found")).toBeVisible({ timeout: 120_000 });
+      // Forensics for a CI-only failure: log every snapshot-explorer API
+      // response, and dump the page's visible state on failure.
+      page.on("response", (res) => {
+        if (res.url().includes("/api/v1/snapshot-explorer")) {
+          console.log(`[rank-test] API ${res.status()} ${res.url()}`);
+        }
+      });
+      try {
+        await page
+          .getByRole("textbox", { name: /search snapshot by address or rank/i })
+          .fill("840");
+        await expect(page.getByText("Wallet found")).toBeVisible({ timeout: 120_000 });
+      } catch (err) {
+        const mainText = await page
+          .locator("main")
+          .innerText()
+          .catch(() => "<main unavailable>");
+        console.log(`[rank-test] FAILURE page main text:\n${mainText.slice(0, 1500)}`);
+        throw err;
+      }
     });
 
     test("shows live prefix matches and then an exact wallet", async ({ page }) => {
