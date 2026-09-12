@@ -83,7 +83,45 @@ export async function dismissWalletDialog(page: Page): Promise<void> {
  */
 export async function hideDevAuthPanel(page: Page): Promise<void> {
   await page.addStyleTag({
-    content: `.fixed.bottom-4.right-4.z-50 { display: none !important; }`,
+    // The panel container is `fixed bottom-4 right-4 z-40` (dev-login-panel.tsx).
+    // Match the position classes without pinning the z-index so this keeps
+    // working if the layering tweaks again — a stale z-50 selector here once
+    // made every hide call a silent no-op and the panel kept intercepting
+    // clicks on the controls it overlaps.
+    content: `.fixed.bottom-4.right-4 { display: none !important; }`,
   });
   await page.waitForTimeout(100);
+}
+
+/**
+ * Auto-dismiss the ConnectWalletDialog whenever it appears.
+ *
+ * The dev-auth auto-connect chain can open the wallet dialog at any point
+ * during a test. The one-shot dismissWalletDialog() races this: when the
+ * dialog appears after its ~4s tolerance window (slow route compiles, slow
+ * runners), the modal overlay silently intercepts every subsequent click —
+ * vote buttons, proposal cards, wizard controls — until timeout.
+ * addLocatorHandler() re-dismisses it each time it shows up, right before
+ * any action it would block.
+ *
+ * Matched by accessible name so dialogs tests open on purpose (e.g. the
+ * WYSIWYG link editor) are never dismissed.
+ *
+ * Register BEFORE the first page.goto() — handlers persist across
+ * navigations but cannot retroactively cover an already-blocked page.
+ */
+export async function registerWalletDialogAutoDismiss(page: Page): Promise<void> {
+  await page.addLocatorHandler(
+    page.getByRole("dialog", { name: /connect your wallet/i }),
+    async () => {
+      await page.keyboard.press("Escape").catch(() => {});
+      // Escape is Radix's default close; fall back to the X button in case
+      // a phase ever swallows the keydown.
+      await page
+        .getByRole("button", { name: /^close$/i })
+        .first()
+        .click({ timeout: 2_000 })
+        .catch(() => {});
+    },
+  );
 }

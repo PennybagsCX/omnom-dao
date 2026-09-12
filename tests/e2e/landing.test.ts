@@ -15,7 +15,9 @@ if (RUN_E2E) {
 
     test("renders the hero, stats bar, and how-it-works sections", async ({ page }) => {
       await expect(page.getByRole("heading", { name: /Your voice\. Your \$OMNOM\. Your DAO\./i })).toBeVisible();
-      await expect(page.getByText(/Off-chain · Snapshot-based · No gas fees/i)).toBeVisible();
+      // The hero badge transiently mounts twice during hydration — strict
+      // mode would reject the multi-match locator.
+      await expect(page.getByText(/Off-chain · Snapshot-based · No gas fees/i).first()).toBeVisible();
       await expect(page.getByText("Govern in three simple steps")).toBeVisible();
       await expect(page.getByText("Connect & Verify")).toBeVisible();
       await expect(page.getByText("Vote & Govern").first()).toBeVisible();
@@ -24,7 +26,13 @@ if (RUN_E2E) {
     test("auto-connects / shows a wallet affordance (dev-auth E2E)", async ({ page }) => {
       await page.goto("/");
       await dismissWalletDialog(page);
-      await expect(page.locator("header button, header a").filter({ hasText: /connect\s*wallet|0x[0-9a-f]{4}/i }).first()).toBeVisible();
+      // First hit of "/" compiles the route, then the dev-auth chain has to
+      // settle before the header shows either affordance — allow for both.
+      // The truncation width varies by rendering (headless shows "0x70…79C8"),
+      // so require only one hex digit after 0x.
+      await expect(
+        page.locator("header button, header a").filter({ hasText: /connect\s*wallet|0x[0-9a-f]/i }).first(),
+      ).toBeVisible({ timeout: 30_000 });
     });
 
     test('"View Proposals" navigates to /proposals', async ({ page }) => {

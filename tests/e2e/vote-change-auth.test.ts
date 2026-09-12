@@ -1,5 +1,9 @@
 import { test, expect } from "./auth.fixture";
-import { dismissWalletDialog, hideDevAuthPanel } from "./helpers";
+import {
+  dismissWalletDialog,
+  hideDevAuthPanel,
+  registerWalletDialogAutoDismiss,
+} from "./helpers";
 
 const RUN_E2E = !process.env.VITEST;
 
@@ -14,7 +18,8 @@ const RUN_E2E = !process.env.VITEST;
 
 if (RUN_E2E) {
 test.describe("Vote change (authenticated)", () => {
-  test.beforeEach(async ({ page, authenticated }) => {
+  test.beforeEach(async ({ page, authenticated: _authenticated }) => {
+    await registerWalletDialogAutoDismiss(page);
     await page.goto("/proposals");
     await page.waitForLoadState("networkidle");
 
@@ -62,13 +67,18 @@ test.describe("Vote change (authenticated)", () => {
     expect(await againstButton.count()).toBeGreaterThan(0);
     expect(await abstainButton.count()).toBeGreaterThan(0);
 
-    // Cast a vote
+    // Cast a vote — wait for the auth-gated enabled state first: clicking
+    // in the window where the me-query is still settling dispatches on a
+    // re-rendering tree and the onClick guard silently drops the vote.
+    await expect(forButton.first()).toBeEnabled({ timeout: 30_000 });
     await forButton.first().click();
 
     // Should show voted state — retry-wait instead of a fixed sleep: under
     // full-suite load the vote POST can take longer than any hard-coded wait.
+    // The panel renders several matching texts ("You voted: For", "Your vote
+    // has been recorded.", …) — strict mode would reject the multi-match.
     await expect(
-      page.getByText(/your vote has been recorded|you voted/i),
+      page.getByText(/your vote has been recorded|you voted/i).first(),
     ).toBeVisible({ timeout: 10_000 });
   });
 
@@ -202,9 +212,10 @@ test.describe("Vote change (authenticated)", () => {
       await page.waitForTimeout(2000);
     }
 
-    // Refresh page
+    // Refresh page — no waitForLoadState("networkidle"): the app polls
+    // periodically and networkidle can simply never settle on slow runners,
+    // blowing the test timeout. Wait for the hydrated state directly.
     await page.reload();
-    await page.waitForLoadState("networkidle");
 
     // Re-dismiss dialogs that reappear after reload
     await dismissWalletDialog(page);
@@ -212,16 +223,16 @@ test.describe("Vote change (authenticated)", () => {
 
     // Should still show vote
     const votedMessage = page.getByText(/against|for|abstain/i);
-    expect(await votedMessage.count()).toBeGreaterThan(0);
+    await expect(votedMessage.first()).toBeVisible({ timeout: 30_000 });
 
     // Change Vote button should still be available
     changeVoteButton = page.getByRole("button", { name: /change.*vote/i });
-    await expect(changeVoteButton.first()).toBeVisible();
+    await expect(changeVoteButton.first()).toBeVisible({ timeout: 30_000 });
   });
 });
 
 test.describe("Vote change mobile (authenticated)", () => {
-  test.beforeEach(async ({ page, authenticated }) => {
+  test.beforeEach(async ({ page, authenticated: _authenticated }) => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
 

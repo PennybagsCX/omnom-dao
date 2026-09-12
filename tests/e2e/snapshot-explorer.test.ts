@@ -11,44 +11,56 @@ if (RUN_E2E) {
 
     test("renders summary and source provenance", async ({ page }) => {
       await expect(page.getByRole("heading", { name: /Snapshot Explorer/i })).toBeVisible();
-      await expect(page.getByText("ever-held wallets")).toBeVisible();
+      // The summary block renders this label more than once (stat card +
+      // footnote) — strict mode would reject the multi-match locator.
+      await expect(page.getByText("ever-held wallets").first()).toBeVisible();
       await expect(page.getByText(/DBOT-DC\/omnom-snapshot/i)).toBeVisible();
       await expect(page.getByText("2c38af7", { exact: true })).toBeVisible();
     });
 
     test("lists top holders by default", async ({ page }) => {
-      await expect(page.getByRole("cell", { name: "#1", exact: true })).toBeVisible();
-      await expect(page.getByRole("cell", { name: "WHALE", exact: true }).first()).toBeVisible();
+      // First hit compiles the route on the dev server — allow for it.
+      await expect(page.getByRole("cell", { name: "#1", exact: true })).toBeVisible({ timeout: 30_000 });
+      // Class badges render as "🐋Whale" (emoji + title-case) — match the
+      // accessible name loosely; the committed snapshot's top ranks 2-4
+      // are Whale-class holders.
+      await expect(page.getByRole("cell", { name: /whale/i }).first()).toBeVisible();
     });
 
     test("finds the admin wallet by address", async ({ page }) => {
       await page
         .getByRole("textbox", { name: /search snapshot by address or rank/i })
         .fill("0x22F4194F6706E70aBaA14AB352D0baA6C7ceD24a");
-      await expect(page.getByText("Wallet found")).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText("Wallet found")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText(/23,946,101,250/i)).toBeVisible();
     });
 
     test("finds a holder by rank", async ({ page }) => {
+      // Rank search scans the full 25k-holder snapshot server-side; CI's
+      // 2-core runners need far longer than local hardware.
+      test.setTimeout(150_000);
       await page
         .getByRole("textbox", { name: /search snapshot by address or rank/i })
         .fill("840");
-      await expect(page.getByText("Wallet found")).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText("Wallet found")).toBeVisible({ timeout: 120_000 });
     });
 
     test("shows live prefix matches and then an exact wallet", async ({ page }) => {
+      // Each keystroke settlement scans the full snapshot server-side; CI's
+      // 2-core runners need far longer than local hardware.
+      test.setTimeout(150_000);
       const input = page.getByRole("textbox", {
         name: /search snapshot by address or rank/i,
       });
       await input.fill("0x22F4194F");
       await expect(
         page.getByText(/Showing wallet addresses that start with/i),
-      ).toBeVisible({ timeout: 10_000 });
+      ).toBeVisible({ timeout: 60_000 });
       await expect(
         page.getByRole("cell", { name: "0x22f4…d24a" }),
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 30_000 });
       await input.fill("0x22F4194F6706E70aBaA14AB352D0baA6C7ceD24a");
-      await expect(page.getByText("Wallet found")).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText("Wallet found")).toBeVisible({ timeout: 60_000 });
       await input.fill("0xzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
       await expect(
         page.getByText(/not a valid EVM address/i),

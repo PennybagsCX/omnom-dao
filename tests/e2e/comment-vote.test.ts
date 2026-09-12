@@ -1,16 +1,25 @@
 import { test, expect } from "./auth.fixture";
-import { dismissWalletDialog } from "./helpers";
+import {
+  dismissWalletDialog,
+  hideDevAuthPanel,
+  registerWalletDialogAutoDismiss,
+} from "./helpers";
 
 const RUN_E2E = !process.env.VITEST;
 
 if (RUN_E2E) {
   test.describe("Comment voting (proposal surface)", () => {
-    test.beforeEach(async ({ page }) => {
-      // Auth fixture logs in as the DOLPHIN wallet. We still dismiss the
-      // wallet-connect dialog if it auto-opens after navigation.
+    test.beforeEach(async ({ page, authenticated: _authenticated }) => {
+      // Destructuring `authenticated` mints the dev session BEFORE
+      // navigation so the reaction buttons render enabled immediately —
+      // relying on the auto-dev-auth chain left them disabled past the
+      // click timeouts. The auto-dismiss handler covers the dialog that
+      // chain can still spawn at any moment.
+      await registerWalletDialogAutoDismiss(page);
       await page.goto("/proposals/prop-active-chain-selection");
       await page.waitForLoadState("networkidle");
       await dismissWalletDialog(page);
+      await hideDevAuthPanel(page);
     });
 
     test("renders upvote and downvote buttons on each non-deleted comment", async ({ page }) => {
@@ -25,6 +34,10 @@ if (RUN_E2E) {
     test("upvote click registers, toggles aria-pressed, and increments count", async ({ page }) => {
       const upBtn = page.getByRole("button", { name: /^upvote comment$/i }).first();
       await expect(upBtn).toBeVisible({ timeout: 30_000 });
+      // Wait for the auth-gated enabled state: clicking while the me-query
+      // is still settling dispatches into a re-rendering tree and the
+      // onClick guard silently drops the reaction.
+      await expect(upBtn).toBeEnabled({ timeout: 30_000 });
 
       // Capture initial count by parsing trailing text of the button.
       const beforeText = (await upBtn.textContent()) ?? "";
@@ -34,13 +47,12 @@ if (RUN_E2E) {
 
       await upBtn.click();
 
-      // Optimistic update: by the time the request settles the button should
-      // either be active (first click) or have incremented the count.
-      await expect(upBtn).toHaveAttribute("aria-pressed", "true", { timeout: 5_000 });
-
-      // Switch to "Remove upvote" label after press.
+      // On success the same button relabels to "Remove upvote" IN THE SAME
+      // RENDER as aria-pressed flips — the original /^upvote comment$/
+      // locator would re-resolve to a different comment's button. Assert on
+      // the post-click label instead.
       const removeBtn = page.getByRole("button", { name: /^remove upvote$/i }).first();
-      await expect(removeBtn).toBeVisible();
+      await expect(removeBtn).toBeVisible({ timeout: 15_000 });
       await expect(removeBtn).toHaveAttribute("aria-pressed", "true");
 
       const afterText = (await removeBtn.textContent()) ?? "";
@@ -51,28 +63,39 @@ if (RUN_E2E) {
     test("toggle off: clicking the same upvote twice removes the reaction", async ({ page }) => {
       const upBtn = page.getByRole("button", { name: /^upvote comment$/i }).first();
       await expect(upBtn).toBeVisible({ timeout: 30_000 });
+      await expect(upBtn).toBeEnabled({ timeout: 30_000 });
       await upBtn.click();
-      await expect(upBtn).toHaveAttribute("aria-pressed", "true", { timeout: 5_000 });
+      // The pressed state is observable via the post-click "Remove upvote"
+      // label (same render as the aria-pressed flip — see test above).
+      const removeBtn = page.getByRole("button", { name: /^remove upvote$/i }).first();
+      await expect(removeBtn).toHaveAttribute("aria-pressed", "true", { timeout: 15_000 });
 
       // Click again — should toggle off.
-      const removeBtn = page.getByRole("button", { name: /^remove upvote$/i }).first();
       await removeBtn.click();
 
-      await expect(upBtn).toHaveAttribute("aria-pressed", "false", { timeout: 5_000 });
+      // After removal the button relabels back to "Upvote comment".
+      const upAgain = page.getByRole("button", { name: /^upvote comment$/i }).first();
+      await expect(upAgain).toHaveAttribute("aria-pressed", "false", { timeout: 15_000 });
     });
 
     test("swap: clicking downvote after upvote switches the reaction", async ({ page }) => {
       const upBtn = page.getByRole("button", { name: /^upvote comment$/i }).first();
       const downBtn = page.getByRole("button", { name: /^downvote comment$/i }).first();
       await expect(upBtn).toBeVisible({ timeout: 30_000 });
+      await expect(upBtn).toBeEnabled({ timeout: 30_000 });
 
       await upBtn.click();
-      await expect(upBtn).toHaveAttribute("aria-pressed", "true", { timeout: 5_000 });
+      const removeUp = page.getByRole("button", { name: /^remove upvote$/i }).first();
+      await expect(removeUp).toHaveAttribute("aria-pressed", "true", { timeout: 15_000 });
 
       await downBtn.click();
-      await expect(downBtn).toHaveAttribute("aria-pressed", "true", { timeout: 5_000 });
-      // The upvote button should now be released and labelled "Upvote comment" again.
-      await expect(upBtn).toHaveAttribute("aria-pressed", "false");
+      // Swapping relabels the downvote button to "Remove downvote" in the
+      // same render the pressed state flips.
+      const removeDown = page.getByRole("button", { name: /^remove downvote$/i }).first();
+      await expect(removeDown).toHaveAttribute("aria-pressed", "true", { timeout: 15_000 });
+      // The upvote button is released and labelled "Upvote comment" again.
+      const upAgain = page.getByRole("button", { name: /^upvote comment$/i }).first();
+      await expect(upAgain).toHaveAttribute("aria-pressed", "false");
     });
 
     test("meets the WCAG 44×44 click target on the reaction buttons", async ({ page }) => {

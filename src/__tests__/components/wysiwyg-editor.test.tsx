@@ -14,19 +14,23 @@ import { WysiwygEditor } from "@/components/shared/wysiwyg-editor";
  * layout rects. Here we cover the toolbar dialog wiring against a real
  * editor, and the bubble's pure view/edit subcomponents directly. */
 
-/* jsdom also has no layout for Text nodes: prosemirror's scrollToSelection
- * reads getClientRects()/getBoundingClientRect() off the selection target,
- * and on slow CI runners the editor's async focus() can fire after the test
- * completes — turning the TypeError into a run-failing unhandled error.
- * Give Text nodes zero-sized rects so the scroll path is a no-op. */
+/* jsdom also has no layout for non-Element nodes: prosemirror's
+ * scrollToSelection reads getClientRects()/getBoundingClientRect() off the
+ * selection's range boundary, which can be a Text node OR any other
+ * non-Element node — none of which jsdom gives layout methods. On slow CI
+ * runners the editor's async focus() can fire after the test completes,
+ * turning the TypeError into a run-failing unhandled error. Patch
+ * Node.prototype (every node type inherits it; Elements keep their own
+ * real implementations) so the scroll path computes a no-op instead of
+ * crashing. */
 const zeroRect = { top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0 } as DOMRect;
-type TextWithLayout = Text & {
+type NodeWithLayout = Node & {
   getClientRects?: () => DOMRectList;
   getBoundingClientRect?: () => DOMRect;
 };
-(Text.prototype as TextWithLayout).getClientRects ??= (() =>
+(Node.prototype as NodeWithLayout).getClientRects ??= (() =>
   [zeroRect] as unknown as DOMRectList);
-(Text.prototype as TextWithLayout).getBoundingClientRect ??= (() => zeroRect);
+(Node.prototype as NodeWithLayout).getBoundingClientRect ??= (() => zeroRect);
 
 function getProseMirror(): HTMLElement {
   const el = document.querySelector(".ProseMirror");

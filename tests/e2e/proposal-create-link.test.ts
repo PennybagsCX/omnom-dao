@@ -1,5 +1,9 @@
 import { test, expect } from "./auth.fixture";
-import { dismissWalletDialog, hideDevAuthPanel } from "./helpers";
+import {
+  dismissWalletDialog,
+  hideDevAuthPanel,
+  registerWalletDialogAutoDismiss,
+} from "./helpers";
 
 const RUN_E2E = !process.env.VITEST;
 
@@ -20,6 +24,7 @@ if (RUN_E2E) {
     }) => {
       test.setTimeout(120_000); // first hit compiles the route on the dev server
 
+      await registerWalletDialogAutoDismiss(page);
       await page.goto("/proposals/create");
       await page.waitForLoadState("networkidle");
       await dismissWalletDialog(page);
