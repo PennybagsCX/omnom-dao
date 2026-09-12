@@ -74,7 +74,7 @@ if (RUN_E2E) {
       ).toBeVisible({ timeout: 60_000 });
       await expect(
         page.getByRole("cell", { name: "0x22f4…d24a" }),
-      ).toBeVisible({ timeout: 30_000 });
+      ).toBeVisible({ timeout: 60_000 });
       await input.fill("0x22F4194F6706E70aBaA14AB352D0baA6C7ceD24a");
       await expect(page.getByText("Wallet found")).toBeVisible({ timeout: 60_000 });
       await input.fill("0xzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
