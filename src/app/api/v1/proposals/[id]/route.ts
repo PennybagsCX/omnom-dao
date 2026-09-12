@@ -232,7 +232,7 @@ export async function GET(
     const sessionAddress = await getSessionAddress();
     if (sessionAddress) {
       const mineRes = await db.execute({
-        sql: "SELECT choice, voting_power, voted_at FROM votes WHERE proposal_id = ? AND voter_address = ? LIMIT 1",
+        sql: "SELECT choice, voting_power, created_at AS voted_at FROM votes WHERE proposal_id = ? AND voter_address = ? LIMIT 1",
         args: [id, sessionAddress],
       });
       const mine = mineRes.rows[0];
