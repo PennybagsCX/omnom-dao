@@ -212,9 +212,10 @@ test.describe("Vote change (authenticated)", () => {
       await page.waitForTimeout(2000);
     }
 
-    // Refresh page
+    // Refresh page — no waitForLoadState("networkidle"): the app polls
+    // periodically and networkidle can simply never settle on slow runners,
+    // blowing the test timeout. Wait for the hydrated state directly.
     await page.reload();
-    await page.waitForLoadState("networkidle");
 
     // Re-dismiss dialogs that reappear after reload
     await dismissWalletDialog(page);
@@ -222,11 +223,11 @@ test.describe("Vote change (authenticated)", () => {
 
     // Should still show vote
     const votedMessage = page.getByText(/against|for|abstain/i);
-    expect(await votedMessage.count()).toBeGreaterThan(0);
+    await expect(votedMessage.first()).toBeVisible({ timeout: 30_000 });
 
     // Change Vote button should still be available
     changeVoteButton = page.getByRole("button", { name: /change.*vote/i });
-    await expect(changeVoteButton.first()).toBeVisible();
+    await expect(changeVoteButton.first()).toBeVisible({ timeout: 30_000 });
   });
 });
 
