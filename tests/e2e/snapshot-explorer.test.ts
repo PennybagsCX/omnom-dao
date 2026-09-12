@@ -1,10 +1,18 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./auth.fixture";
+
+// Destructuring `authenticated` in the beforeEach pre-mints the dev session
+// BEFORE navigation, so AutoDevAuthTrigger sees /me succeed on load and
+// skips its whole chain. Without this, the chain completes at a random time
+// after load (dev-server compile speed) — its me-invalidation storm disrupts
+// the debounced search queries and was the root cause of the CI-only search
+// flakiness (traces show dev-login landing mid-test + the default list
+// refiring 3x while "Wallet found" never renders).
 
 const RUN_E2E = !process.env.VITEST;
 
 if (RUN_E2E) {
   test.describe("Snapshot Explorer", () => {
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(async ({ page, authenticated: _authenticated }) => {
       await page.goto("/snapshot-explorer");
       await page.waitForLoadState("domcontentloaded");
     });
