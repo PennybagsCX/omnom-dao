@@ -3,6 +3,7 @@ import "@/__tests__/setup";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { EditorView } from "prosemirror-view";
 
 import {
   LinkBubbleEditForm,
@@ -14,23 +15,23 @@ import { WysiwygEditor } from "@/components/shared/wysiwyg-editor";
  * layout rects. Here we cover the toolbar dialog wiring against a real
  * editor, and the bubble's pure view/edit subcomponents directly. */
 
-/* jsdom also has no layout for non-Element nodes: prosemirror's
- * scrollToSelection reads getClientRects()/getBoundingClientRect() off the
- * selection's range boundary, which can be a Text node OR any other
- * non-Element node — none of which jsdom gives layout methods. On slow CI
- * runners the editor's async focus() can fire after the test completes,
- * turning the TypeError into a run-failing unhandled error. Patch
- * Node.prototype (every node type inherits it; Elements keep their own
- * real implementations) so the scroll path computes a no-op instead of
- * crashing. */
-const zeroRect = { top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0 } as DOMRect;
-type NodeWithLayout = Node & {
-  getClientRects?: () => DOMRectList;
-  getBoundingClientRect?: () => DOMRect;
+/* jsdom has no layout, and prosemirror's focus() → scrollIntoView chain
+ * eventually calls scrollToSelection → coordsAtPos, which reads client
+ * rects off selection range boundaries that jsdom gives no layout methods.
+ * On slow CI runners the editor's async focus() can fire after the test
+ * completes, surfacing "target.getClientRects is not a function" as a
+ * run-failing unhandled error — this survived DOM-prototype polyfills
+ * (Node.prototype.getClientRects), so the failing target can live outside
+ * the test file's patched realm. Sever the path at its entry instead:
+ * stub EditorView.prototype.scrollToSelection, which is the SAME module
+ * object the component imports (module identity is guaranteed), and whose
+ * behavior — scrolling to the selection — is meaningless in jsdom anyway
+ * and asserted by no test. */
+(
+  EditorView.prototype as unknown as Record<"scrollToSelection", () => void>
+).scrollToSelection = function scrollToSelectionNoop(): void {
+  /* no layout — nothing to scroll to */
 };
-(Node.prototype as NodeWithLayout).getClientRects ??= (() =>
-  [zeroRect] as unknown as DOMRectList);
-(Node.prototype as NodeWithLayout).getBoundingClientRect ??= (() => zeroRect);
 
 function getProseMirror(): HTMLElement {
   const el = document.querySelector(".ProseMirror");
