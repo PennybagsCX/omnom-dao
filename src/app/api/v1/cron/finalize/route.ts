@@ -2,7 +2,9 @@ import { type NextRequest } from "next/server";
 import { timingSafeEqual } from "crypto";
 
 import { apiSuccess } from "@/lib/api-response";
+import { db } from "@/lib/db";
 import { finalizeExpiredProposals, type FinalizeResult } from "@/lib/proposal-finalize";
+import { notifyEndingSoon } from "@/lib/notifications";
 
 /**
  * POST /api/v1/cron/finalize
@@ -47,10 +49,44 @@ export async function POST(request: NextRequest) {
 
   const results = await finalizeExpiredProposals();
 
-  return apiSuccess<{ finalized: FinalizeResult[]; count: number }>({
+  // Ending-soon sweep: fan out VOTING_ENDING_SOON for ACTIVE proposals whose
+  // window closes within 24h. notifyEndingSoon is idempotent per proposal, so
+  // the daily cadence matches the 24h window exactly (one wave per proposal).
+  const endingSoon = await sweepEndingSoon();
+
+  return apiSuccess<{ finalized: FinalizeResult[]; count: number; endingSoon: string[] }>({
     finalized: results,
     count: results.length,
+    endingSoon,
   });
+}
+
+/**
+ * Find ACTIVE proposals whose voting window ends within the next 24h and
+ * dispatch the (idempotent) ending-soon notification for each. Returns the
+ * ids that entered the notification path.
+ */
+async function sweepEndingSoon(): Promise<string[]> {
+  const res = await db.execute({
+    sql: "SELECT id, voting_ends_at FROM proposals WHERE status = 'ACTIVE' AND voting_ends_at IS NOT NULL",
+    args: [],
+  });
+  const now = Date.now();
+  const due: string[] = [];
+  for (const row of res.rows) {
+    const endsMs = Date.parse(row.voting_ends_at as string);
+    if (Number.isNaN(endsMs)) continue;
+    const remainingH = (endsMs - now) / (60 * 60 * 1000);
+    if (remainingH >= 0 && remainingH <= 24) {
+      due.push(row.id as string);
+    }
+  }
+  for (const id of due) {
+    await notifyEndingSoon(id).catch((err) =>
+      console.error("[cron/finalize] ending-soon dispatch failed:", err),
+    );
+  }
+  return due;
 }
 
 /** GET alias for cron services that prefer GET. */
