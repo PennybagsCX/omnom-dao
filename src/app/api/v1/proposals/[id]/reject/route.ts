@@ -6,6 +6,7 @@ import { getProposalById } from "@/lib/proposal-service";
 import { requireAuth, UnauthorizedError } from "@/lib/auth";
 import { isAdminAddress } from "@/lib/constants";
 import { recordAuditEvent } from "@/lib/audit-log";
+import { notifyAuthorOfRejection } from "@/lib/notifications";
 import { sanitizeContent } from "@/lib/sanitize";
 import { z } from "zod";
 import { ErrorCode, ProposalStatus, type Proposal } from "@/types";
@@ -82,6 +83,11 @@ export async function POST(
       500,
     );
   }
+
+  // Tell the author (best-effort — never blocks the rejection).
+  await notifyAuthorOfRejection(id, reason).catch((err) =>
+    console.error("[reject] author notification failed:", err),
+  );
 
   return apiSuccess<{ proposal: Proposal }>({ proposal: updated });
 }

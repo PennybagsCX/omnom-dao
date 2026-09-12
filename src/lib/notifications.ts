@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { getProposalById } from "@/lib/proposal-service";
 import { getUserSettings, getUserIdByAddress } from "@/lib/user-settings";
-import { NOTIFICATION_TYPE_CONFIG } from "@/lib/constants";
+import { NOTIFICATION_TYPE_CONFIG, isAdminAddress } from "@/lib/constants";
 import {
   NotificationType,
   ProposalStatus,
@@ -166,14 +166,81 @@ export async function notifyProposalCreated(
   const title = `${NOTIFICATION_TYPE_CONFIG[NotificationType.PROPOSAL_CREATED].emoji} New proposal: ${proposal.title}`;
   const body = `A new ${proposal.type.toLowerCase().replace(/_/g, " ")} proposal was submitted by ${shortAddr(proposerAddress)}. Review and discuss before voting opens.`;
 
-  // v1: notify all known users (excluding the proposer). Loaded from the DB so
-  // we only target registered (verified) holders rather than the raw snapshot.
+  // v1: notify all known users (excluding the proposer and admins). Loaded
+  // from the DB so we only target registered (verified) holders rather than
+  // the raw snapshot. Admins are excluded here because they receive the
+  // action-oriented review request instead (notifyAdminsOfReview).
   const res = await db.execute({
-    sql: "SELECT id FROM users WHERE wallet_address != ?",
+    sql: "SELECT id, wallet_address FROM users WHERE wallet_address != ?",
     args: [proposerAddress.toLowerCase()],
   });
-  const userIds = res.rows.map((r) => r.id as string);
+  const userIds = res.rows
+    .filter((r) => !isAdminAddress(r.wallet_address as string))
+    .map((r) => r.id as string);
   await broadcast(userIds, NotificationType.PROPOSAL_CREATED, title, body, proposalId);
+
+  await notifyAdminsOfReview(proposalId, proposerAddress).catch((err) =>
+    console.error("[notifications] admin review dispatch failed:", err),
+  );
+}
+
+/**
+ * Notify admins that a proposal is awaiting their review (PENDING_REVIEW).
+ *
+ * Companion to notifyProposalCreated: the community broadcast is
+ * informational, this one is the actionable review request routed to every
+ * configured admin who has a registered user row.
+ *
+ * @param proposalId      the submitted proposal
+ * @param proposerAddress the author (context for the copy)
+ */
+export async function notifyAdminsOfReview(
+  proposalId: string,
+  proposerAddress: string,
+): Promise<void> {
+  const proposal = await getProposalById(proposalId);
+  if (!proposal) return;
+
+  const emoji = NOTIFICATION_TYPE_CONFIG[NotificationType.PROPOSAL_CREATED].emoji;
+  const title = `${emoji} Review requested: ${proposal.title}`;
+  const body = `A ${proposal.type.toLowerCase().replace(/_/g, " ")} proposal by ${shortAddr(proposerAddress)} is awaiting review. Approve it to open voting, or reject it with a reason.`;
+
+  const res = await db.execute({ sql: "SELECT id, wallet_address FROM users", args: [] });
+  const adminIds = res.rows
+    .filter((r) => isAdminAddress(r.wallet_address as string))
+    .map((r) => r.id as string);
+  await broadcast(adminIds, NotificationType.PROPOSAL_CREATED, title, body, proposalId);
+}
+
+/**
+ * Notify the author that their proposal was rejected in review.
+ *
+ * @param proposalId  the rejected proposal
+ * @param reason      admin-supplied rejection reason (optional)
+ */
+export async function notifyAuthorOfRejection(
+  proposalId: string,
+  reason?: string,
+): Promise<void> {
+  const proposal = await getProposalById(proposalId);
+  if (!proposal) return;
+
+  const authorId = await getUserIdByAddress(proposal.authorAddress);
+  if (!authorId) return;
+
+  const emoji = NOTIFICATION_TYPE_CONFIG[NotificationType.PROPOSAL_RESULT].emoji;
+  const title = `${emoji} Rejected in review: ${proposal.title}`;
+  const body = reason
+    ? `Your proposal was rejected during review: ${reason}`
+    : "Your proposal was rejected during review. You may revise and resubmit.";
+
+  await createNotification({
+    userId: authorId,
+    type: NotificationType.PROPOSAL_RESULT,
+    title,
+    body,
+    proposalId,
+  });
 }
 
 /**
@@ -196,9 +263,9 @@ export async function notifyVotingStarted(proposalId: string): Promise<void> {
 /**
  * Notify that a proposal's voting window ends within 24h.
  *
- * Typically invoked by a cron job, or lazily on access. Idempotent-ish: it
- * will create duplicate notifications if called repeatedly, so callers should
- * guard invocation (e.g. once per proposal per cron tick).
+ * Typically invoked by a cron job, or lazily on access. Idempotent: skips
+ * if any VOTING_ENDING_SOON notification already exists for the proposal,
+ * so repeated cron sweeps never duplicate the fan-out.
  */
 export async function notifyEndingSoon(proposalId: string): Promise<void> {
   const proposal = await getProposalById(proposalId);
@@ -209,6 +276,13 @@ export async function notifyEndingSoon(proposalId: string): Promise<void> {
   if (Number.isNaN(endsMs)) return;
   const remainingH = (endsMs - Date.now()) / (60 * 60 * 1000);
   if (remainingH < 0 || remainingH > 24) return;
+
+  // Idempotency guard: one ending-soon wave per proposal, ever.
+  const seen = await db.execute({
+    sql: "SELECT 1 FROM notifications WHERE type = 'VOTING_ENDING_SOON' AND proposal_id = ? LIMIT 1",
+    args: [proposalId],
+  });
+  if (seen.rows.length > 0) return;
 
   const title = `${NOTIFICATION_TYPE_CONFIG[NotificationType.VOTING_ENDING_SOON].emoji} Ending soon: ${proposal.title}`;
   const body = `Less than 24 hours remain to vote. The proposal closes at ${proposal.votingEndsAt}.`;
