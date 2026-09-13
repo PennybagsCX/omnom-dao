@@ -197,3 +197,62 @@ describe("notifications lib — admin review targeting", () => {
     expect(inserts).not.toContain("u-not-admin");
   });
 });
+
+describe("notifications lib — ending-soon idempotency", () => {
+  async function runEndingSoon(alreadySent: boolean) {
+    vi.doUnmock("@/lib/notifications");
+    vi.resetModules();
+    hoisted.getUserSettings.mockResolvedValue({
+      notifications: {
+        proposalCreated: true,
+        votingStarted: true,
+        votingEndingSoon: true,
+        proposalResult: true,
+        mention: true,
+      },
+    });
+    hoisted.isAdminAddress.mockReturnValue(false);
+    hoisted.getProposalById.mockResolvedValue({
+      ...makeProposal("ACTIVE"),
+      votingEndsAt: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+    });
+    hoisted.execute.mockImplementation(async (stmt: { sql: string }) => {
+      if (stmt.sql.includes("FROM notifications WHERE type = 'VOTING_ENDING_SOON'")) {
+        return {
+          rows: alreadySent ? [{ 1: 1 }] : [],
+          columns: [],
+          rowsAffected: 0,
+          lastInsertRowid: undefined,
+        };
+      }
+      if (stmt.sql.startsWith("SELECT id FROM users")) {
+        return {
+          rows: [{ id: "u-1" }, { id: "u-2" }],
+          columns: [],
+          rowsAffected: 0,
+          lastInsertRowid: undefined,
+        };
+      }
+      if (stmt.sql.startsWith("INSERT INTO notifications")) {
+        return { rows: [], columns: [], rowsAffected: 1, lastInsertRowid: 1n };
+      }
+      return { rows: [], columns: [], rowsAffected: 0, lastInsertRowid: undefined };
+    });
+
+    const { notifyEndingSoon } = await import("@/lib/notifications");
+    await notifyEndingSoon("prop-r1");
+    return hoisted.execute.mock.calls.filter((c) =>
+      (c[0] as { sql: string }).sql.startsWith("INSERT INTO notifications"),
+    ).length;
+  }
+
+  it("fans out when no prior ending-soon notification exists", async () => {
+    const inserts = await runEndingSoon(false);
+    expect(inserts).toBe(2); // one per user
+  });
+
+  it("skips entirely when the proposal already had its ending-soon wave", async () => {
+    const inserts = await runEndingSoon(true);
+    expect(inserts).toBe(0);
+  });
+});

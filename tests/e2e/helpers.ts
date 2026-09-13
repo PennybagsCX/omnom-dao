@@ -125,3 +125,28 @@ export async function registerWalletDialogAutoDismiss(page: Page): Promise<void>
     },
   );
 }
+
+
+/**
+ * Block until the app's client JS is live (hydrated) and authenticated.
+ *
+ * Filling inputs right after domcontentloaded races React hydration: the
+ * input event fires before listeners exist, then hydration re-renders the
+ * controlled input with its initial (empty) state and WIPES the value — no
+ * debounce, no query, "element(s) not found" for the results. On 2-core CI
+ * runners hydration takes seconds; locally it always wins the race, which
+ * is why the failure never reproduced.
+ *
+ * The header wallet affordance is the gate: the connected address (0x…)
+ * only renders after client JS resolves the session — it cannot exist in
+ * SSR output. Requires the authenticated fixture (or dev-auth) so the
+ * address form appears.
+ */
+export async function awaitAppHydration(page: Page): Promise<void> {
+  await expect(
+    page
+      .locator("header button, header a")
+      .filter({ hasText: /0x[0-9a-f]|connect\s*wallet/i })
+      .first(),
+  ).toBeVisible({ timeout: 30_000 });
+}

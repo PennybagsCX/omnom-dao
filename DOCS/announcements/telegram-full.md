@@ -1,11 +1,3 @@
-# Telegram Announcement Draft — Election Results & Proposals Live
-
-> Channel post. Telegram hard limit is 4,096 characters per message; this
-> draft is ~1,900 with markdown formatting kept to bold/italic (safe for
-> channel posts via Telegram's native formatting).
-
----
-
 🗳️ **The vote is in — OMNOM DAO has chosen how it governs.**
 
 The Foundational Governance Election is now CLOSED.

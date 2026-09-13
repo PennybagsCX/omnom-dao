@@ -163,8 +163,15 @@ function SnapshotExplorer({ seed }: { seed: string | null }) {
   const [appliedSeed, setAppliedSeed] = useState<string | null>(seed);
   if (seed !== null && seed !== appliedSeed) {
     setAppliedSeed(seed);
-    setInput(seed);
-    setQuery(seed);
+    // An EMPTY seed means "no deep link". The seed arrives via a
+    // Suspense-resolved effect, which can land AFTER the user has already
+    // started typing (slow connections / slow hydration) — applying it would
+    // silently wipe their input and reset the query. Only a real address
+    // seed may clobber; "" never does.
+    if (seed !== "") {
+      setInput(seed);
+      setQuery(seed);
+    }
   }
   const [classFilter, setClassFilter] = useState<"ALL" | HolderClass>("ALL");
   const [page, setPage] = useState(1);
