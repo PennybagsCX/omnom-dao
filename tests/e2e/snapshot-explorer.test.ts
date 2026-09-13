@@ -1,4 +1,5 @@
 import { test, expect } from "./auth.fixture";
+import { awaitAppHydration } from "./helpers";
 
 // Destructuring `authenticated` in the beforeEach pre-mints the dev session
 // BEFORE navigation, so AutoDevAuthTrigger sees /me succeed on load and
@@ -15,6 +16,8 @@ if (RUN_E2E) {
     test.beforeEach(async ({ page, authenticated: _authenticated }) => {
       await page.goto("/snapshot-explorer");
       await page.waitForLoadState("domcontentloaded");
+      // Do not interact before hydration — see awaitAppHydration.
+      await awaitAppHydration(page);
     });
 
     test("renders summary and source provenance", async ({ page }) => {
