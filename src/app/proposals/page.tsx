@@ -32,7 +32,6 @@ import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { useCurrentUser, useProposals, fetchApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { FGE_VOTING_ENDS_AT, FGE_VOTING_STARTS_AT } from "@/lib/election";
 import {
   ProposalStatus,
   ProposalType,

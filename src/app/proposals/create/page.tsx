@@ -50,7 +50,6 @@ import { useDraftAutosave, type DraftRecord } from "@/lib/use-draft-autosave";
 import { PROPOSAL_TYPE_CONFIG } from "@/lib/constants";
 import { HolderClass, ProposalType } from "@/types";
 import { useQuery } from "@tanstack/react-query";
-import { FGE_VOTING_ENDS_AT } from "@/lib/election";
 
 // Confetti is a client-only canvas component — load it lazily.
 const ReactConfetti = dynamic(() => import("react-confetti"), { ssr: false });

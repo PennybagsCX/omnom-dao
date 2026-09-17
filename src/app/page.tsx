@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import {
   CircleDot,
   ClipboardList,
+  CheckCircle2,
   Wallet,
   Vote,
   Search,
@@ -18,13 +19,11 @@ import { HolderStatsBar } from "@/components/shared/holder-stats-bar";
 import { ProposalCard } from "@/components/shared/proposal-card";
 import { ProposalRow } from "@/components/shared/proposal-row";
 import { EmptyState } from "@/components/shared/empty-state";
-import { CountdownTimer } from "@/components/shared/countdown-timer";
 import type { ReactNode } from "react";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { ConnectCta } from "@/components/wallet/connect-cta";
 import { useProposals, useCurrentUser } from "@/lib/api";
 import { ProposalStatus } from "@/types";
-import { FGE_VOTING_STARTS_AT, FGE_VOTING_ENDS_AT } from "@/lib/election";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -166,17 +165,19 @@ export default function HomePage() {
           <span>·</span>
           <span>Any EVM wallet</span>
           <span>·</span>
-          <span>Voting model TBD by community</span>
+          <span>Quadratic voting — community-elected</span>
         </motion.p>
       </section>
 
-      {/* ── FGE countdown (between hero CTA and stats bar) ───── */}
+      {/* ── FGE result banner (election closed 2026-09-12) ───── */}
       <section className="mx-auto w-full max-w-2xl px-4 pb-10 sm:px-6 lg:px-8">
-        <CountdownTimer
-          target={FGE_VOTING_STARTS_AT}
-          label={`Voting opens in · ends ${new Date(FGE_VOTING_ENDS_AT).toISOString().slice(0, 10)}`}
-          ariaLabel="Countdown to Foundational Governance Election opening"
-        />
+        <Link
+          href="/results"
+          className="flex items-center justify-center gap-2 rounded-xl border border-gold/30 bg-gold/5 px-4 py-3 text-sm font-medium text-gold transition-colors hover:bg-gold/10"
+        >
+          <CheckCircle2 className="h-4 w-4" aria-hidden />
+          Election closed · Quadratic voting elected — view results
+        </Link>
       </section>
 
       {/* ── Stats bar ───────────────────────────────────────── */}
