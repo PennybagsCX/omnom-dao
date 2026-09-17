@@ -61,6 +61,13 @@ function isPublicElectionCommentsRead(method: string, pathname: string): boolean
   );
 }
 
+// GET /api/v1/audit-log is a public read — the admin-action trail exists
+// precisely so governance gatekeeping is publicly auditable (single-admin
+// trust concern; see src/lib/audit-log.ts). The route only exports GET.
+function isPublicAuditLogRead(method: string, pathname: string): boolean {
+  return method === "GET" && pathname === "/api/v1/audit-log";
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method.toUpperCase();
@@ -87,6 +94,10 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isPublicElectionCommentsRead(method, pathname)) {
+    return NextResponse.next();
+  }
+
+  if (isPublicAuditLogRead(method, pathname)) {
     return NextResponse.next();
   }
 
