@@ -171,7 +171,7 @@ export const HOLDER_CLASS_CONFIG: Record<HolderClass, HolderClassConfig> = {
 
 /**
  * Classify a holder by percentage of supply. Cosmetic only — voting power is
- * strictly balance-weighted (1 token = 1 vote) in v1.
+ * √ of snapshot balance (quadratic, per src/lib/voting-power.ts).
  */
 export function classifyHolder(pct: number): HolderClass {
   if (pct >= HOLDER_CLASS_CONFIG[HolderClass.KRAKEN].threshold) return HolderClass.KRAKEN;
@@ -323,11 +323,11 @@ export const PROPOSAL_STATUS_CONFIG: Record<ProposalStatus, ProposalStatusConfig
     badgeClass: "bg-emerald-500/15 text-emerald-300 border-emerald-600/40",
     votingOpen: true,
   },
-  [ProposalStatus.CLOSED]: {
-    label: "Closed",
-    emoji: "🔒",
-    iconName: "Lock",
-    badgeClass: "bg-slate-700/60 text-slate-300 border-slate-600",
+  [ProposalStatus.EXECUTED]: {
+    label: "Executed",
+    emoji: "🚀",
+    iconName: "Rocket",
+    badgeClass: "bg-indigo-500/15 text-indigo-300 border-indigo-600/40",
     votingOpen: false,
   },
   [ProposalStatus.PASSED]: {
@@ -494,6 +494,7 @@ export interface NavItem {
 export const PRIMARY_NAV_ITEMS: readonly NavItem[] = [
   { label: "Home", href: "/", emoji: "🏠", iconName: "Home" },
   { label: "Proposals", href: "/proposals", emoji: "📋", iconName: "ClipboardList" },
+  { label: "Results", href: "/results", emoji: "🏆", iconName: "Trophy" },
   { label: "Vote", href: "/governance-vote", emoji: "🗳️", iconName: "Vote" },
   { label: "Create", href: "/proposals/create", emoji: "➕", iconName: "Plus" },
   { label: "Explorer", href: "/snapshot-explorer", emoji: "🔍", iconName: "Search" },

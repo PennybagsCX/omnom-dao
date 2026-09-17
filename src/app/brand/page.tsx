@@ -455,7 +455,8 @@ export default function BrandPage() {
       >
         <p className="mb-8 max-w-2xl text-sm text-muted-foreground">
           Core brand identity. Color-coded holder tiers add personality while
-          voting power remains strictly balance-weighted (1 token = 1 vote).
+          voting power follows the adopted quadratic model (√ of snapshot
+          balance); tiers are identity, not weight multipliers.
         </p>
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           {HOLDER_CARDS.map(({ holderClass, count, accent, ring }) => {

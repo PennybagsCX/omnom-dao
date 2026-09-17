@@ -13,7 +13,7 @@ import {
  * (PASSED / FAILED / EXPIRED) when their voting window closes.
  *
  * Enforces:
- *   - Quorum: (totalFor + totalAgainst + totalAbstain) / totalSupply × 100 ≥ quorumRequired
+ *   - Quorum: (totalFor + totalAgainst + totalAbstain) / total quadratic power (Σ√balance) × 100 ≥ quorumRequired
  *   - Simple majority (Treasury, Guideline, General): totalFor > totalAgainst
  *   - Supermajority (Chain Selection, Tokenomics Change, Technical):
  *     totalFor / (totalFor + totalAgainst) ≥ 0.60

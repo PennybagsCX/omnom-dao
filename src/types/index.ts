@@ -169,14 +169,14 @@ export enum ProposalStatus {
   PENDING_REVIEW = "PENDING_REVIEW",
   /** Voting is open */
   ACTIVE = "ACTIVE",
-  /** Voting period ended, not yet finalized */
-  CLOSED = "CLOSED",
   /** Quorum met + majority for */
   PASSED = "PASSED",
   /** Quorum not met OR majority against */
   FAILED = "FAILED",
   /** Auto-expired without reaching quorum */
   EXPIRED = "EXPIRED",
+  /** Outcome recorded, off-chain action taken */
+  EXECUTED = "EXECUTED",
 }
 
 /** Base metadata shared by all proposal types. */
@@ -190,6 +190,12 @@ export interface BaseMeta {
   rejectedBy?: string;
   /** ISO 8601 timestamp when proposal was rejected */
   rejectedAt?: string;
+  /** Execution transparency: off-chain action taken after the proposal passed */
+  executionNote?: string;
+  /** Address of admin/moderator who recorded the outcome */
+  executedBy?: string;
+  /** ISO 8601 timestamp when the outcome was recorded */
+  executedAt?: string;
 }
 
 export interface ChainSelectionMeta extends Omit<BaseMeta, "type"> {

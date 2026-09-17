@@ -35,8 +35,8 @@ export const MIGRATION_STATEMENTS: Array<{ sql: string }> = [
                         )),
       status            TEXT NOT NULL DEFAULT 'DRAFT'
                         CHECK (status IN (
-                          'DRAFT', 'PENDING_REVIEW', 'ACTIVE', 'CLOSED',
-                          'PASSED', 'FAILED', 'EXPIRED'
+                          'DRAFT', 'PENDING_REVIEW', 'ACTIVE',
+                          'PASSED', 'FAILED', 'EXPIRED', 'EXECUTED'
                         )),
       author_address    TEXT NOT NULL,
       created_at        TEXT NOT NULL DEFAULT (datetime('now')),
@@ -425,4 +425,26 @@ export const MIGRATION_STATEMENTS: Array<{ sql: string }> = [
     sql: `CREATE INDEX IF NOT EXISTS idx_election_comment_emoji_reactions_comment
           ON election_comment_emoji_reactions (comment_id)`,
   },
+
+  // ── 17. Admin action audit log ────────────────────────────
+  //    Public, append-only trail of governance gatekeeping decisions
+  //    (approve/reject/record-outcome/status overrides), read via
+  //    GET /api/v1/audit-log and written by src/lib/audit-log.ts.
+  //    No FK on target_id — it may reference any entity kind.
+  {
+    sql: `CREATE TABLE IF NOT EXISTS audit_log (
+      id              TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+      actor_address   TEXT NOT NULL,
+      action          TEXT NOT NULL CHECK (action IN (
+                        'PROPOSAL_APPROVED', 'PROPOSAL_REJECTED',
+                        'PROPOSAL_OUTCOME_RECORDED', 'PROPOSAL_STATUS_OVERRIDE'
+                      )),
+      target_type     TEXT NOT NULL CHECK (target_type IN ('proposal', 'user', 'platform')),
+      target_id       TEXT NOT NULL,
+      details         TEXT,
+      created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+    )`,
+  },
+  { sql: `CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log (created_at DESC)` },
+  { sql: `CREATE INDEX IF NOT EXISTS idx_audit_log_target ON audit_log (target_type, target_id)` },
 ];

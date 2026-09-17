@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { lookupHolderClasses } from "@/lib/snapshot";
-import type { Proposal, ProposalStatus } from "@/types";
+import { type Proposal, ProposalStatus } from "@/types";
 import { emptyEmojiCounts } from "@/lib/emoji-reactions";
 
 /**
@@ -156,6 +156,34 @@ export async function listProposals(
   );
   await attachHolderClasses(proposals);
   return { proposals, total };
+}
+
+/** Statuses representing a decided proposal (voting closed, outcome known). */
+const FINALIZED_STATUSES: ProposalStatus[] = [
+  ProposalStatus.PASSED,
+  ProposalStatus.FAILED,
+  ProposalStatus.EXPIRED,
+  ProposalStatus.EXECUTED,
+];
+
+/**
+ * All finalized proposals, newest voting window first. Backs the public
+ * /results page; returns the same {@link Proposal} shape as
+ * {@link listProposals}.
+ */
+export async function listFinalizedProposals(): Promise<Proposal[]> {
+  const res = await db.execute({
+    sql: `SELECT ${SELECT_COLS} FROM proposals
+          WHERE status IN (${FINALIZED_STATUSES.map(() => "?").join(", ")})
+          ORDER BY voting_ends_at DESC`,
+    args: [...FINALIZED_STATUSES],
+  });
+
+  const proposals = res.rows.map((r) =>
+    rowToProposal(r as unknown as Record<string, unknown>),
+  );
+  await attachHolderClasses(proposals);
+  return proposals;
 }
 
 export type { ProposalRow };

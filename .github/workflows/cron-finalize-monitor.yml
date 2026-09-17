@@ -1,10 +1,11 @@
 name: cron-finalize-monitor
 
-# Verifies the daily /api/v1/cron/finalize sweep runs successfully.
+# Daily health-check of /api/v1/cron/finalize with paging on failure.
 #
-# Schedule: 00:10 UTC daily — runs 5 minutes after the Vercel cron at 00:05 UTC
-# to give the sweep time to complete. If the sweep returns non-200, the job
-# fails and creates a GitHub issue so the operator is paged.
+# The sweep is driven primarily by cron-finalize.yml (30-minute pinger); the
+# Vercel cron (daily) and this check remain as fallback floor + verification.
+# Schedule: 00:10 UTC daily. If the sweep returns non-200, the job fails and
+# creates a GitHub issue so the operator is paged.
 #
 # Required repo secrets:
 #   CRON_HEALTH_URL    — production URL (e.g. https://dao.omnom.dog)

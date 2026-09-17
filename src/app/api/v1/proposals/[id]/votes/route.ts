@@ -107,7 +107,8 @@ function recalcCounts(rows: { choice: unknown; total: unknown }[]) {
 
 /**
  * Compute the quorum achievement percentage (C3.3): total voted power relative
- * to the snapshot total supply. Reads supply best-effort; falls back to 0.
+ * to the total quadratic power of the snapshot. Reads power best-effort; falls
+ * back to 0.
  */
 async function computeQuorumAchieved(
   votesFor: number,

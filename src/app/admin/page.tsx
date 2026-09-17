@@ -12,6 +12,7 @@ import {
   ExternalLink,
   FileSearch,
   Loader2,
+  Rocket,
   ShieldCheck,
   ShieldX,
   X,
@@ -60,11 +61,25 @@ export default function AdminPage() {
   const qc = useQueryClient();
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [recordingId, setRecordingId] = useState<string | null>(null);
+  const [outcomeNote, setOutcomeNote] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
 
   const { data, isLoading, isError, refetch } = useQuery<PendingResponse>({
     queryKey: ["admin", "pending"],
     queryFn: ({ signal }) => apiGet<PendingResponse>("/api/v1/admin/proposals/pending", undefined, signal),
+    enabled: !!me,
+  });
+
+  const {
+    data: passedData,
+    isLoading: passedLoading,
+    isError: passedIsError,
+    refetch: refetchPassed,
+  } = useQuery<PendingResponse>({
+    queryKey: ["admin", "passed"],
+    queryFn: ({ signal }) =>
+      apiGet<PendingResponse>("/api/v1/proposals", { status: "PASSED", pageSize: 100 }, signal),
     enabled: !!me,
   });
 
@@ -102,6 +117,24 @@ export default function AdminPage() {
     },
   });
 
+  const recordOutcome = useMutation({
+    mutationFn: ({ id, note }: { id: string; note: string }) =>
+      fetchApi<{ proposal: Proposal }>(`/api/v1/proposals/${id}/record-outcome`, {
+        method: "POST",
+        body: note ? { note } : {},
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "passed"] });
+      setRecordingId(null);
+      setOutcomeNote("");
+      setActionError(null);
+    },
+    onError: (error: { message?: string }) => {
+      console.error("Record outcome error:", error);
+      setActionError(error.message || "Failed to record outcome. Please ensure you're authenticated as an admin.");
+    },
+  });
+
   const handleApprove = useCallback((id: string) => {
     setActionError(null);
     approve.mutate(id);
@@ -114,6 +147,14 @@ export default function AdminPage() {
       reject.mutate({ id, reason: rejectReason.trim() });
     },
     [reject, rejectReason],
+  );
+
+  const handleRecordOutcome = useCallback(
+    (id: string) => {
+      setActionError(null);
+      recordOutcome.mutate({ id, note: outcomeNote.trim() });
+    },
+    [recordOutcome, outcomeNote],
   );
 
   if (!me) {
@@ -148,6 +189,7 @@ export default function AdminPage() {
   }
 
   const proposals = data?.proposals ?? [];
+  const passedProposals = passedData?.proposals ?? [];
   const maxCount = Math.max(...(election?.results.map((r) => r.count) ?? [0]), 1);
 
   return (
@@ -394,6 +436,110 @@ export default function AdminPage() {
                 {(approve.isError && approve.variables === p.id) || (reject.isError && rejectingId === p.id) ? (
                   <p className="mt-2 text-sm text-danger">
                     {actionError || "An error occurred while processing this action. Please try again."}
+                  </p>
+                ) : null}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Passed — awaiting outcome recording (§6.1: PASSED → EXECUTED) */}
+      <div className="mb-4 mt-12 text-center">
+        <h2 className="text-xl font-bold text-foreground">Passed — awaiting outcome recording</h2>
+        <p className="text-sm text-muted-foreground">
+          Record the off-chain action taken on proposals that passed their vote.
+        </p>
+      </div>
+
+      {passedLoading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-gold" aria-hidden />
+        </div>
+      ) : passedIsError ? (
+        <EmptyState
+          icon={<AlertTriangle className="h-12 w-12" />}
+          title="Failed to load passed proposals"
+          description="We couldn't reach the proposal service. Please try again."
+          action={
+            <Button onClick={() => refetchPassed()} disabled={passedLoading}>
+              {passedLoading ? "Retrying…" : "Retry"}
+            </Button>
+          }
+        />
+      ) : passedProposals.length === 0 ? (
+        <EmptyState
+          icon={<Rocket className="h-12 w-12 text-success" />}
+          title="Nothing to execute"
+          description="No passed proposals are waiting for their outcome to be recorded."
+        />
+      ) : (
+        <div className="space-y-4">
+          {passedProposals.map((p) => (
+            <Card key={p.id}>
+              <CardContent className="p-5">
+                <div className="mb-3 flex flex-col items-center gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 space-y-1 text-center sm:text-left">
+                    <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                      <ProposalTypeBadge type={p.type} />
+                      <span className="inline-flex items-center gap-1 text-xs text-text-dim">
+                        by
+                        <Link
+                          href={`/snapshot-explorer?address=${p.authorAddress.toLowerCase()}`}
+                          title={p.authorAddress}
+                          className="font-mono underline-offset-2 hover:underline hover:text-foreground"
+                        >
+                          {shortenAddress(p.authorAddress)}
+                        </Link>
+                        {p.authorHolderClass && (
+                          <HolderBadge holderClass={p.authorHolderClass} size="sm" plain />
+                        )}
+                      </span>
+                      <span className="flex items-center gap-1 text-xs text-text-dim">
+                        <Clock className="h-3 w-3" aria-hidden />
+                        {new Date(p.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-foreground text-center">{p.title}</h3>
+                  </div>
+                </div>
+
+                {recordingId === p.id ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={outcomeNote}
+                      onChange={(e) => setOutcomeNote(e.target.value)}
+                      placeholder="Outcome note (optional, max 500 chars)…"
+                      rows={3}
+                      maxLength={500}
+                      className="w-full rounded-lg border border-border bg-transparent p-3 text-sm outline-none placeholder:text-text-dim focus:border-success/50"
+                    />
+                    <div className="flex items-center justify-center gap-2">
+                      <Button size="sm" onClick={() => handleRecordOutcome(p.id)} disabled={recordOutcome.isPending}>
+                        {recordOutcome.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Rocket className="h-4 w-4" aria-hidden />}
+                        Confirm Outcome
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => { setRecordingId(null); setOutcomeNote(""); }}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <Button size="sm" onClick={() => setRecordingId(p.id)}>
+                      <Rocket className="h-4 w-4" aria-hidden /> Record outcome
+                    </Button>
+                    <Button size="sm" variant="ghost" asChild>
+                      <Link href={`/proposals/${p.id}`}>
+                        <ExternalLink className="h-4 w-4" aria-hidden /> View
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+
+                {recordOutcome.isError && recordOutcome.variables?.id === p.id ? (
+                  <p className="mt-2 text-sm text-danger">
+                    {actionError || "An error occurred while recording this outcome. Please try again."}
                   </p>
                 ) : null}
               </CardContent>

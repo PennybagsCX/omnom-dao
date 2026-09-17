@@ -95,7 +95,7 @@ With no live blockchain, on-chain governance is impossible. The platform deliber
 
 1. **🔍 Transparency** — All proposals, votes, and results are publicly auditable. No backroom deals; every decision is visible to every holder.
 2. **👥 Community Ownership** — No centralized decision-maker. The community proposes, debates, and decides; the platform surfaces the collective will.
-3. **⚖️ Stake-Weighted Voice** — Voting power scales with verified holdings (1 token = 1 vote in v1), while mechanisms like quorum and delegation keep governance feeling legitimate across the full distribution.
+3. **⚖️ Stake-Weighted Voice** — Voting power is the √ of verified holdings (quadratic, elected 2026-09-12), while mechanisms like quorum and delegation keep governance feeling legitimate across the full distribution.
 4. **🪨 Snapshot as Truth** — The frozen snapshot at Block 59,922,100 is the immutable, cryptographic anchor of legitimacy. It cannot be rewritten or gamed.
 5. **🌱 Accessibility & Education** — Many holders are first-time DAO participants. The platform educates as much as it governs — explaining proposals, quorum, and voting mechanics — so that the smallest holder can participate as confidently as the largest.
 
@@ -138,7 +138,7 @@ At a high level, the platform enables holders to:
 
 ## 6. Holder Classification System
 
-After the burn, supply distribution is heavily skewed. Every holder is assigned to one of seven tiers based on their percentage of total supply. In v1, class badges are **cosmetic and social only** — all holders vote proportionally to balance (1 token = 1 vote).
+After the burn, supply distribution is heavily skewed. Every holder is assigned to one of seven tiers based on their percentage of total supply. Class badges are **cosmetic and social only** — voting power is the √ of snapshot balance (quadratic), so tiers are identity, not weight multipliers.
 
 | Class | Emoji | Threshold | Holders | Approx. Share of Circulating Supply |
 |---|---|---|---|---|
@@ -230,7 +230,7 @@ The platform's success is measured by holder participation and the maturation of
 
 Several governance parameters are intentionally **left to the community** to decide through the platform itself. These are not engineering unknowns — they are policy choices that should be ratified by holders, not imposed.
 
-- **Voting math** — Pure token-weighted (1 token = 1 vote) is the **v1 baseline**. Whether to adopt quorum tiers, delegation, or **quadratic voting** is pending community vote.
+- **Voting math** — ✅ **Settled**: quadratic voting (√ of snapshot balance) was elected at the Foundational Governance Election (65.7%, closed 2026-09-12) and is shipped in [`src/lib/voting-power.ts`](../src/lib/voting-power.ts). Delegation and quorum tiers remain future options.
 - **Tokenomics model** — Post-sunset economic design (migration, reissuance, dissolution) is undecided. See [`TOKENOMICS-OPTIONS.md`](../TOKENOMICS-OPTIONS.md) for candidate models.
 - **Chain migration** — Whether and where to relaunch $OMNOM (and on what standard) is the single most consequential open decision.
 - **On-chain binding** — v1 governance is advisory only. Whether/how to bind future decisions to on-chain execution is a Phase 5 (P5) question.

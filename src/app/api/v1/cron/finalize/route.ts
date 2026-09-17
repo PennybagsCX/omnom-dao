@@ -7,14 +7,15 @@ import { finalizeExpiredProposals, type FinalizeResult } from "@/lib/proposal-fi
 import { notifyEndingSoon } from "@/lib/notifications";
 
 /**
- * POST /api/v1/cron/finalize
+ * POST|GET /api/v1/cron/finalize
  *
  * Sweep all ACTIVE proposals whose voting window has elapsed and finalize
- * them (transition to PASSED / FAILED / EXPIRED with computed tallies).
+ * them (transition to PASSED / FAILED / EXPIRED with computed tallies), and
+ * fan out VOTING_ENDING_SOON notifications for proposals closing within 24h.
  *
- * This endpoint is intended to be called by an external cron scheduler
- * (e.g. Vercel Cron, GitHub Actions, or a simple cron-job.org trigger)
- * at a regular interval (recommended: every 15–30 minutes).
+ * Cadence: driven primarily by the GitHub Actions 30-minute pinger
+ * (.github/workflows/cron-finalize.yml); the Vercel cron in vercel.json
+ * (Hobby plan caps it at daily) remains as a fallback floor.
  *
  * Authentication: the caller must provide the CRON_SECRET env var as a
  * Bearer token. This prevents public abuse of the sweep endpoint.
@@ -47,12 +48,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const results = await finalizeExpiredProposals();
-
-  // Ending-soon sweep: fan out VOTING_ENDING_SOON for ACTIVE proposals whose
-  // window closes within 24h. notifyEndingSoon is idempotent per proposal, so
-  // the daily cadence matches the 24h window exactly (one wave per proposal).
+  // Sweep before finalize: a proposal expiring in this same tick must still
+  // be ACTIVE to receive its ending-soon wave.
   const endingSoon = await sweepEndingSoon();
+
+  const results = await finalizeExpiredProposals();
 
   return apiSuccess<{ finalized: FinalizeResult[]; count: number; endingSoon: string[] }>({
     finalized: results,

@@ -24,13 +24,19 @@
 
 ## Outcome
 
-The community selected **Quadratic Voting** as the governance voting model.
-Per ROADMAP.md, applying the quadratic model to proposal voting power is the
-planned v2 enhancement ("Quadratic Voting — Medium effort"); proposal voting
-continues on the tiered holder-class power model until that work lands.
+The community selected **Quadratic Voting** as the governance voting model,
+and it is now shipped: voting power is floor(√(snapshot balance)) in
+`src/lib/voting-power.ts`, and quorum is measured against total quadratic
+power (Σ√balance across all snapshot holders) in `src/lib/proposal-finalize.ts`.
 
 ---
 
 *Source of truth: the `governance_election` / `governance_election_ballots` /
 `governance_election_ballot_events` tables in the production Turso database.
 This document is the durable human-readable record of the closed election.*
+
+*Durable archive: exported 2026-09-17 via `scripts/export-governance-archive.ts`
+(public-safe mode → `governance-archive-2026-09-17T18-38-16-409Z.json`,
+SHA-256 `b4696c21bdd6bc69258b19b60512b9e8977e89a87a949a0d541e86b3c6ea42ce`).
+The `--full` per-wallet audit export exists privately off-repo
+(SHA-256 `153eee5b7f9c7dd160262680e588c7e764a0610c0d89ea85a225a5b273f62585`).*

@@ -559,7 +559,7 @@ CSV (canonical) ──┐
 | 🦄 Seahorse | < 0.0001% | 22,547 | 1× balance-weighted |
 | **Total** | — | **25,686** | — |
 
-> ℹ️ Class badges are **cosmetic/social** — voting power is strictly balance-weighted (1 token = 1 vote) in v1. Quadratic voting is an open v2 question ([§16](#16-open-technical-questions)).
+> ℹ️ Class badges are **cosmetic/social** — voting power is the √ of snapshot balance (quadratic, live since 2026-09-12; see [`GOVERNANCE_MECHANICS.md`](GOVERNANCE_MECHANICS.md) §3).
 
 ---
 
@@ -751,7 +751,7 @@ These remain **unresolved** and are tracked for future iterations:
 
 | # | Question | Notes |
 |---|---|---|
-| 1 | **Quadratic voting** — adopt in v2? | Currently 1 token = 1 vote. Quadratic would reduce whale dominance; needs a credit/subsidy model and on/off-chain cost math. |
+| 1 | **Quadratic voting** — ~~adopt in v2?~~ ✅ **Resolved** | Adopted: elected at the Foundational Governance Election (65.7%, closed 2026-09-12) and shipped in [`src/lib/voting-power.ts`](../src/lib/voting-power.ts) (`floor(√balance)`). |
 | 2 | **Real-time strategy** — polling vs SSE vs WebSocket | v1 relies on ISR (30–60 s) + client refetch. True push (SSE/WS) would meet stricter real-time targets but costs a persistent connection on serverless. |
 | 3 | **Multi-chain support timeline** | v1 is Dogechain-snapshot-only. Post-migration, RainbowKit/wagmi chain config must support the new live chain. |
 | 4 | **JWT expiry reconciliation** | PRD (24h) vs DESIGN/WALLET-FLOW (7d). Canonical = 7d; PRD should be updated. |

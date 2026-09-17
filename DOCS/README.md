@@ -142,9 +142,9 @@ Documentation is community-maintained. To propose a change:
 | 🐙 **Octopuses** | 1,078 |
 | 🦀 **Crabs** | 1,701 |
 | 🦄 **Seahorses** | 22,547 |
-| 🛠️ **Tech Stack** | Next.js 15, React 19, TypeScript, RainbowKit v2, wagmi v3, viem, Turso (libSQL), Vercel |
+| 🛠️ **Tech Stack** | Next.js 16, React 19, TypeScript, RainbowKit v2, wagmi v2, viem, Turso (libSQL), Vercel |
 | 🚀 **Deployment** | Vercel |
-| ⚙️ **Governance** | v1: off-chain, advisory, linear voting (1 token = 1 vote) — **no smart contracts** |
+| ⚙️ **Governance** | off-chain, advisory, quadratic voting (√ of snapshot balance) — **no smart contracts** |
 | 📆 **Dogechain Sunset** | June 7, 2026 |
 
 </div>

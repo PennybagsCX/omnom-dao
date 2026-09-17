@@ -1,0 +1,44 @@
+name: cron-finalize
+
+# Primary 30-minute pinger for /api/v1/cron/finalize (proposal finalization +
+# ending-soon notification sweep). The Vercel cron in vercel.json is daily-only
+# (Hobby plan) and stays as a fallback floor.
+#
+# Required repo secrets:
+#   CRON_SECRET — must be added to the repo's GitHub Actions secrets; must
+#   match the Vercel env CRON_SECRET (see src/app/api/v1/cron/finalize/route.ts).
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: cron-finalize
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    name: Trigger finalize sweep
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: POST to finalize sweep
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          # Same secret the cron-finalize-monitor workflow uses; falls back to
+          # the production apex if unset.
+          CRON_HEALTH_URL: ${{ secrets.CRON_HEALTH_URL }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET not configured (add it to the repo's GitHub Actions secrets)"
+            exit 1
+          fi
+
+          BASE_URL="${CRON_HEALTH_URL:-https://dao.omnom.dog}"
+
+          curl -fsS -X POST "${BASE_URL}/api/v1/cron/finalize" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            --max-time 30

@@ -400,7 +400,7 @@ export function defaultDisplayName(address: string): string {
 /**
  * Determine whether a holder class may create a proposal of the given type.
  * Per GOVERNANCE_MECHANICS.md §5: Chain Selection / Tokenomics / Technical
- * require Dolphin+; everything else is open to any verified holder.
+ * require Shark+; everything else is open to any verified holder.
  */
 export function canCreateProposalType(holderClass: HolderClass, type: string): boolean {
   const config = PROPOSAL_TYPE_CONFIG[type as keyof typeof PROPOSAL_TYPE_CONFIG];

@@ -152,7 +152,7 @@ export default function DashboardPage() {
           <StatCard
             label="Voting Power"
             value={formatCompact(profile.votingPower)}
-            subtitle="1 token = 1 vote"
+            subtitle="√ of your snapshot balance"
             icon={<Zap className="h-5 w-5" />}
             accent="green"
           />

@@ -950,7 +950,7 @@ function StepParameters({
         <div className="rounded-md border border-border bg-bg-elevated/40 p-3">
           <div className="flex items-baseline justify-center gap-2">
             <span className="text-2xl font-bold text-gold">{effectiveQuorum}%</span>
-            <span className="text-xs text-text-dim">of total supply</span>
+            <span className="text-xs text-text-dim">of total quadratic power</span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground text-center">
             Minimum participation required for the result to be valid. This is the
@@ -973,8 +973,8 @@ function StepParameters({
         </p>
         <ul className="space-y-1 text-xs text-muted-foreground text-center">
           <li>Duration: {humanizeHours(durationHours)}</li>
-          <li>Quorum: {effectiveQuorum}% of total supply</li>
-          <li>1 token = 1 vote (linear)</li>
+          <li>Quorum: {effectiveQuorum}% of total quadratic power</li>
+          <li>Power = √ of snapshot balance (quadratic)</li>
         </ul>
       </div>
     </div>

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { formatPercentage } from "@/lib/utils";
 
 interface QuorumProgressProps {
-  /** Achieved participation as a percentage of total supply (0–100). */
+  /** Achieved participation as a percentage of total quadratic power (0–100). */
   achieved: number;
   /** Required quorum threshold percentage (0–100). */
   required: number;

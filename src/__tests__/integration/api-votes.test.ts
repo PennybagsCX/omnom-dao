@@ -105,8 +105,8 @@ describe("POST /api/v1/proposals/[id]/votes — auth", () => {
 });
 
 describe("POST /api/v1/proposals/[id]/votes — voting window", () => {
-  it("rejects voting on a CLOSED proposal with 409", async () => {
-    hoisted.getProposalById.mockResolvedValue(activeProposal({ status: ProposalStatus.CLOSED }));
+  it("rejects voting on a terminal (non-ACTIVE) proposal with 409", async () => {
+    hoisted.getProposalById.mockResolvedValue(activeProposal({ status: ProposalStatus.EXPIRED }));
     const { status, body } = await callVote("POST", { choice: "FOR" });
     expect(status).toBe(409);
     expect((body.error as { code: string }).code).toBe("VOTING_CLOSED");

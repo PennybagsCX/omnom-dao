@@ -15,6 +15,7 @@ import {
   Loader2,
   MessageSquare,
   PenLine,
+  Rocket,
   Scale,
   XCircle,
 } from "lucide-react";
@@ -168,12 +169,12 @@ export default function ProposalDetailPage() {
     ProposalStatus.PASSED,
     ProposalStatus.FAILED,
     ProposalStatus.EXPIRED,
-    ProposalStatus.CLOSED,
+    ProposalStatus.EXECUTED,
   ].includes(proposal.status);
   const totalVotes = votes.totalFor + votes.totalAgainst + votes.totalAbstain;
-  // Quorum achieved = (total votes) / total supply % — we don't have total supply
-  // client-side, so derive from proposal.quorumRequired vs. the bar. We pass the
-  // proposal's recorded quorum fields when available.
+  // Quorum achieved = total voted power / total quadratic power (%) — computed
+  // server-side at finalize and recorded on the proposal. We fall back to 0
+  // until the proposal's recorded quorum fields are available.
   const quorumAchieved = proposal.quorumAchieved ?? 0;
   const userVoted = myVote !== null;
 
@@ -232,6 +233,11 @@ export default function ProposalDetailPage() {
           {/* Rejection Banner */}
           {proposal.status === ProposalStatus.FAILED && (
             <AdminRejectionBanner proposal={proposal} />
+          )}
+
+          {/* Execution outcome banner */}
+          {proposal.status === ProposalStatus.EXECUTED && (
+            <ExecutedOutcomeBanner proposal={proposal} />
           )}
 
           {/* Body */}
@@ -675,6 +681,64 @@ function MobileVoteBar({
   );
 }
 
+/* ── Execution outcome banner ─────────────────────────────────── */
+
+/**
+ * Execution transparency banner — the PASSED counterpart of
+ * <AdminRejectionBanner>. Renders once the outcome was recorded (§6.1:
+ * "Outcome recorded (off-chain action taken)"): the note, the recording
+ * admin, and when it was recorded.
+ */
+function ExecutedOutcomeBanner({ proposal }: { proposal: Proposal }) {
+  const note = proposal.metadata?.executionNote;
+  const executedBy = proposal.metadata?.executedBy;
+  const executedAt = proposal.metadata?.executedAt;
+
+  return (
+    <Card className="border-success/30 bg-success/10">
+      <CardContent className="flex items-start gap-3 p-4">
+        <div className="flex-shrink-0">
+          <Rocket className="h-5 w-5 text-success" aria-hidden />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground">Outcome Recorded</h3>
+            <div className="flex items-center gap-1.5 rounded-full bg-success/20 px-2 py-0.5">
+              <CheckCircle2 className="h-3 w-3 text-success" aria-hidden />
+              <span className="text-xs font-medium text-success">Executed</span>
+            </div>
+          </div>
+          {note ? (
+            <p className="text-sm text-muted-foreground">{note}</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              The community decision has been carried out and its outcome recorded.
+            </p>
+          )}
+          {(executedBy || executedAt) && (
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-dim">
+              {executedBy && (
+                <span className="inline-flex items-center gap-1">
+                  <span>Recorded by</span>
+                  <span className="font-mono text-muted-foreground">
+                    {shortenAddress(executedBy)}
+                  </span>
+                </span>
+              )}
+              {executedAt && (
+                <span className="inline-flex items-center gap-1">
+                  <span>•</span>
+                  <span>{formatDateTime(executedAt)}</span>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 /* ── Timeline ─────────────────────────────────────────────────── */
 
 function Timeline({ proposal }: { proposal: Proposal }) {
@@ -707,7 +771,7 @@ function Timeline({ proposal }: { proposal: Proposal }) {
           ProposalStatus.PASSED,
           ProposalStatus.FAILED,
           ProposalStatus.EXPIRED,
-          ProposalStatus.CLOSED,
+          ProposalStatus.EXECUTED,
         ].includes(proposal.status),
       },
     ];
@@ -718,6 +782,16 @@ function Timeline({ proposal }: { proposal: Proposal }) {
         label: "Rejected by admin",
         iconName: "ShieldX",
         date: proposal.metadata.rejectedAt || null,
+        done: true,
+      });
+    }
+
+    // Add execution event once the outcome was recorded (§6.1: off-chain action taken)
+    if (proposal.status === ProposalStatus.EXECUTED) {
+      items.push({
+        label: "Outcome recorded",
+        iconName: "Rocket",
+        date: proposal.metadata?.executedAt || null,
         done: true,
       });
     }

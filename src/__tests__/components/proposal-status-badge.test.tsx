@@ -30,14 +30,25 @@ describe("<ProposalStatusBadge />", () => {
     expect(badge?.className).toContain("bg-rose-500/15");
   });
 
+  it("applies the executed status indigo classes", () => {
+    render(<ProposalStatusBadge status={ProposalStatus.EXECUTED} />);
+    const badge = screen.getByText("Executed").closest("span");
+    expect(badge?.className).toContain("bg-indigo-500/15");
+    expect(badge?.className).toContain("border");
+  });
+
   it("adds the pulse-glow animation only for ACTIVE when pulse is set", () => {
     const { rerender } = render(<ProposalStatusBadge status={ProposalStatus.ACTIVE} pulse />);
     let badge = screen.getByText("Active").closest("span");
     expect(badge?.className).toContain("animate-pulse-glow");
 
-    // Closed status with pulse should NOT get the animation class.
-    rerender(<ProposalStatusBadge status={ProposalStatus.CLOSED} pulse />);
-    badge = screen.getByText("Closed").closest("span");
+    // Terminal statuses with pulse should NOT get the animation class.
+    rerender(<ProposalStatusBadge status={ProposalStatus.EXPIRED} pulse />);
+    badge = screen.getByText("Expired").closest("span");
+    expect(badge?.className).not.toContain("animate-pulse-glow");
+
+    rerender(<ProposalStatusBadge status={ProposalStatus.EXECUTED} pulse />);
+    badge = screen.getByText("Executed").closest("span");
     expect(badge?.className).not.toContain("animate-pulse-glow");
   });
 

@@ -45,7 +45,7 @@
 
 - **Approachable but credible** — friendly community tone with serious governance underpinning
 - **Transparent** — snapshot data, provenance, and block numbers are always visible
-- **Playful identity, serious mechanics** — the dog mascot and 🦑🐋🐬🦈🐙🦀🦄 holder classes add personality; voting power is strictly balance-weighted (1 token = 1 vote)
+- **Playful identity, serious mechanics** — the dog mascot and 🦑🐋🐬🦈🐙🦀🦄 holder classes add personality; voting power is the √ of snapshot balance (quadratic)
 
 ### Naming Conventions
 
@@ -618,7 +618,7 @@ export const HOLDER_CLASS_CONFIG: Record<HolderClass, HolderClassConfig> = {
 1. Holder emojis appear in: profile cards, dashboard, settings, comments, proposal author badges
 2. The [`<HolderBadge>`](src/components/shared/holder-badge.tsx) component renders the class label + emoji consistently
 3. Avatar circles use gradient backgrounds: `bg-gradient-to-br from-purple/25 to-gold/20`
-4. Classification is **cosmetic only** — voting power is strictly balance-weighted (1 token = 1 vote)
+4. Classification is **cosmetic only** — voting power is the √ of snapshot balance (quadratic); tiers are identity, not weight multipliers
 
 ---
 

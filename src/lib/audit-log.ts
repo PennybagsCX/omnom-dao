@@ -15,6 +15,7 @@ import { db } from "@/lib/db";
 export type AuditAction =
   | "PROPOSAL_APPROVED"
   | "PROPOSAL_REJECTED"
+  | "PROPOSAL_OUTCOME_RECORDED"
   | "PROPOSAL_STATUS_OVERRIDE";
 
 export interface AuditLogEntry {

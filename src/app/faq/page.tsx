@@ -104,7 +104,7 @@ const FAQ_SECTIONS: FAQSection[] = [
     items: [
       {
         q: "How is voting power calculated?",
-        a: "In v1, voting power is strictly linear: 1 token = 1 vote. Your voting power equals your $OMNOM balance at the snapshot block (Block 59,922,100). Holder-class badges (🦑 Kraken, 🐋 Whale, 🐬 Dolphin, 🦈 Shark, 🐙 Octopus, 🦀 Crab, 🦄 Seahorse) are cosmetic — they do not change your voting power. A Quadratic Token Voting model (which compresses whale influence) is proposed for v2 but is not yet implemented.",
+        a: "Voting power is quadratic: power = floor(√(snapshot balance)) — the square root of your $OMNOM balance at the frozen snapshot block (Block 59,922,100). This model was elected by the Foundational Governance Election (65.7% of ballots, closed 2026-09-12) and is already live. Holder-class badges (🦑 Kraken, 🐋 Whale, 🐬 Dolphin, 🦈 Shark, 🐙 Octopus, 🦀 Crab, 🦄 Seahorse) are cosmetic — they do not change your voting power. Quorum is measured against total quadratic power (Σ√balance across all snapshot holders), not raw token supply.",
       },
       {
         q: "What can I vote on?",
@@ -116,7 +116,7 @@ const FAQ_SECTIONS: FAQSection[] = [
       },
       {
         q: "What is quorum and why does it matter?",
-        a: "Quorum is the minimum percentage of total token supply that must participate for a vote to be valid. Without quorum, a small group of active voters could pass decisions most holders never saw. If quorum isn't met, the proposal expires regardless of the For/Against ratio. Quorum is measured as (For + Against + Abstain) / total supply × 100%.",
+        a: "Quorum is the minimum percentage of total quadratic power that must participate for a vote to be valid. Without quorum, a small group of active voters could pass decisions most holders never saw. If quorum isn't met, the proposal expires regardless of the For/Against ratio. Quorum is measured as (For + Against + Abstain) / total quadratic power (Σ√balance across the snapshot) × 100%.",
       },
       {
         q: "What are the quorum and pass thresholds for each proposal type?",
@@ -124,7 +124,7 @@ const FAQ_SECTIONS: FAQSection[] = [
       },
       {
         q: "How are proposals finalized after voting ends?",
-        a: "When the voting period ends, the proposal is automatically evaluated: if quorum was met AND the pass threshold was reached, it transitions to PASSED. If quorum was not met, it becomes EXPIRED. If quorum was met but the threshold wasn't reached, it becomes FAILED. This happens both via a scheduled cron job (every 15–30 minutes) and lazily when anyone views the proposal page.",
+        a: "When the voting period ends, the proposal is automatically evaluated: if quorum was met AND the pass threshold was reached, it transitions to PASSED. If quorum was not met, it becomes EXPIRED. If quorum was met but the threshold wasn't reached, it becomes FAILED. This happens via a scheduled cron job checked roughly every 30 minutes (with a daily fallback sweep; results also finalize the moment anyone views the page).",
       },
       {
         q: "Can I change my vote?",
@@ -135,8 +135,8 @@ const FAQ_SECTIONS: FAQSection[] = [
         a: "Voting periods depend on the proposal type: high-impact proposals (Chain Selection, Tokenomics) run for a minimum of 7 days (up to 14), while standard proposals (Treasury, Guideline, Technical, General) run for a minimum of 72 hours (up to 7 days). The proposer selects the duration at creation within the allowed range.",
       },
       {
-        q: "What is the Voting Model Reform poll?",
-        a: "The community is currently voting on whether to change how voting power is calculated. Right now, the top 4 wallets (1 kraken + 3 whales) control ~87.1% of all votes under the linear (1 token = 1 vote) model. The reform poll at /governance-vote lets every verified holder cast 1 vote to choose between: Quadratic Voting (compresses whale power), One Wallet One Vote (pure democracy), or Tiered Voting (equal blocks per class). This meta-poll uses 1-wallet-1-vote by design — every holder gets equal say in how future voting works.",
+        q: "What was the Voting Model Reform poll?",
+        a: "The reform poll at /governance-vote closed on 2026-09-12. It let every verified holder cast 1 vote to choose between: Quadratic Voting (compresses whale power), One Wallet One Vote (pure democracy), or Tiered Voting (equal blocks per class). Quadratic won with 65.7% of the 35 ballots and is now the live voting model. The meta-poll used 1-wallet-1-vote by design — every holder got an equal say in how future voting works.",
       },
     ],
   },
@@ -251,7 +251,7 @@ const FAQ_SECTIONS: FAQSection[] = [
     items: [
       {
         q: "What are the current limitations of the platform?",
-        a: "The following are known limitations of v1 that holders should understand:\n\n1. Single administrator — One person currently gates which proposals reach the ballot. All admin actions are publicly audited, but this is a centralization point.\n2. Linear voting — Voting power is strictly 1 token = 1 vote, meaning the top 4 wallets (1 kraken + 3 whales) control ~87.1% of votes. A community poll is currently open at /governance-vote to choose between Quadratic, One-Wallet-One-Vote, or Tiered models.\n3. Informational delegation — Delegation records who represents whom but does not transfer voting power in v1.\n4. Advisory outcomes — Passed proposals are community decisions, not auto-executed transactions.\n5. Off-chain governance — There is no on-chain enforcement; the platform records the community's will, but acting on it requires coordination.\n6. No secret ballot — All votes are transparent and visible. This enables auditability but also means votes can be observed in real-time, which theoretically enables coercion.",
+        a: "The following are known limitations of v1 that holders should understand:\n\n1. Single administrator — One person currently gates which proposals reach the ballot. All admin actions are publicly audited, but this is a centralization point.\n2. Token concentration — The top 4 wallets (1 kraken + 3 whales) still control ~87.1% of raw supply. Linear voting has been retired, and the adopted quadratic model (√ of snapshot balance) compresses — though does not eliminate — that concentration.\n3. Informational delegation — Delegation records who represents whom but does not transfer voting power in v1.\n4. Advisory outcomes — Passed proposals are community decisions, not auto-executed transactions.\n5. Off-chain governance — There is no on-chain enforcement; the platform records the community's will, but acting on it requires coordination.\n6. No secret ballot — All votes are transparent and visible. This enables auditability but also means votes can be observed in real-time, which theoretically enables coercion.",
       },
       {
         q: "What safeguards are in place despite these limitations?",

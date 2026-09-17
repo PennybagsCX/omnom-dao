@@ -15,7 +15,7 @@ sources:
 
 # OMNOM DAO — Governance Mechanics
 
-> **TL;DR** — $OMNOM DAO governance is **snapshot-based, off-chain, and advisory**. Voting power is derived from a frozen on-chain balance snapshot taken at **Dogechain block 59,922,100 (June 7, 2026 23:59:58 UTC)** covering **25,431 holders**. There are **no live smart contracts**; verification uses gasless Sign-In with Ethereum (SIWE) message signing, and all balance/eligibility lookups resolve against a static, SHA-256-verified snapshot. The **v1 implementation baseline is 1 token = 1 vote (linear)**, with a PRD-recommended Quadratic Token Voting model deferred to v2. Proposals pass community-defined quorum and threshold gates; outcomes are **advisory decisions**, not auto-executed transactions. This document is the single authoritative reference for every governance mechanic and explicitly reconciles conflicting source-document recommendations.
+> **TL;DR** — $OMNOM DAO governance is **snapshot-based, off-chain, and advisory**. Voting power is derived from a frozen on-chain balance snapshot taken at **Dogechain block 59,922,100 (June 7, 2026 23:59:58 UTC)** covering **25,431 holders**. There are **no live smart contracts**; verification uses gasless Sign-In with Ethereum (SIWE) message signing, and all balance/eligibility lookups resolve against a static, SHA-256-verified snapshot. The **voting model is quadratic** — power = floor(√(snapshot balance)) — elected by the Foundational Governance Election (65.7%, closed 2026-09-12) and shipped in `src/lib/voting-power.ts`, superseding the original linear (1 token = 1 vote) launch model. Proposals pass community-defined quorum and threshold gates; outcomes are **advisory decisions**, not auto-executed transactions. This document is the single authoritative reference for every governance mechanic and explicitly reconciles conflicting source-document recommendations.
 
 ---
 
@@ -83,11 +83,11 @@ The snapshot is the immutable anchor of legitimacy for all governance. It captur
 
 ## 3. Voting Power Calculation
 
-Voting power is the weight applied to a holder's ballot. There is a **live implementation model (v1 linear)** and a **proposed future model (v2 quadratic)**. This section documents both and explicitly reconciles the conflict between source documents.
+Voting power is the weight applied to a holder's ballot. There is a **live implementation model (quadratic, [§3.2](#32-implemented-baseline--quadratic-token-voting-qtv--live))** and a **superseded historical model (linear, [§3.1](#31-historical-baseline--linear-1-token--1-vote--superseded))**. This section documents both and how the community transitioned between them.
 
-### 3.1 v1 Implementation Baseline — Linear (1 token = 1 vote) ✅ LIVE
+### 3.1 Historical Baseline — Linear (1 token = 1 vote) ⛔ SUPERSEDED
 
-The implemented v1 model, as specified in [`DESIGN.md`](../DESIGN.md) §1.2 and reflected in the [`DATA-MODEL.md`](../DATA-MODEL.md) schema, is **purely linear**:
+The launch model, as specified in [`DESIGN.md`](../DESIGN.md) §1.2 and reflected in the original [`DATA-MODEL.md`](../DATA-MODEL.md) schema, was **purely linear**. It was retired on 2026-09-12 when quadratic voting shipped (see [§3.2](#32-implemented-baseline--quadratic-token-voting-qtv--live)):
 
 ```text
 voting_power = raw_token_balance (from snapshot)
@@ -110,16 +110,16 @@ interface VoteResult {
 }
 ```
 
-### 3.2 PRD-Recommended Future Model — Quadratic Token Voting (QTV) 🧪 PROPOSED (v2)
+### 3.2 Implemented Baseline — Quadratic Token Voting (QTV) ✅ LIVE
 
-The PRD ([`PRD.md`](../PRD.md) §8 / FR-5) recommends a **Quadratic Token Voting** model to compress the whale-to-fish influence ratio. It is **aspirational and deferred to v2 / post-launch**, not implemented in v1.
+Quadratic Token Voting compresses the whale-to-fish influence ratio. Originally a PRD ([`PRD.md`](../PRD.md) §8 / FR-5) recommendation, it was elected by the Foundational Governance Election (QUADRATIC — 65.7%, closed 2026-09-12; see [`ELECTION-RESULTS.md`](ELECTION-RESULTS.md)) and is the live model, implemented in [`src/lib/voting-power.ts`](../src/lib/voting-power.ts) (`quadraticPower`):
 
 ```text
 voting_power = floor(sqrt(raw_token_balance / 10^18)) × voting_multiplier
 
 where:
   raw_token_balance = tokens held at snapshot (18 decimals, in wei)
-  voting_multiplier = 1.0 (base), adjustable per proposal type by governance
+  voting_multiplier = 1.0 (fixed in the implementation — no per-type multipliers)
 ```
 
 **Rationale (per PRD):** pure 1-token-1-vote gives the top 4 wallets ~87% of votes (mathematically democratic but practically oligarchic); pure one-person-one-vote gives 22,547 seahorses ~99.98% of votes (decoupled from economics). Quadratic voting preserves the *direction* of token-weighted influence while compressing the ratio from ~100,000:1 down to ~1,000:1, letting a coalition of sharks/dolphins meaningfully challenge a whale.
@@ -157,7 +157,7 @@ Holders are classified by share of circulating supply (post-burn). Classes are u
 | **Seahorse** | < 0.0001% | 22,547 | 🦄 | ~8% |
 | **Total** | — | **25,686** | — | ~100% |
 
-> ℹ️ Class badges are **cosmetic** under v1 linear voting — they do not change voting power (see [§3.1](#31-v1-implementation-baseline--linear-1-token--1-vote--live)). They gate proposal creation (see [§5](#5-proposal-types--thresholds)).
+> ℹ️ Class badges are **cosmetic** — they do not change voting power under either the current quadratic model or the retired linear model (see [§3](#3-voting-power-calculation)). They gate proposal creation (see [§5](#5-proposal-types--thresholds)).
 
 ### Eligibility matrix
 
@@ -178,12 +178,12 @@ There are six proposal types. Each carries its own quorum, voting period, minimu
 
 | Type | Quorum | Voting Period (min) | Min Holding to Create | Pass Threshold |
 |---|---|---|---|---|
-| **Chain Selection** | 25% of supply | 7 days | 🦈 Shark+ (≥0.01%) | 60% supermajority |
-| **Tokenomics Change** | 25% of supply | 7 days | 🦈 Shark+ | 60% supermajority |
-| **Treasury / Resource** | 15% of supply | 72 hours | Any verified | Simple majority (>50%) |
-| **Community Guideline** | 10% of supply | 72 hours | Any verified | Simple majority (>50%) |
-| **Technical Spec** | 15% of supply | 72 hours | 🦈 Shark+ | 60% supermajority |
-| **General Discussion** | 5% of supply | 72 hours | Any verified | Simple majority (>50%) |
+| **Chain Selection** | 25% of total quadratic power | 7 days | 🦈 Shark+ (≥0.01%) | 60% supermajority |
+| **Tokenomics Change** | 25% of total quadratic power | 7 days | 🦈 Shark+ | 60% supermajority |
+| **Treasury / Resource** | 15% of total quadratic power | 72 hours | Any verified | Simple majority (>50%) |
+| **Community Guideline** | 10% of total quadratic power | 72 hours | Any verified | Simple majority (>50%) |
+| **Technical Spec** | 15% of total quadratic power | 72 hours | 🦈 Shark+ | 60% supermajority |
+| **General Discussion** | 5% of total quadratic power | 72 hours | Any verified | Simple majority (>50%) |
 
 > ℹ️ **Why tiered creation thresholds?** High-impact decisions (chain migration, tokenomics) should be proposed by stakeholders with meaningful economic exposure (Shark+), while resource, guideline, and sentiment proposals remain open to any verified holder. See [`PRD.md`](../PRD.md) §9 ("Who Can Create Proposals").
 
@@ -269,14 +269,14 @@ stateDiagram-v2
 ### 7.2 Core rules
 
 - **One vote per (proposal, address).** Enforced at the database layer by a `UNIQUE`/primary-key constraint on `(proposal_id, voter_address)` (see [`DATA-MODEL.md`](../DATA-MODEL.md) `votes` table, and [`DESIGN.md`](../DESIGN.md) §8.1 "Double voting → PRIMARY KEY constraint"). Attempting a second vote for the same proposal from the same address updates the existing ballot rather than inserting a duplicate.
-- **Snapshot-weighted.** Each ballot's `voting_power` is the voter's frozen snapshot balance (v1 linear). Delegated power is added where applicable ([§9](#9-delegation-system)).
+- **Snapshot-weighted.** Each ballot's `voting_power` is the quadratic power (`floor(√balance)`) of the voter's frozen snapshot balance. Delegated power is added where applicable ([§9](#9-delegation-system)).
 - **Vote changes allowed** at any time while the proposal is ACTIVE, until voting closes. Your latest ballot is the one counted. Changing a vote requires a fresh signature.
 - **Real-time counting.** Tallies are computed live from the database on read (no separate counter to avoid drift) and update within ~10 seconds via optimistic UI + polling/WebSocket ([`PRD.md`](../PRD.md) NFR-2).
 - **Voting window.** Votes are only accepted while `vote_start ≤ now ≤ vote_end`. Ballots outside the Active window are rejected.
 
 ### 7.3 Quorum accounting
 
-Quorum participation is measured as the **sum of FOR + AGAINST + ABSTAIN** voting power divided by total snapshot supply. Because ABSTAIN counts toward quorum but not toward the outcome, a proposal can reach quorum on abstentions alone yet still fail to pass (no FOR majority).
+Quorum participation is measured as the **sum of FOR + AGAINST + ABSTAIN** voting power divided by total quadratic power (Σ√balance across all snapshot holders). Because ABSTAIN counts toward quorum but not toward the outcome, a proposal can reach quorum on abstentions alone yet still fail to pass (no FOR majority).
 
 ---
 
@@ -285,7 +285,7 @@ Quorum participation is measured as the **sum of FOR + AGAINST + ABSTAIN** votin
 ### 8.1 How quorum is calculated
 
 ```text
-quorumAchieved % = (totalFor + totalAgainst + totalAbstain) / totalSnapshotSupply × 100
+quorumAchieved % = (totalFor + totalAgainst + totalAbstain) / totalQuadraticPower × 100
 
 passed (base) = (quorumAchieved ≥ quorumRequired) AND (totalFor > totalAgainst)
 ```
@@ -346,7 +346,7 @@ Delegation lets a holder transfer their voting power to a trusted representative
 | **Max incoming delegations** | **500** per address (prevents single points of failure and delegation spam) |
 | **Transparency** | All delegations are **publicly visible and logged**; whale-to-whale delegation is surfaced |
 
-> ℹ️ **Quadratic interaction (v2 only).** Under the proposed QTV model, **delegated tokens are NOT square-rooted** — they transfer raw voting power directly. This prevents the square-root compression from being gamed by splitting balances across delegated wallets. This does not apply to v1 linear voting, where delegation simply transfers balance-weighted power.
+> ℹ️ **Quadratic interaction.** Under the implemented QTV model, **delegated tokens are NOT square-rooted** — they transfer raw voting power directly. This prevents the square-root compression from being gamed by splitting balances across delegated wallets. (Under the retired linear model, delegation simply transferred balance-weighted power.)
 
 ---
 
@@ -358,7 +358,7 @@ The supply distribution is heavily skewed — the kraken alone holds 68.9%; the 
 
 | Safeguard | Mechanism |
 |---|---|
-| **Quorum floor** | High-impact proposals require 15–25% of total supply to participate — whales alone can meet it, but it ensures broad economic backing |
+| **Quorum floor** | High-impact proposals require 15–25% of total quadratic power to participate — whales alone can meet it, but it ensures broad economic backing |
 | **Supermajority threshold** | 60% of cast power must be FOR on high-impact types — blocks narrow 51% whale coalitions from forcing wins |
 | **Public delegation tracking** | All delegations visible; whale-to-whale concentration is surfaced |
 | **24h delegation time-lock** | New delegations delayed 24h — prevents last-minute vote-swinging |
@@ -501,11 +501,11 @@ A brief summary of the post-migration tokenomics models under consideration (ful
 
 ## 14. Open Governance Decisions
 
-The following parameters are **unresolved** and require community ratification before they are finalized. Until decided, the **v1 implementation baseline** values apply. Each item links back to the section where the conflict is documented.
+The parameters below require community ratification before they are finalized (item 1 — voting math — was settled by the Foundational Governance Election on 2026-09-12). Until decided, the **v1 implementation baseline** values apply. Each item links back to the section where the conflict is documented.
 
 | # | Decision | Options | v1 Baseline | Section |
 |---|---|---|---|---|
-| 1 | **Voting math model** | Linear (1 token = 1 vote) vs. Quadratic Token Voting | Linear | [§3](#3-voting-power-calculation) |
+| 1 | **Voting math model** | Linear (1 token = 1 vote) vs. Quadratic Token Voting | ✅ **SETTLED** — Quadratic, elected 65.7% (2026-09-12), shipped in [`src/lib/voting-power.ts`](../src/lib/voting-power.ts) | [§3](#3-voting-power-calculation) |
 | 2 | **Global default quorum** | 5% (TOKENOMICS) / 5–10% (DESIGN/DATA-MODEL) / 20% (PRD) | 5–10% per-type | [§8](#8-quorum--pass-thresholds) |
 | 3 | **Global pass threshold** | Simple majority vs. 60% supermajority for all types | Per-type (simple or 60% per §5) | [§8](#8-quorum--pass-thresholds) |
 | 4 | **Pending Review duration** | 24h auto-approve (DESIGN) vs. max 7 days (PRD) | Configurable — pick at deploy | [§6.2](#62-editing--transition-rules) |
@@ -529,15 +529,15 @@ The following parameters are **unresolved** and require community ratification b
 | **Advisory governance** | A governance model where passed proposals are legitimate community decisions recorded transparently, but are **not auto-executed** by a smart contract. Execution is a separate coordinated step. |
 | **Snapshot** | A frozen, point-in-time record of token holdings at a specific block (here, Dogechain block 59,922,100). The sole source of truth for balances and eligibility in off-chain governance. |
 | **SIWE** | **Sign-In with Ethereum** — an authentication pattern (EIP-4361) where a user signs a human-readable message with their wallet to prove ownership, with **no transaction and no gas**. |
-| **Quorum** | The minimum participation threshold (as a % of total supply) required for a vote's result to be valid/binding. If quorum is not met, the proposal fails as "Quorum Not Met." |
+| **Quorum** | The minimum participation threshold (as a % of total quadratic power — Σ√balance across the snapshot) required for a vote's result to be valid/binding. If quorum is not met, the proposal fails as "Quorum Not Met." |
 | **Supermajority** | A pass threshold higher than 50%. In $OMNOM DAO, high-impact proposals require ≥60% of cast (non-abstaining) voting power to be FOR. |
 | **Simple majority** | A pass threshold where FOR voting power merely needs to exceed AGAINST voting power (>50%). |
-| **Voting power** | The weight applied to a holder's ballot. v1 = raw snapshot balance (linear); proposed v2 = `floor(sqrt(balance / 10^18)) × multiplier` (quadratic). |
+| **Voting power** | The weight applied to a holder's ballot. Current model (quadratic, elected 2026-09-12) = `floor(sqrt(balance / 10^18)) × 1.0`; the original v1 launch model (raw snapshot balance, linear) is retired. |
 | **Delegation** | Transferring your voting power to another verified holder who votes on your behalf. v1 supports 100% delegation with per-proposal override. |
 | **Cooling-off period** | A mandatory delay (7 days) triggered when 30% of unique holders vote AGAINST, before the proposal can be re-submitted. A PRD-recommended safeguard. |
 | **Time-lock** | A delay before a governance action takes effect — e.g. new delegations are delayed 24h to prevent last-minute vote manipulation. |
 | **DRC-20** | Dogechain's token standard, analogous to Ethereum's ERC-20. $OMNOM is a DRC-20 token with 18 decimals. |
-| **Quadratic voting (QTV)** | A voting system where voting power scales with the square root of tokens held, compressing the whale-to-fish influence ratio. Proposed for $OMNOM v2. |
+| **Quadratic voting (QTV)** | A voting system where voting power scales with the square root of tokens held, compressing the whale-to-fish influence ratio. The live $OMNOM voting model since the 2026-09-12 election. |
 | **Levenshtein distance** | A measure of edit distance between two strings. Used in $OMNOM's anti-spam (titles within Levenshtein ≤ 3 of a recent proposal are flagged as duplicates). |
 
 ---

@@ -17,6 +17,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "db:migrate": "tsx scripts/migrate.ts",
+    "db:migrate:executed": "tsx scripts/migrate-executed-status.ts",
     "db:seed": "tsx scripts/seed-db.ts",
     "verify:election": "tsx scripts/verify-election.ts",
     "fetch:snapshot": "bash scripts/fetch-snapshot.sh"

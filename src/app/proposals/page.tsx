@@ -49,6 +49,7 @@ const STATUS_TABS: { value: "all" | ProposalStatus; label: string }[] = [
   { value: ProposalStatus.PASSED, label: "Passed" },
   { value: ProposalStatus.FAILED, label: "Failed" },
   { value: ProposalStatus.EXPIRED, label: "Expired" },
+  { value: ProposalStatus.EXECUTED, label: "Executed" },
 ];
 
 const TYPE_OPTIONS: { value: "all" | ProposalType; label: string }[] = [
