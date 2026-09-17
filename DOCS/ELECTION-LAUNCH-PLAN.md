@@ -68,10 +68,10 @@ regardless of token balance.
 - [x] Unit tests cover status, eligibility, duplicate, and timing behavior.
 - [x] Browser checks pass at 375, 768, 1280, and 1920 pixels.
 - [x] Full Playwright suite passes.
-- [ ] Production migration `npm run db:migrate`.
-- [ ] Production smoke test after migration.
-- [ ] Announce the election.
-- [ ] Close and publish results after 14 days.
+- [x] Production migration `npm run db:migrate` (runs on every deploy; `db:migrate:executed` for the post-election EXECUTED state ran 2026-09-17).
+- [x] Production smoke test after migration (`npm run verify:election` — all checks green, phase CLOSED, re-verified 2026-09-17).
+- [ ] Announce the election. — **drafts ready, unposted**: `DOCS/announcements/telegram-full.md`, `telegram-caption.md`, `x-draft.md`.
+- [x] Close and publish results after 14 days (closed 2026-09-12; official record in [ELECTION-RESULTS.md](ELECTION-RESULTS.md); public record on `/results`; durable archive exports checksummed 2026-09-17).
 
 ## Recommended public announcement
 

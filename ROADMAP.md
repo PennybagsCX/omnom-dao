@@ -5,6 +5,27 @@
 
 ---
 
+## Current Status (2026-09-17)
+
+**Live state:** The Foundational Governance Election closed 2026-09-12 with **Quadratic voting elected (65.7%)** and the model is live ([results](DOCS/ELECTION-RESULTS.md)). The post-election closeout shipped the same day (commits `61fe99e`, `f7dd282` — CI green, prod-verified):
+
+- ✅ **EXECUTED lifecycle** — admin "record outcome" flow closes the loop on passed proposals; prod schema migrated
+- ✅ **Public audit log** — `audit_log` table now exists (was silently missing) and is publicly readable
+- ✅ **Public `/results` page** — election outcome + every finalized proposal
+- ✅ **30-minute cron** — GitHub Actions pinger drives finalize/reminders (daily Vercel cron as fallback)
+- ✅ **Accuracy** — all stale "1 token = 1 vote" copy and docs corrected to the shipped quadratic model
+
+**Deliberately pending (owner decisions, strategy discussions planned):**
+
+- ⏸ **Governance waves** — the 11 open parameters ([GOVERNANCE_MECHANICS §14](DOCS/GOVERNANCE_MECHANICS.md)) are prepared as 3 themed waves via `scripts/seed-governance-decisions.ts --wave 1|2|3` (creates DRAFTs only — nothing runs until the owner seeds, announces, and approves). Wave 1 = voting rules.
+- ⏸ **FGE result announcements** — drafts ready in [DOCS/announcements/](DOCS/announcements/), unposted.
+- ⏸ **Admin review queue** — 4 proposals in PENDING_REVIEW at `/admin`.
+- Long arc after Wave 1: Chain Selection vote → 6-round tokenomics framework ([TOKENOMICS-OPTIONS.md](TOKENOMICS-OPTIONS.md) §9).
+
+Ongoing status details: [DOCS/STATUS.md](DOCS/STATUS.md).
+
+---
+
 ## Timeline Overview
 
 ```
@@ -204,6 +225,7 @@ P4:   ░░░░░░░░░░░░░░░░░░░░░░░░�
 **Duration:** 3 weeks
 **Team:** 1-2 developers
 **Dependencies:** Phase 2 complete
+**Status:** Mostly shipped — in-app notifications (created/started/ending-soon/result + 30-min reminder cadence), profiles, and delegation live. Push channels (email/Telegram) were removed before launch; revisit only if turnout justifies it.
 
 ### Goals
 - Notifications drive engagement (email + Telegram)
@@ -321,7 +343,7 @@ Long-term features, prioritized by community demand:
 | Snapshot v2 | Support for new snapshots if token relaunches | High |
 | Tally Integration | Verified on-chain voting for binding decisions | Medium |
 | Multi-chain Proposals | Vote on cross-chain deployment | Medium |
-| Quadratic Voting | More sophisticated voting mechanism | Medium |
+| ~~Quadratic Voting~~ | ✅ **Shipped 2026-09-12** — community-elected (65.7%), live | Done |
 | Delegation Graph | Visualize delegation relationships | Low |
 | Governance SDK | API for third-party integrations | Low |
 | Open Framework | Export/import proposal templates | Low |
