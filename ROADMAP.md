@@ -7,13 +7,13 @@
 
 ## Current Status (2026-09-17)
 
-**Live state:** The Foundational Governance Election closed 2026-09-12 with **Quadratic voting elected (65.7%)** and the model is live ([results](DOCS/ELECTION-RESULTS.md)). The post-election closeout shipped the same day (commits `61fe99e`, `f7dd282` — CI green, prod-verified):
+**Live state:** The Foundational Governance Election closed 2026-09-12 with **Quadratic voting elected (65.7%)** and the model is live ([results](DOCS/ELECTION-RESULTS.md)). The post-election closeout shipped 2026-09-17 (commits `61fe99e`, `f7dd282`, `4a6599d` — CI green, prod-verified):
 
 - ✅ **EXECUTED lifecycle** — admin "record outcome" flow closes the loop on passed proposals; prod schema migrated
 - ✅ **Public audit log** — `audit_log` table now exists (was silently missing) and is publicly readable
 - ✅ **Public `/results` page** — election outcome + every finalized proposal
 - ✅ **30-minute cron** — GitHub Actions pinger drives finalize/reminders (daily Vercel cron as fallback)
-- ✅ **Accuracy** — all stale "1 token = 1 vote" copy and docs corrected to the shipped quadratic model
+- ✅ **Accuracy** — all stale "1 token = 1 vote" copy and docs corrected to the shipped quadratic model, including the homepage hero ("TBD by community" → community-elected; countdown → closed banner)
 
 **Deliberately pending (owner decisions, strategy discussions planned):**
 
