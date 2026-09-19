@@ -19,6 +19,7 @@ import { test as base } from "@playwright/test";
 
 interface AuthFixtures {
   authenticated: void;
+  adminAuthenticated: void;
 }
 
 // Mock wallet addresses from the 7-tier mock snapshot data for testing
@@ -33,6 +34,13 @@ const TEST_WALLET_ADDRESSES = {
   SEAHORSE: "0x90f79bf6eb2c4f870365e785982e1f101e93b906", // 1K OMNOM, rank #25000
 };
 
+// The real admin address from .env.local's NEXT_PUBLIC_ADMIN_ADDRESSES
+// (public by design — it ships in the client bundle). dev-login accepts any
+// address when holderClass + votingPower are supplied (its non-snapshot path).
+const ADMIN_WALLET_ADDRESS =
+  process.env.NEXT_PUBLIC_ADMIN_ADDRESSES?.split(",")[0]?.trim() ||
+  "0x22f4194f6706e70abaa14ab352d0baa6c7ced24a";
+
 export const test = base.extend<AuthFixtures>({
   authenticated: async ({ page }, use) => {
     const res = await page.request.post("/api/v1/dev-login",
@@ -40,6 +48,20 @@ export const test = base.extend<AuthFixtures>({
     if (!res.ok()) throw new Error(`dev-login failed: ${res.status}`);
     const me = await page.request.get("/api/v1/me");
     if (!me.ok()) throw new Error("session verification failed");
+    // eslint-disable-next-line react-hooks/rules-of-hooks -- Playwright fixture, not React
+    await use();
+  },
+  adminAuthenticated: async ({ page }, use) => {
+    const res = await page.request.post("/api/v1/dev-login", {
+      data: {
+        walletAddress: ADMIN_WALLET_ADDRESS,
+        holderClass: "KRAKEN",
+        votingPower: 1095445,
+      },
+    });
+    if (!res.ok()) throw new Error(`admin dev-login failed: ${res.status}`);
+    const me = await page.request.get("/api/v1/me");
+    if (!me.ok()) throw new Error("admin session verification failed");
     // eslint-disable-next-line react-hooks/rules-of-hooks -- Playwright fixture, not React
     await use();
   },
