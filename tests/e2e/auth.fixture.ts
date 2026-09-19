@@ -1,5 +1,7 @@
 import { test as base } from "@playwright/test";
 
+import { E2E_ADMIN_ADDRESS } from "./e2e-admin-address";
+
 /**
  * Authentication fixtures for E2E testing.
  *
@@ -37,9 +39,7 @@ const TEST_WALLET_ADDRESSES = {
 // The real admin address from .env.local's NEXT_PUBLIC_ADMIN_ADDRESSES
 // (public by design — it ships in the client bundle). dev-login accepts any
 // address when holderClass + votingPower are supplied (its non-snapshot path).
-const ADMIN_WALLET_ADDRESS =
-  process.env.NEXT_PUBLIC_ADMIN_ADDRESSES?.split(",")[0]?.trim() ||
-  "0x22f4194f6706e70abaa14ab352d0baa6c7ced24a";
+const ADMIN_WALLET_ADDRESS = E2E_ADMIN_ADDRESS;
 
 export const test = base.extend<AuthFixtures>({
   authenticated: async ({ page }, use) => {

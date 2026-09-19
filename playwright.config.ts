@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+import { E2E_ADMIN_ADDRESS } from "./tests/e2e/e2e-admin-address";
+
 /**
  * Playwright E2E configuration.
  * @see https://playwright.dev/docs/test-configuration
@@ -35,7 +37,11 @@ export default defineConfig({
     // database, and these tests log in as mock wallets and cast votes,
     // reactions and comments that must never reach real data. (Empty env
     // vars set here override .env.local in Next.js precedence.)
-    command: "NEXT_PUBLIC_ENABLE_DEV_AUTH=true TURSO_DATABASE_URL= TURSO_AUTH_TOKEN= npm run dev",
+    // NEXT_PUBLIC_ADMIN_ADDRESSES: CI has no .env.local, so the admin
+    // allow-list would otherwise be empty and nothing passes isAdminAddress.
+    // Injecting the E2E admin address keeps the server list, the client
+    // bundle, and the adminAuthenticated fixture in sync everywhere.
+    command: `NEXT_PUBLIC_ENABLE_DEV_AUTH=true NEXT_PUBLIC_ADMIN_ADDRESSES=${E2E_ADMIN_ADDRESS} TURSO_DATABASE_URL= TURSO_AUTH_TOKEN= npm run dev`,
     url: "http://localhost:3000",
     // Never reuse an externally-started server: a `npm run dev` running with
     // the real .env.local credentials would silently point these tests at
