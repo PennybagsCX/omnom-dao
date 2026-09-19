@@ -428,16 +428,18 @@ export const MIGRATION_STATEMENTS: Array<{ sql: string }> = [
 
   // ── 17. Admin action audit log ────────────────────────────
   //    Public, append-only trail of governance gatekeeping decisions
-  //    (approve/reject/record-outcome/status overrides), read via
-  //    GET /api/v1/audit-log and written by src/lib/audit-log.ts.
-  //    No FK on target_id — it may reference any entity kind.
+  //    (approve/reject/record-outcome/status overrides/deletes), read
+  //    via GET /api/v1/audit-log and written by src/lib/audit-log.ts.
+  //    No FK on target_id — it may reference any entity kind (and
+  //    PROPOSAL_DELETED entries outlive the deleted proposal).
   {
     sql: `CREATE TABLE IF NOT EXISTS audit_log (
       id              TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
       actor_address   TEXT NOT NULL,
       action          TEXT NOT NULL CHECK (action IN (
                         'PROPOSAL_APPROVED', 'PROPOSAL_REJECTED',
-                        'PROPOSAL_OUTCOME_RECORDED', 'PROPOSAL_STATUS_OVERRIDE'
+                        'PROPOSAL_OUTCOME_RECORDED', 'PROPOSAL_STATUS_OVERRIDE',
+                        'PROPOSAL_DELETED'
                       )),
       target_type     TEXT NOT NULL CHECK (target_type IN ('proposal', 'user', 'platform')),
       target_id       TEXT NOT NULL,
