@@ -29,6 +29,14 @@ import { ErrorCode, ProposalStatus } from "@/types";
  * each is individually idempotent — an admin retry after a partial
  * failure completes the delete cleanly. Children are deleted before the
  * proposal row, so a mid-sequence failure never orphans a missing parent.
+ *
+ * Accepted tradeoffs (security review 2026-09-19): (1) recordAuditEvent is
+ * fire-and-forget — a swallowed DB error would leave this delete without a
+ * public audit entry and no retry path (retry hits 404); monitor server
+ * logs after the first production delete. (2) Child deletes run before the
+ * status-conditioned final DELETE; safe today because FAILED is terminal
+ * (no writer leaves FAILED), but a future FAILED→ACTIVE override feature
+ * must reorder these or introduce a real transaction.
  */
 
 export const dynamic = "force-dynamic";
@@ -73,7 +81,9 @@ export async function DELETE(
   // Gather comment ids first — the mock SQL engine supports literal
   // placeholder IN (...) lists but not subqueries, and an empty IN ()
   // would match every row, so the child-reaction deletes are skipped
-  // entirely when the proposal has no comments.
+  // entirely when the proposal has no comments. (Placeholder count equals
+  // the comment count; SQLite's bind ceiling is ≥32k on modern builds —
+  // chunk here if a proposal ever approaches it.)
   const commentRes = await db.execute({
     sql: "SELECT id FROM comments WHERE proposal_id = ?",
     args: [id],

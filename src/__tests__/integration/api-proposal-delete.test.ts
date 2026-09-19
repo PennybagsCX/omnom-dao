@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { NextResponse } from "next/server";
 import { ADDR_DOLPHIN, ADDR_WHALE } from "@/__tests__/helpers/mocks";
+import { getMockDbClient } from "@/lib/mock-db";
 
 /**
  * Integration tests for the admin proposal-delete route. A FAILED proposal
@@ -67,17 +68,17 @@ function makeFailedProposal() {
   };
 }
 
-async function deleteProposal() {
+async function deleteProposal(id = PROPOSAL_ID) {
   const { DELETE } = await import("@/app/api/v1/proposals/[id]/delete/route");
   const req = {
     method: "DELETE",
-    url: `http://localhost/api/v1/proposals/${PROPOSAL_ID}/delete`,
-    nextUrl: new URL(`http://localhost/api/v1/proposals/${PROPOSAL_ID}/delete`),
+    url: `http://localhost/api/v1/proposals/${id}/delete`,
+    nextUrl: new URL(`http://localhost/api/v1/proposals/${id}/delete`),
     headers: new Headers(),
     cookies: { get: vi.fn(), getAll: vi.fn(() => []) },
   } as unknown as Parameters<typeof DELETE>[0];
   const res = (await DELETE(req, {
-    params: Promise.resolve({ id: PROPOSAL_ID }),
+    params: Promise.resolve({ id }),
   })) as NextResponse;
   return { status: res.status, body: (await res.json()) as Record<string, unknown> };
 }
@@ -118,6 +119,11 @@ describe("DELETE /api/v1/proposals/[id]/delete — happy path", () => {
     // The final DELETE is status-guarded with FAILED.
     const finalCall = hoisted.execute.mock.calls.at(-1) as [{ args: string[] }];
     expect(finalCall[0].args).toEqual([PROPOSAL_ID, "FAILED"]);
+    // Notifications detach (SET NULL) targeting exactly this proposal.
+    const notifCall = hoisted.execute.mock.calls.find(
+      (c) => (c[0] as { sql: string }).sql.startsWith("UPDATE notifications"),
+    ) as [{ args: string[] }];
+    expect(notifCall[0].args).toEqual([PROPOSAL_ID]);
   });
 
   it("detaches notifications and records the audit event with rejection context", async () => {
@@ -223,5 +229,96 @@ describe("DELETE /api/v1/proposals/[id]/delete — guards", () => {
     expect(status).toBe(409);
     expect((body.error as { code: string }).code).toBe("VOTING_CLOSED");
     expect(hoisted.recordAuditEvent).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Engine-contract coverage: the mocked tests above pin the SQL *strings*;
+ * this suite forwards the route's statements to the real in-memory engine
+ * (the same one mock-mode dev and the E2E webServer run on) with seeded
+ * child rows, proving the cascade semantics — reactions die with their
+ * comments, votes/reactions die with the proposal, and the detached
+ * notification survives with proposal_id NULL.
+ */
+describe("DELETE /api/v1/proposals/[id]/delete — engine contract", () => {
+  const realDb = getMockDbClient();
+  const ENG_ID = "prop-eng";
+  const ENG_COMMENT = "c-eng-1";
+
+  async function seed() {
+    await realDb.execute({
+      sql: "INSERT INTO proposals (id, title, description, type, status, author_address) VALUES (?, ?, ?, ?, ?, ?)",
+      args: [ENG_ID, "Engine test", "Body", "GENERAL", "FAILED", ADDR_DOLPHIN],
+    });
+    await realDb.execute({
+      sql: "INSERT INTO comments (id, proposal_id, author_address, content) VALUES (?, ?, ?, ?)",
+      args: [ENG_COMMENT, ENG_ID, ADDR_WHALE, "hello"],
+    });
+    await realDb.execute({
+      sql: "INSERT INTO comment_reactions (id, comment_id, user_address, type) VALUES (?, ?, ?, ?)",
+      args: ["cr-eng-1", ENG_COMMENT, ADDR_WHALE, "up"],
+    });
+    await realDb.execute({
+      sql: "INSERT INTO comment_emoji_reactions (id, comment_id, user_address, emoji) VALUES (?, ?, ?, ?)",
+      args: ["ce-eng-1", ENG_COMMENT, ADDR_WHALE, "heart"],
+    });
+    await realDb.execute({
+      sql: "INSERT INTO votes (id, proposal_id, voter_address, choice, voting_power) VALUES (?, ?, ?, ?, ?)",
+      args: ["v-eng-1", ENG_ID, ADDR_WHALE, "FOR", 5],
+    });
+    await realDb.execute({
+      sql: "INSERT INTO proposal_emoji_reactions (id, proposal_id, user_address, emoji) VALUES (?, ?, ?, ?)",
+      args: ["pe-eng-1", ENG_ID, ADDR_WHALE, "tada"],
+    });
+    await realDb.execute({
+      sql: "INSERT INTO notifications (id, user_id, type, title, body, read, proposal_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      args: ["n-eng-1", "user-eng", "PROPOSAL_CREATED", "Engine test", "Body", 0, ENG_ID],
+    });
+  }
+
+  async function count(table: string, where: string, arg: string): Promise<number> {
+    const res = await realDb.execute({
+      sql: `SELECT COUNT(*) AS cnt FROM ${table} WHERE ${where} = ?`,
+      args: [arg],
+    });
+    return Number((res.rows[0]?.cnt as number | string) ?? 0);
+  }
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    hoisted.requireAuth.mockResolvedValue({ sub: ADMIN });
+    hoisted.isAdminAddress.mockReturnValue(true);
+    hoisted.recordAuditEvent.mockResolvedValue(undefined);
+    hoisted.getProposalById.mockReset();
+    hoisted.execute.mockReset();
+    // Forward the route's statements to the real in-memory engine.
+    hoisted.execute.mockImplementation(async (cmd) => realDb.execute(cmd));
+    await seed();
+  });
+
+  it("cascades for real: children die, the notification detaches, the row goes", async () => {
+    hoisted.getProposalById.mockResolvedValueOnce({
+      ...makeFailedProposal(),
+      id: ENG_ID,
+    });
+
+    const { status, body } = await deleteProposal(ENG_ID);
+    expect(status).toBe(200);
+    expect(body.data).toEqual({ deleted: true, id: ENG_ID });
+
+    expect(await count("proposals", "id", ENG_ID)).toBe(0);
+    expect(await count("comments", "proposal_id", ENG_ID)).toBe(0);
+    expect(await count("comment_reactions", "comment_id", ENG_COMMENT)).toBe(0);
+    expect(await count("comment_emoji_reactions", "comment_id", ENG_COMMENT)).toBe(0);
+    expect(await count("votes", "proposal_id", ENG_ID)).toBe(0);
+    expect(await count("proposal_emoji_reactions", "proposal_id", ENG_ID)).toBe(0);
+
+    // The notification survives, detached (proposal_id NULL).
+    const notif = await realDb.execute({
+      sql: "SELECT proposal_id FROM notifications WHERE id = ?",
+      args: ["n-eng-1"],
+    });
+    expect(notif.rows).toHaveLength(1);
+    expect(notif.rows[0]?.proposal_id ?? null).toBeNull();
   });
 });

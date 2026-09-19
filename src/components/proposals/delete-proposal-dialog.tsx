@@ -47,7 +47,7 @@ export function DeleteProposalDialog({ proposal }: { proposal: Proposal }) {
       ),
     onSuccess: () => {
       setOpen(false);
-      toast.success("Proposal deleted");
+      toast.success(`Deleted "${proposal.title}"`);
       // Prefix keys cover every list filter, the dashboard, and all admin
       // sections (pending / passed / failed).
       qc.invalidateQueries({ queryKey: ["proposals"] });
@@ -64,6 +64,15 @@ export function DeleteProposalDialog({ proposal }: { proposal: Proposal }) {
           ? error.message
           : "Failed to delete proposal.",
       );
+      // Stale-state race: another admin got there first (404) or the
+      // proposal left the FAILED state (409) — drop the dialog and refresh
+      // so the dead row disappears instead of lingering until an unrelated
+      // refetch.
+      if (error instanceof ApiRequestError && (error.status === 404 || error.status === 409)) {
+        setOpen(false);
+        qc.invalidateQueries({ queryKey: ["proposals"] });
+        qc.invalidateQueries({ queryKey: ["admin"] });
+      }
     },
   });
 
@@ -77,11 +86,17 @@ export function DeleteProposalDialog({ proposal }: { proposal: Proposal }) {
     <Dialog
       open={open}
       onOpenChange={(o) => {
-        setOpen(o);
+        // Ignore Esc/overlay closes mid-flight: a late success would
+        // otherwise navigate away from a page the admin chose to stay on.
+        if (!deleteProposal.isPending) setOpen(o);
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="destructive" size="sm">
+        <Button
+          variant="destructive"
+          size="sm"
+          aria-label={`Delete proposal: ${proposal.title}`}
+        >
           <Trash2 className="h-4 w-4" aria-hidden /> Delete proposal
         </Button>
       </DialogTrigger>
@@ -117,6 +132,7 @@ export function DeleteProposalDialog({ proposal }: { proposal: Proposal }) {
           <Button
             variant="destructive"
             disabled={deleteProposal.isPending}
+            aria-busy={deleteProposal.isPending}
             onClick={() => deleteProposal.mutate()}
           >
             {deleteProposal.isPending ? (

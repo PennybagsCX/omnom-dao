@@ -1,4 +1,4 @@
-import { dismissWalletDialog } from "./helpers";
+import { registerWalletDialogAutoDismiss } from "./helpers";
 import { expect, test } from "./auth.fixture";
 
 const RUN_E2E = !process.env.VITEST;
@@ -23,7 +23,9 @@ interface FailedListResponse {
 
 async function firstFailedProposal(page: import("@playwright/test").Page) {
   const res = await page.request.get("/api/v1/proposals?status=FAILED&pageSize=100");
-  if (!res.ok()) return null;
+  // A broken list API must fail loudly, not silently zero this spec's
+  // coverage — skip is reserved for a genuinely empty seed.
+  expect(res.ok()).toBeTruthy();
   const body = (await res.json()) as { data?: FailedListResponse };
   const proposals = body.data?.proposals ?? [];
   return proposals[0] ?? null;
@@ -35,8 +37,8 @@ if (RUN_E2E) {
       const target = await firstFailedProposal(page);
       test.skip(!target, "no FAILED proposals seeded — skipping delete tests");
 
+      await registerWalletDialogAutoDismiss(page);
       await page.goto(`/proposals/${target!.id}`);
-      await dismissWalletDialog(page);
 
       const deleteButton = page.getByRole("button", { name: /delete proposal/i });
       await expect(deleteButton).toBeVisible({ timeout: 30_000 });
@@ -81,8 +83,11 @@ if (RUN_E2E) {
       const target = await firstFailedProposal(page);
       test.skip(!target, "no FAILED proposals seeded — skipping delete tests");
 
+      await registerWalletDialogAutoDismiss(page);
       await page.goto(`/proposals/${target!.id}`);
-      await dismissWalletDialog(page);
+      // Positive anchor first: the page really rendered, so the absence of
+      // the button below is meaningful rather than a loading skeleton.
+      await expect(page.getByRole("heading", { name: target!.title })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: /delete proposal/i })).toHaveCount(0);
     });
 
@@ -90,8 +95,8 @@ if (RUN_E2E) {
       const target = await firstFailedProposal(page);
       test.skip(!target, "no FAILED proposals seeded — skipping delete tests");
 
+      await registerWalletDialogAutoDismiss(page);
       await page.goto("/admin");
-      await dismissWalletDialog(page);
       await expect(page.getByText(/failed proposals/i).first()).toBeVisible({ timeout: 30_000 });
       // The seeded FAILED proposal appears in the cleanup queue with a
       // delete affordance.

@@ -15,7 +15,6 @@ import {
   Rocket,
   ShieldCheck,
   ShieldX,
-  Trash2,
   X,
   AlertCircle,
 } from "lucide-react";
@@ -592,7 +591,7 @@ export default function AdminPage() {
         />
       ) : failedProposals.length === 0 ? (
         <EmptyState
-          icon={<Trash2 className="h-12 w-12 text-muted-foreground" />}
+          icon={<Check className="h-12 w-12 text-success" />}
           title="Nothing to clean up"
           description="No failed proposals right now."
         />
