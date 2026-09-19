@@ -13,6 +13,7 @@ import { checkRateLimit, userActionBucket } from "@/lib/rate-limit";
 import { sanitizeContent } from "@/lib/sanitize";
 import { createProposalSchema, getProposalsSchema } from "@/lib/validators";
 import { RATE_LIMITS } from "@/lib/constants";
+import { DEFAULT_DURATION_BY_TYPE } from "@/lib/proposal-config";
 import { notifyProposalCreated } from "@/lib/notifications";
 import { lookupHolder } from "@/lib/snapshot";
 import { getSessionAddress } from "@/lib/auth";
@@ -34,15 +35,6 @@ import {
  * GET  /api/v1/proposals  — list proposals (public, paginated).
  * POST /api/v1/proposals  — create proposal (auth + holder + tier gate).
  */
-
-const DEFAULT_DURATION_BY_TYPE: Record<string, number> = {
-  CHAIN_SELECTION: 336,
-  TOKENOMICS_CHANGE: 336,
-  TREASURY: 168,
-  GUIDELINE: 168,
-  TECHNICAL: 168,
-  GENERAL: 168,
-};
 
 const MIN_DURATION_BY_TYPE: Record<string, number> = {
   CHAIN_SELECTION: 168,

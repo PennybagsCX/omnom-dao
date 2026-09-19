@@ -7,6 +7,10 @@ import { requireAuth, UnauthorizedError } from "@/lib/auth";
 import { isAdminAddress } from "@/lib/constants";
 import { recordAuditEvent } from "@/lib/audit-log";
 import { notifyVotingStarted } from "@/lib/notifications";
+import {
+  DEFAULT_DURATION_BY_TYPE,
+  FALLBACK_DURATION_HOURS,
+} from "@/lib/proposal-config";
 import { ErrorCode, ProposalStatus, type Proposal } from "@/types";
 
 /**
@@ -45,9 +49,12 @@ export async function POST(
 
   const now = new Date();
   const startsAtIso = now.toISOString();
-  // Default active window: 168h (7d) unless the proposal already encodes a
-  // duration in its metadata; spec keeps duration fixed per type default.
-  const endsAtMs = now.getTime() + 168 * 60 * 60 * 1000;
+  // Active window: the type's default duration (14d for Chain Selection and
+  // Tokenomics Change, 7d otherwise). Durations are not persisted at creation,
+  // so the per-type default is authoritative at approval.
+  const durationHours =
+    DEFAULT_DURATION_BY_TYPE[proposal.type] ?? FALLBACK_DURATION_HOURS;
+  const endsAtMs = now.getTime() + durationHours * 60 * 60 * 1000;
   const endsAtIso = new Date(endsAtMs).toISOString();
 
   await db.execute({
