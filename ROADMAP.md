@@ -15,6 +15,8 @@
 - ✅ **30-minute cron** — GitHub Actions pinger drives finalize/reminders (daily Vercel cron as fallback)
 - ✅ **Accuracy** — all stale "1 token = 1 vote" copy and docs corrected to the shipped quadratic model, including the homepage hero ("TBD by community" → community-elected; countdown → closed banner)
 
+**2026-09-19:** ✅ **Admin proposal deletion** — admin-only hard delete for FAILED proposals (detail page + `/admin` "Failed proposals" section, audited via `PROPOSAL_DELETED`); also landed per-type voting duration defaults (14d chain-selection/tokenomics, 7d otherwise) replacing the approve route's fixed 7-day window. Existing DBs: run `npm run db:migrate:proposal-deleted` once.
+
 **Deliberately pending (owner decisions, strategy discussions planned):**
 
 - ⏸ **Governance waves** — the 11 open parameters ([GOVERNANCE_MECHANICS §14](DOCS/GOVERNANCE_MECHANICS.md)) are prepared as 3 themed waves via `scripts/seed-governance-decisions.ts --wave 1|2|3` (creates DRAFTs only — nothing runs until the owner seeds, announces, and approves). Wave 1 = voting rules.

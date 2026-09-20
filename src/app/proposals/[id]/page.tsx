@@ -35,6 +35,7 @@ import { ProposalTypeBadge } from "@/components/shared/proposal-type-badge";
 import { QuorumProgress } from "@/components/shared/quorum-progress";
 import { VoteBar } from "@/components/shared/vote-bar";
 import { AdminRejectionBanner } from "@/components/proposals/admin-rejection-banner";
+import { DeleteProposalDialog } from "@/components/proposals/delete-proposal-dialog";
 import {
   useCastVote,
   useChangeVote,
@@ -233,6 +234,14 @@ export default function ProposalDetailPage() {
           {/* Rejection Banner */}
           {proposal.status === ProposalStatus.FAILED && (
             <AdminRejectionBanner proposal={proposal} />
+          )}
+
+          {/* Admin-only hard delete for FAILED proposals (self-gating; renders
+              nothing for non-admins). */}
+          {proposal.status === ProposalStatus.FAILED && (
+            <div className="flex justify-center">
+              <DeleteProposalDialog proposal={proposal} />
+            </div>
           )}
 
           {/* Execution outcome banner */}

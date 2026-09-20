@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { DevLoginButton } from "@/components/admin/dev-login-button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DeleteProposalDialog } from "@/components/proposals/delete-proposal-dialog";
 import { ProposalTypeBadge } from "@/components/shared/proposal-type-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { HolderBadge } from "@/components/shared/holder-badge";
@@ -80,6 +81,20 @@ export default function AdminPage() {
     queryKey: ["admin", "passed"],
     queryFn: ({ signal }) =>
       apiGet<PendingResponse>("/api/v1/proposals", { status: "PASSED", pageSize: 100 }, signal),
+    enabled: !!me,
+  });
+
+  // FAILED proposals (rejected / quorum-failed) — cleanup queue for the
+  // delete action. The dialog self-gates and invalidates ["admin"].
+  const {
+    data: failedData,
+    isLoading: failedLoading,
+    isError: failedIsError,
+    refetch: refetchFailed,
+  } = useQuery<PendingResponse>({
+    queryKey: ["admin", "failed"],
+    queryFn: ({ signal }) =>
+      apiGet<PendingResponse>("/api/v1/proposals", { status: "FAILED", pageSize: 100 }, signal),
     enabled: !!me,
   });
 
@@ -190,6 +205,7 @@ export default function AdminPage() {
 
   const proposals = data?.proposals ?? [];
   const passedProposals = passedData?.proposals ?? [];
+  const failedProposals = failedData?.proposals ?? [];
   const maxCount = Math.max(...(election?.results.map((r) => r.count) ?? [0]), 1);
 
   return (
@@ -542,6 +558,87 @@ export default function AdminPage() {
                     {actionError || "An error occurred while recording this outcome. Please try again."}
                   </p>
                 ) : null}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Failed proposals — cleanup queue (rejected / quorum-failed) */}
+      <div className="mb-4 mt-12 text-center">
+        <h2 className="text-xl font-bold text-foreground">Failed proposals</h2>
+        <p className="text-sm text-muted-foreground">
+          Rejected and quorum-failed proposals. Deleting removes the proposal,
+          its votes and its comments permanently — the public audit log keeps a
+          record.
+        </p>
+      </div>
+
+      {failedLoading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-gold" aria-hidden />
+        </div>
+      ) : failedIsError ? (
+        <EmptyState
+          icon={<AlertTriangle className="h-12 w-12" />}
+          title="Failed to load failed proposals"
+          description="We couldn't reach the proposal service. Please try again."
+          action={
+            <Button onClick={() => refetchFailed()} disabled={failedLoading}>
+              {failedLoading ? "Retrying…" : "Retry"}
+            </Button>
+          }
+        />
+      ) : failedProposals.length === 0 ? (
+        <EmptyState
+          icon={<Check className="h-12 w-12 text-success" />}
+          title="Nothing to clean up"
+          description="No failed proposals right now."
+        />
+      ) : (
+        <div className="space-y-4">
+          {failedProposals.map((p) => (
+            <Card key={p.id}>
+              <CardContent className="p-5">
+                <div className="mb-3 flex flex-col items-center gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 space-y-1 text-center sm:text-left">
+                    <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                      <ProposalTypeBadge type={p.type} />
+                      <span className="inline-flex items-center gap-1 text-xs text-text-dim">
+                        by
+                        <Link
+                          href={`/snapshot-explorer?address=${p.authorAddress.toLowerCase()}`}
+                          title={p.authorAddress}
+                          className="font-mono underline-offset-2 hover:underline hover:text-foreground"
+                        >
+                          {shortenAddress(p.authorAddress)}
+                        </Link>
+                        {p.authorHolderClass && (
+                          <HolderBadge holderClass={p.authorHolderClass} size="sm" plain />
+                        )}
+                      </span>
+                      <span className="flex items-center gap-1 text-xs text-text-dim">
+                        <Clock className="h-3 w-3" aria-hidden />
+                        {new Date(p.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-foreground text-center">{p.title}</h3>
+                    {p.metadata?.rejectionReason && (
+                      <p className="text-sm text-muted-foreground">
+                        Rejected: {p.metadata.rejectionReason}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <DeleteProposalDialog proposal={p} />
+                  <Button size="sm" variant="ghost" asChild>
+                    <Link href={`/proposals/${p.id}`}>
+                      <ExternalLink className="h-4 w-4" aria-hidden /> View
+                    </Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}

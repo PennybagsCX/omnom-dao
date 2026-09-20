@@ -409,7 +409,15 @@ The supply distribution is heavily skewed — the kraken alone holds 68.9%; the 
 | Assign moderators | ✅ | ❌ | ❌ | ❌ |
 | Platform settings | ✅ | ❌ | ❌ | ❌ |
 | Status override (emergency) | ✅ | ❌ | ❌ | ❌ |
+| Delete failed proposals | ✅ | ❌ | ❌ | ❌ |
 | View audit log | ✅ | ✅ | ✅ | ✅ |
+
+> **Delete failed proposals** (§11.2 row): admin-only hard delete restricted to
+> `FAILED` proposals (rejected or quorum-failed). Removes the proposal with its
+> votes, comments, and reactions; notifications are detached (`proposal_id`
+> set NULL). A `PROPOSAL_DELETED` entry is written to the public audit log and
+> **outlives the deleted proposal** (the audit log has no FK on `target_id`),
+> per §11.3. See `DELETE /api/v1/proposals/[id]/delete`.
 
 ### 11.3 Admin configuration & audit
 
