@@ -10,11 +10,16 @@ import { mainnet } from "wagmi/chains";
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { defineChain } from "viem";
 
-// Wallet connectors (standard ones only)
+// Wallet connectors: one injected entry covers ALL browser-extension hot
+// wallets (MetaMask, Brave, Rabby, …); the WalletConnect-based entries add
+// QR + cold-wallet paths. The specialized metaMaskWallet/braveWallet entries
+// were removed deliberately — their SDK/EIP-6963 targeting resolves providers
+// through routes the app's mock/extension setups don't announce, so their
+// picker rows silently failed to connect (a real "connect twice" trap).
 import {
-  metaMaskWallet,
   injectedWallet,
-  braveWallet,
+  walletConnectWallet,
+  ledgerWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 
 /**
@@ -70,8 +75,11 @@ export const config = getDefaultConfig({
       groupName: "Popular",
       wallets: [
         injectedWallet,
-        metaMaskWallet,
-        braveWallet,
+        // Cold-wallet / QR paths — both tunnel through WalletConnect. RainbowKit
+        // invokes these factories with the config's projectId itself, so they
+        // are only listed when a real project ID is configured (otherwise they
+        // would throw at connect time instead of degrading).
+        ...(projectId ? [walletConnectWallet, ledgerWallet] : []),
       ],
     },
   ],

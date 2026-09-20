@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   useAccount,
@@ -11,20 +18,15 @@ import {
 import { injected } from "wagmi/connectors";
 import {
   CheckCircle2,
-  Coins,
   Eye,
   FlaskConical,
-  Ghost,
   HelpCircle,
-  Link2,
   Loader2,
   Lock,
   MessageCircle,
   PartyPopper,
   ShieldAlert,
   ShieldCheck,
-  Wallet,
-  Wallet2,
   X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -39,7 +41,7 @@ import { Button } from "@/components/ui/button";
 import { HolderBadge } from "@/components/shared/holder-badge";
 import { buildSiweMessage } from "@/lib/siwe";
 import { DEV_ADDRESS, isDevMockWalletActive } from "@/config/dev-mock-provider";
-import { fetchApi } from "@/lib/api";
+import { ApiRequestError, fetchApi } from "@/lib/api";
 import { formatCompact, shortenAddress } from "@/lib/utils";
 import { ErrorCode, type HolderClass } from "@/types";
 
@@ -100,10 +102,32 @@ export function ConnectWalletDialog({
   const [errorMsg, setErrorMsg] = useState<string>("");
   const startedRef = useRef(false);
 
-  const nextPath = useMemo(
-    () => searchParams.get("next") ?? "/verify/result",
-    [searchParams],
-  );
+  // Guards against re-entrant verify runs. `isConnected` can flicker
+  // mid-flow (WalletConnect session settle, hardware-wallet transport
+  // hiccup); the flicker must not reset the phase or re-arm the auto-start
+  // effect, or a second runVerify would overwrite the single-use server
+  // nonce and the in-flight signature would fail with NONCE_EXPIRED.
+  // Tracked as state (not a ref) because the render-time reset blocks below
+  // need to read it.
+  const [verifyInFlight, setVerifyInFlight] = useState(false);
+  const runTokenRef = useRef(0);
+  // Mirrors of the `open`/`isConnected`/`address` values, updated before
+  // paint (see the effect below) so an in-flight async run can tell whether
+  // it still owns the UI for the wallet it started with.
+  const openRef = useRef(open);
+  const connectedRef = useRef(isConnected);
+  const addressRef = useRef(address);
+
+  // Post-verify redirect target. Sanitized: `?next` is attacker-controllable
+  // (and reachable through a single crafted /?login=1&next=… link now that
+  // the deep link auto-opens the connect flow), so only a same-origin
+  // relative path passes through.
+  const nextPath = useMemo(() => {
+    const requested = searchParams.get("next") ?? "/verify/result";
+    return requested.startsWith("/") && !requested.startsWith("//")
+      ? requested
+      : "/verify/result";
+  }, [searchParams]);
 
   // Reset when the dialog closes — state-during-render pattern to avoid
   // setState-in-effect.
@@ -119,10 +143,13 @@ export function ConnectWalletDialog({
 
   // Reset the auth flow if the wallet disconnects mid-flow (C2.3), so the UI
   // doesn't get stuck in a signing/verifying phase with no connected account.
+  // A TRANSIENT `isConnected` flicker while a run is in flight must not reset
+  // anything (that re-fire is the nonce-overwrite bug); a real disconnect is
+  // handled by the in-flight run's staleness check instead.
   const [prevConnected, setPrevConnected] = useState(isConnected);
   if (prevConnected !== isConnected) {
     setPrevConnected(isConnected);
-    if (!isConnected) {
+    if (!isConnected && !verifyInFlight) {
       setPhase("idle");
     }
   }
@@ -135,9 +162,34 @@ export function ConnectWalletDialog({
    * "latest-ref" pattern (useEffect with no dep-array reassigning a ref on
    * every render) which was fragile under React Compiler and could leave the
    * dialog stuck in the "verifying" phase.
+   *
+   * Each run takes a token; after every await it checks that it is still the
+   * latest run on an open dialog with a connected wallet before touching
+   * state. A superseded run (a newer retry started) bails silently; a run
+   * orphaned by a dialog close or a real disconnect resets the phase to idle
+   * instead of resurrecting stale UI.
    */
   const runVerify = useCallback(
     async (walletAddress: string) => {
+      const token = ++runTokenRef.current;
+      setVerifyInFlight(true);
+      const bailIfStale = (): boolean => {
+        if (token !== runTokenRef.current) return true;
+        // Also bail if the dialog closed, the wallet actually disconnected,
+        // or the account switched mid-flow (a signature from the new account
+        // would not match this run's nonce-1 message anyway).
+        if (
+          !openRef.current ||
+          !connectedRef.current ||
+          (addressRef.current !== undefined &&
+            addressRef.current !== walletAddress)
+        ) {
+          setPhase("idle");
+          setErrorMsg("");
+          return true;
+        }
+        return false;
+      };
       try {
         // 1. Fetch nonce.
         setPhase("fetching-nonce");
@@ -145,6 +197,7 @@ export function ConnectWalletDialog({
           "/api/v1/nonce",
           { method: "POST", body: { address: walletAddress } },
         );
+        if (bailIfStale()) return;
 
         // 2. Build SIWE message + request signature.
         setPhase("awaiting-signature");
@@ -158,6 +211,7 @@ export function ConnectWalletDialog({
         try {
           signature = await signMessageAsync({ message });
         } catch (signErr) {
+          if (bailIfStale()) return;
           const err = signErr as {
             code?: number;
             message?: string;
@@ -224,6 +278,7 @@ export function ConnectWalletDialog({
           }
           return;
         }
+        if (bailIfStale()) return;
 
         // 3. Verify server-side (sets the httpOnly session cookie).
         setPhase("verifying");
@@ -232,9 +287,11 @@ export function ConnectWalletDialog({
             method: "POST",
             body: { message, signature },
           });
+          if (bailIfStale()) return;
           setResult(data);
           setPhase("success");
         } catch (verifyErr) {
+          if (bailIfStale()) return;
           const err = verifyErr as { code?: ErrorCode; message?: string };
           if (err.code === ErrorCode.NOT_IN_SNAPSHOT) {
             setPhase("not-in-snapshot");
@@ -243,18 +300,46 @@ export function ConnectWalletDialog({
             setErrorMsg(err.message ?? "Verification failed. Please try again.");
           }
         }
-      } catch {
-        setPhase("error");
-        setErrorMsg("Something went wrong starting verification. Please try again.");
+      } catch (err) {
+        if (bailIfStale()) return;
+        if (
+          err instanceof ApiRequestError &&
+          (err.code === ErrorCode.RATE_LIMITED || err.status === 429)
+        ) {
+          setPhase("error");
+          setErrorMsg("Too many attempts. Please wait a few minutes and try again.");
+        } else {
+          setPhase("error");
+          setErrorMsg("Something went wrong starting verification. Please try again.");
+        }
+      } finally {
+        if (token === runTokenRef.current) {
+          setVerifyInFlight(false);
+        }
       }
     },
     [signMessageAsync],
   );
 
-  // Reset the started guard when the dialog closes or wallet disconnects.
-  useEffect(() => {
-    if (!open || !isConnected) startedRef.current = false;
-  }, [open, isConnected]);
+  // Keep the open/connected/address mirrors fresh (layout effect: before
+  // paint, shrinking the window in which a resolving run can see a stale
+  // mirror), and reset the started guard. A CLOSE always ends the dialog's
+  // pipeline — any in-flight run is orphaned and bails at its next
+  // staleness check — so the next open can auto-start fresh instead of
+  // leaking `startedRef` past the close and leaving a reopened dialog dead
+  // on idle (no way to retry or switch wallets). While the dialog stays
+  // OPEN, only a disconnect re-arms the guard, and never while a run is in
+  // flight (an `isConnected` flicker must not double-fire the pipeline).
+  useLayoutEffect(() => {
+    openRef.current = open;
+    connectedRef.current = isConnected;
+    addressRef.current = address;
+    if (!open) {
+      startedRef.current = false;
+    } else if (!verifyInFlight && !isConnected) {
+      startedRef.current = false;
+    }
+  }, [open, isConnected, verifyInFlight, address]);
 
   // Kick off the SIWE flow automatically once a wallet is connected inside
   // an open dialog.
@@ -407,13 +492,6 @@ function IdlePhase({ onDevConnect }: { onDevConnect: () => void }) {
           <Lock className="h-3.5 w-3.5 text-muted-foreground" aria-hidden /> No token access
         </TrustBadge>
       </div>
-
-      <ul className="mt-5 space-y-2.5">
-        <WalletRow icon={<Wallet2 className="h-5 w-5 text-amber-500" />} name="MetaMask" />
-        <WalletRow icon={<Link2 className="h-5 w-5 text-sky-500" />} name="WalletConnect" />
-        <WalletRow icon={<Coins className="h-5 w-5 text-blue-500" />} name="Coinbase Wallet" />
-        <WalletRow icon={<Ghost className="h-5 w-5 text-amber-400" />} name="Phantom" />
-      </ul>
     </>
   );
 }
@@ -588,18 +666,6 @@ function TrustBadge({ children }: { children: React.ReactNode }) {
     <span className="inline-flex items-center rounded-full border border-border bg-bg-elevated px-2.5 py-0.5 text-xs text-muted-foreground">
       {children}
     </span>
-  );
-}
-
-function WalletRow({ icon, name }: { icon: React.ReactNode; name: string }) {
-  return (
-    <li className="flex items-center gap-3 rounded-lg border border-border bg-bg-elevated/40 px-3 py-2.5">
-      <span aria-hidden className="flex h-6 w-6 items-center justify-center">
-        {icon}
-      </span>
-      <span className="text-sm font-medium text-foreground">{name}</span>
-      <Wallet className="ml-auto h-4 w-4 text-text-dim" aria-hidden />
-    </li>
   );
 }
 
