@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -40,6 +41,24 @@ export function ConnectWalletButton() {
   const connectedButUnverified = Boolean(address) && !me;
   const isAuthenticated = Boolean(me);
 
+  // A wallet-level disconnect (RainbowKit's account modal, the wallet itself,
+  // …) must not leave the header rendering an authenticated account: for
+  // real users the session is derived from the wallet connection, so the
+  // identity cache is dropped and the server session cleared. Tracked as an
+  // address-set → unset TRANSITION so the initial mount and dev-auth's
+  // wallet-less sessions are untouched. Account SWITCHES (0xA → 0xB) never
+  // pass through an undefined address, so they don't trigger this either.
+  const prevAddressRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const hadAddress = prevAddressRef.current;
+    prevAddressRef.current = address;
+    if (hadAddress && !address && !isDevMockWalletActive()) {
+      qc.removeQueries({ queryKey: ["me"] });
+      qc.removeQueries({ queryKey: ["dashboard"] });
+      void fetch("/api/v1/logout", { method: "POST" }).catch(() => {});
+    }
+  }, [address, qc]);
+
   // Fetch notifications for authenticated users
   const { data: countData } = useUnreadNotificationCount(isAuthenticated);
   const unreadCount = countData?.unreadCount ?? 0;
@@ -53,25 +72,31 @@ export function ConnectWalletButton() {
     router.refresh();
   };
 
-  const handleSignOut = async () => {
-    disconnect();
-    qc.removeQueries({ queryKey: ["me"] });
-    qc.removeQueries({ queryKey: ["dashboard"] });
-    qc.clear();
-
+  const handleSignOut = useCallback(async () => {
+    // Dev path: a full-page reload sidesteps the cache-repopulation race
+    // entirely.
     if (isDevMockWalletActive()) {
       window.location.href = "/api/v1/logout?next=/";
       return;
     }
 
+    // CRITICAL ORDER: clear the SERVER session first. The mounted `me`
+    // query observers refetch as soon as the cache is cleared — if the
+    // cookie is still valid at that moment, the 200 response repopulates
+    // `me` and the header keeps rendering the connected state indefinitely
+    // (staleTime 30s, refetchOnWindowFocus false → nothing re-triggers it).
     try {
       await fetch("/api/v1/logout", { method: "POST" });
     } catch {
       // Best-effort; proceed to navigate regardless.
     }
+    disconnect();
+    qc.removeQueries({ queryKey: ["me"] });
+    qc.removeQueries({ queryKey: ["dashboard"] });
+    qc.clear();
     router.push("/");
     router.refresh();
-  };
+  }, [disconnect, qc, router]);
 
   return (
     <ConnectButton.Custom>
@@ -100,10 +125,11 @@ export function ConnectWalletButton() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent sideOffset={24} align="end" className="w-56">
                       <DropdownMenuLabel className="font-mono text-xs text-muted-foreground">
-                        {me.class} - Dev Auth
+                        {me.class}
+                        {isDevMockWalletActive() ? " - Dev Auth" : " · Verified"}
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      
+
                       {ACCOUNT_NAV_ITEMS.filter(
                         (item) => item.href !== "/admin" || isAdminAddress(me.address),
                       ).map((item) => {
