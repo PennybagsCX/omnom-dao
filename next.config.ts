@@ -56,14 +56,27 @@ const nextConfig: NextConfig = {
             //  - report-uri points at /api/v1/csp-report (currently 404s — see
             //    Phase 5 backlog). Browsers POST violations there; once that
             //    endpoint lands, all CSP violations land in the audit log.
+            //  - walletconnect.org / web3modal.org entries are required by
+            //    the WalletConnect/AppKit machinery behind the WalletConnect
+            //    and Ledger connect options: relay wss + https fallback,
+            //    blockchain API (rpc), telemetry (pulse), explorer/config
+            //    (api.web3modal.org) — verified against @walletconnect 2.21.x
+            //    and live CSP violations. Least-privilege: legacy .com relay
+            //    hosts and the Notify/Chat key server are NOT allowlisted
+            //    (zero references in the installed bundle); watch
+            //    /api/v1/csp-report after SDK bumps for new needs. img-src's
+            //    https: already covers wallet icons.
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://va.vercel-scripts.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://www.google.com https://va.vercel-scripts.com https://rpc.dogechain.dog https://ethereum-rpc.publicnode.com",
-              "frame-src 'self'",
+              "connect-src 'self' https://www.google.com https://va.vercel-scripts.com https://rpc.dogechain.dog https://ethereum-rpc.publicnode.com wss://relay.walletconnect.org https://relay.walletconnect.org https://rpc.walletconnect.org https://pulse.walletconnect.org https://api.web3modal.org",
+              // verify.walletconnect.org is WalletConnect's attestation iframe,
+              // loaded during pairing (observed live; blocks the QR flow if
+              // absent). .com twin kept for SDK-region fallback.
+              "frame-src 'self' https://verify.walletconnect.org https://verify.walletconnect.com",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
