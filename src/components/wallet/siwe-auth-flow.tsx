@@ -59,12 +59,13 @@ export function useWalletDialog(): WalletDialogValue {
 export function SiweAuthFlow({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const { address } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { openConnectModal, connectModalOpen } = useConnectModal();
   const qc = useQueryClient();
-  const { data: me } = useCurrentUser();
+  const { data: me, isPending: mePending, isFetching: meFetching } = useCurrentUser();
 
   const mountedRef = useRef(false);
   const prevAddressRef = useRef<string | undefined>(undefined);
+  const loginParamHandledRef = useRef(false);
 
   const connect = useCallback(() => {
     // Already connected → jump straight to SIWE verification.
@@ -82,24 +83,57 @@ export function SiweAuthFlow({ children }: { children: ReactNode }) {
   // Auto-open the verify dialog on a fresh wallet connection (not on the very
   // first mount, so returning authenticated users aren't prompted).
   //
-  // Critical: skip the auto-open while `me` is still undefined (loading).
-  // On page reload with a valid JWT cookie, `address` becomes set (wagmi
-  // reconnects to the Ledger) BEFORE `me` has resolved from /api/v1/me.
-  // Without this guard, an authenticated Ledger user gets the
-  // "Check your wallet to sign" modal on every reload.
+  // Wait for the auth probe to SETTLE (either outcome) before deciding.
+  // `isPending` — not `me === undefined` — is the loading signal here: for
+  // anonymous visitors /api/v1/me answers 401 and `me` data stays undefined
+  // forever (retry: false), so a data-based guard would never unblock the
+  // auto-open. A settled SUCCESS means the wallet is already verified and
+  // `!me` is false — this is what keeps the dialog from popping on every
+  // reload of an authenticated Ledger user (wagmi reconnects before `me`
+  // resolves).
+  //
+  // Also skip while RainbowKit's connect modal (or WalletConnect QR pane) is
+  // open, so the verify dialog never stacks on top of it. The early returns
+  // leave `prevAddressRef` untouched, so the address transition still fires
+  // once the pending condition clears.
+  //
+  // `meFetching` covers background REFETCHES (e.g. the dev-auth chain's
+  // invalidateQueries right after devLogin): the query's status stays
+  // "error" through a refetch, so `mePending` alone would let the auto-open
+  // fire for a user who is about to be revealed as authenticated.
   useEffect(() => {
     if (!mountedRef.current) {
       mountedRef.current = true;
       prevAddressRef.current = address;
       return;
     }
-    // Wait for the auth probe to settle — don't auto-open mid-loading.
-    if (me === undefined) return;
+    if (mePending || meFetching) return;
+    if (connectModalOpen) return;
     if (address && address !== prevAddressRef.current && !me) {
       setOpen(true);
     }
     prevAddressRef.current = address;
-  }, [address, me]);
+  }, [address, me, mePending, meFetching, connectModalOpen]);
+
+  // Deep-link recovery: an expired session bounces through
+  // /verify/result → /?login=1 (see src/app/verify/result/page.tsx).
+  // Re-open the connect flow once so the user isn't stranded on the homepage.
+  // Wait for the auth probe to settle and skip entirely for users who are
+  // already verified — a stale deep link must never re-prompt them to sign.
+  // The timeout keeps setState out of the effect body (React Compiler rule);
+  // the handled-flag lives inside the callback so StrictMode's
+  // setup→cleanup→setup cycle can't swallow the timer or double-fire it.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!new URLSearchParams(window.location.search).has("login")) return;
+    if (mePending || me) return;
+    const t = window.setTimeout(() => {
+      if (loginParamHandledRef.current) return;
+      loginParamHandledRef.current = true;
+      connect();
+    }, 0);
+    return () => window.clearTimeout(t);
+  }, [connect, me, mePending]);
 
   // When the dialog closes after a successful verify, refresh identity queries.
   const handleOpenChange = useCallback(
