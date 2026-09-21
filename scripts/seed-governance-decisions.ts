@@ -103,7 +103,11 @@ const WAVES: readonly Wave[] = [
         title: "Governance parameter: global default quorum",
         tags: ["governance", "voting-rules"],
         quorum: WAVE1_QUORUM,
-        description: `## The Decision
+        description: `## TL;DR
+
+**One question: how many people need to vote before a result counts?** Today it's roughly 10% of all voting power — a default that was never voted on. Choose 5% (easiest), keep ~10%, or require 20% (strictest). Everything below is the detail.
+
+## The Decision
 
 Pick **one global default quorum** that applies to every proposal type — the minimum share of total quadratic voting power that must cast a ballot (FOR + AGAINST + ABSTAIN) for a result to be valid at all.
 
@@ -134,7 +138,11 @@ GOVERNANCE_MECHANICS.md §14, row 2 — "Global default quorum"; conflict docume
         title: "Governance parameter: pass threshold (simple majority vs supermajority)",
         tags: ["governance", "voting-rules"],
         quorum: WAVE1_QUORUM,
-        description: `## The Decision
+        description: `## TL;DR
+
+**One question: how many "yes" votes does it take to win?** Today most proposals need more yes than no; big ones (chain, tokenomics, technical) need 60% yes. Keep that split, make everything simple-majority, or require 60% everywhere. Detail below.
+
+## The Decision
 
 Should every proposal pass on a **simple majority**, should the **60% supermajority** apply to all types — or should today's split by type stay?
 
@@ -165,7 +173,11 @@ GOVERNANCE_MECHANICS.md §14, row 3 — "Global pass threshold"; per-type table 
         title: "Governance parameter: per-type quorum schedule",
         tags: ["governance", "voting-rules"],
         quorum: WAVE1_QUORUM,
-        description: `## The Decision
+        description: `## TL;DR
+
+**One question: should bigger decisions need more voters?** Today every proposal type has a similar turnout bar (10–15%). Option: grade it — everyday proposals easy (5%), big decisions like chain & tokenomics harder (up to 25%). Or keep today's flat defaults. Detail below.
+
+## The Decision
 
 Adopt the PRD's per-type quorum schedule (up to 25% for high-impact types, 5% for General Discussion) or keep the seeded 10–15% defaults.
 
