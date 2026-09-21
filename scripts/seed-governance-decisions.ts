@@ -99,6 +99,14 @@ const GENERAL_V1_QUORUM = 10.0;
  */
 const WAVE1_QUORUM = 5.0;
 
+/**
+ * Public repo base for the reference links embedded in proposal bodies (the
+ * repo is public, so every voter can follow them).
+ */
+const GITHUB = "https://github.com/PennybagsCX/omnom-dao/blob/main";
+const GM = `${GITHUB}/DOCS/GOVERNANCE_MECHANICS.md`;
+const PRD = `${GITHUB}/PRD.md`;
+
 const WAVES: readonly Wave[] = [
   {
     wave: 1,
@@ -155,7 +163,7 @@ The "default_quorum" values in "proposal_templates" and the create-proposal wiza
 
 ## Reference
 
-GOVERNANCE_MECHANICS.md §14, row 2 — "Global default quorum"; conflict documented in §8.1.`,
+[GOVERNANCE_MECHANICS.md §14, row 2](${GM}#14-open-governance-decisions) — "Global default quorum"; conflict documented in [§8](${GM}#8-quorum--pass-thresholds).`,
       },
       {
         ref: 3,
@@ -206,7 +214,7 @@ Formally ratified thresholds. The finalize engine's supermajority type set stays
 
 ## Reference
 
-GOVERNANCE_MECHANICS.md §14, row 3 — "Global pass threshold"; per-type table in §5, math in §8.`,
+[GOVERNANCE_MECHANICS.md §14, row 3](${GM}#14-open-governance-decisions) — "Global pass threshold"; per-type table in [§5](${GM}#5-proposal-types--thresholds), math in [§8](${GM}#8-quorum--pass-thresholds).`,
       },
       {
         ref: 5,
@@ -259,7 +267,7 @@ Seeded defaults: Chain Selection 15%, Tokenomics Change 15%, Treasury 10%, Techn
 
 ## Reference
 
-GOVERNANCE_MECHANICS.md §14, row 5 — "Per-type quorums"; PRD schedule §8.2, seeded defaults §8.3.`,
+[GOVERNANCE_MECHANICS.md §14, row 5](${GM}#14-open-governance-decisions) — "Per-type quorums"; [PRD §9 schedule](${PRD}), seeded defaults [§8.3](${GM}#83-v1-seeded-defaults-data-modelmd).`,
       },
     ],
   },
@@ -293,7 +301,7 @@ A scheduled sweep that transitions aged PENDING_REVIEW proposals, plus an SLA in
 
 ## Reference
 
-GOVERNANCE_MECHANICS.md §14, row 4 — "Pending Review duration"; conflict documented in §6.2.`,
+[GOVERNANCE_MECHANICS.md §14, row 4](${GM}#14-open-governance-decisions) — "Pending Review duration"; conflict documented in [§6.2](${GM}#62-editing--transition-rules).`,
       },
       {
         ref: 6,
@@ -320,7 +328,7 @@ The per-type minimum-holder-class configuration (server gate and creation-UI cop
 
 ## Reference
 
-GOVERNANCE_MECHANICS.md §14, row 6 — "Min holding to create proposals"; tier table in §5.`,
+[GOVERNANCE_MECHANICS.md §14, row 6](${GM}#14-open-governance-decisions) — "Min holding to create proposals"; tier table in [§5](${GM}#5-proposal-types--thresholds).`,
       },
       {
         ref: 10,
@@ -347,7 +355,7 @@ A schema migration extending the allowed proposal types, new type configuration,
 
 ## Reference
 
-GOVERNANCE_MECHANICS.md §14, row 10 — "Emergency proposals"; PRD open question Q10.`,
+[GOVERNANCE_MECHANICS.md §14, row 10](${GM}#14-open-governance-decisions) — "Emergency proposals"; [PRD open question Q10](${PRD}).`,
       },
     ],
   },
@@ -381,7 +389,7 @@ Vote accounting gains a unique-AGAINST-holder counter and resubmission gating (i
 
 ## Reference
 
-GOVERNANCE_MECHANICS.md §14, row 7 — "30% unique-holder veto / cooling-off"; anti-whale measures in §10.1.`,
+[GOVERNANCE_MECHANICS.md §14, row 7](${GM}#14-open-governance-decisions) — "30% unique-holder veto / cooling-off"; anti-whale measures in [§10.1](${GM}#101-anti-whale-measures-prd-recommendations).`,
       },
       {
         ref: 8,
@@ -408,7 +416,7 @@ A dispute intake process and possibly a public verification surface. Status quo 
 
 ## Reference
 
-GOVERNANCE_MECHANICS.md §14, row 8 — "Snapshot dispute resolution"; PRD open question Q4.`,
+[GOVERNANCE_MECHANICS.md §14, row 8](${GM}#14-open-governance-decisions) — "Snapshot dispute resolution"; [PRD open question Q4](${PRD}).`,
       },
       {
         ref: 9,
@@ -435,7 +443,7 @@ Vote accounting changes and possibly a new identity-linkage layer. Status quo ch
 
 ## Reference
 
-GOVERNANCE_MECHANICS.md §14, row 9 — "Multi-wallet aggregation"; PRD open question Q5.`,
+[GOVERNANCE_MECHANICS.md §14, row 9](${GM}#14-open-governance-decisions) — "Multi-wallet aggregation"; [PRD open question Q5](${PRD}).`,
       },
       {
         ref: 11,
@@ -462,7 +470,7 @@ Ballot-visibility rules and possibly a new public ballots feed. Status quo stays
 
 ## Reference
 
-GOVERNANCE_MECHANICS.md §14, row 11 — "Whale vote transparency"; PRD open question Q8.`,
+[GOVERNANCE_MECHANICS.md §14, row 11](${GM}#14-open-governance-decisions) — "Whale vote transparency"; [PRD open question Q8](${PRD}).`,
       },
     ],
   },
