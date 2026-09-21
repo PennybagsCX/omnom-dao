@@ -92,7 +92,7 @@ Closes Oct 6. Vote at **dao.omnom.dog/proposals** 🐕🧡
 
 Turnout bar ✅ Win condition ✅ This week: **should big decisions need more voters than small ones?**
 
-🟢 FOR = graded bars (chat 5% · standard 10% · chain & tokenomics 25%) · 🔴 AGAINST = keep the flat rules.
+🟢 FOR = graded bars (general proposals 5% · standard 10% · chain & tokenomics 25%) · 🔴 AGAINST = keep the flat rules.
 
 Closes Oct 13. Finish the rulebook — vote at **dao.omnom.dog/proposals** 🐕🧡
 

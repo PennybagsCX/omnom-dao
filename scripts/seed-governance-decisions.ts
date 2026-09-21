@@ -217,7 +217,7 @@ GOVERNANCE_MECHANICS.md §14, row 3 — "Global pass threshold"; per-type table 
 
 **One question: should bigger decisions need more voters than small ones?**
 
-- 🟢 **VOTE FOR** to adopt a **graded turnout bar**: everyday chat 5% · standard proposals 10% · chain & tokenomics 25%.
+- 🟢 **VOTE FOR** to adopt a **graded turnout bar**: General Discussion proposals 5% · standard proposals (Treasury, Guideline, Technical) 10% · chain & tokenomics 25%.
 - 🔴 **VOTE AGAINST** to keep today's flat 10–15% defaults for every type.
 
 This is week 3 of the rulebook: it builds on the turnout default set in week 1 and the win condition set in week 2. Full analysis below.
@@ -226,7 +226,7 @@ This is week 3 of the rulebook: it builds on the turnout default set in week 1 a
 
 The ballot is FOR / AGAINST / ABSTAIN:
 
-- **FOR** = adopt the graded schedule: **General Discussion 5% · Treasury, Community Guideline, Technical 10% · Chain Selection, Tokenomics Change 25%.** Everyday proposals stay easy; the decisions that could reshape the project need the deepest participation.
+- **FOR** = adopt the graded schedule: **General Discussion 5% · Treasury, Community Guideline, Technical 10% · Chain Selection, Tokenomics Change 25%.** ("General Discussion" = formal proposals about community matters rather than money or code — e.g. a community event or program.) Everyday proposals stay easy; the decisions that could reshape the project need the deepest participation.
 - **AGAINST** = keep the flat seeded defaults (10–15% for every type).
 - **ABSTAIN** counts toward turnout (quorum) but not toward the outcome.
 - Interplay: if week 1 adopted the 5% global default, this schedule becomes the per-type refinement of it; if week 1 failed, this vote still decides the schedule on its own.
