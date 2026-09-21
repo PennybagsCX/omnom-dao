@@ -24,7 +24,7 @@ The Foundational Governance Election (the DAO's first vote) closed **2026-09-12*
 **No votes have been run or seeded since the election.** Wave 1 strategy was settled by the owner on 2026-09-21:
 
 1. ✅ **Governance waves strategy — DECIDED** — three themed waves of separate GENERAL proposals — Wave 1 voting rules (§14 #2, #3, #5) → Wave 2 process & access (#4, #6, #10) → Wave 3 holder protections (#7, #8, #9, #11); #12 deferred to the migration arc. **Wave 1 runs at the platform's 5% quorum floor** — a bootstrap convention vote whose container quorum is disclosed in each proposal body (the 10% v1 default was never ratified; a quorum-fail leaves the v1 rules in force). Seed script and announcements updated to match.
-2. **FGE result announcements** — drafted but unposted: `DOCS/announcements/telegram-full.md`, `telegram-caption.md`, `x-draft.md`. Post at the start of the discussion window.
+2. ✅ **Announcements — POSTED 2026-09-21** (owner confirmed): the three FGE result posts and the Wave 1 announcement are live. The Wave 1 discussion window is running.
 3. **Admin review queue** — 4 proposals sit in PENDING_REVIEW at `dao.omnom.dog/admin` (needs the admin wallet).
 4. **Longer arc, after Wave 1**: Chain Selection vote → 6-round tokenomics framework ([TOKENOMICS-OPTIONS.md](../TOKENOMICS-OPTIONS.md) §9) → decision #12 resolved within it.
 
