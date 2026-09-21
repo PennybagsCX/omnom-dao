@@ -152,17 +152,18 @@ describe("proposal-service", () => {
       expect(list.args).toEqual(["ACTIVE", "TREASURY", 10, 20]);
     });
 
-    it("defaults to created_at DESC with no filters", async () => {
+    it("defaults to created_at DESC with no filters, excluding non-public statuses", async () => {
       executeMock
         .mockResolvedValueOnce(result([{ cnt: 0 }]))
         .mockResolvedValueOnce(result([]));
 
       await listProposals({ limit: 5, offset: 0 });
 
-      const list = executeMock.mock.calls[1]![0] as { sql: string; args: number[] };
+      const list = executeMock.mock.calls[1]![0] as { sql: string; args: (string | number)[] };
       expect(list.sql).toContain("ORDER BY created_at DESC");
-      expect(list.sql).not.toContain("WHERE");
-      expect(list.args).toEqual([5, 0]);
+      // Unfiltered lists never serve drafts or pending-review items.
+      expect(list.sql).toContain("status NOT IN");
+      expect(list.args).toEqual(["DRAFT", "PENDING_REVIEW", 5, 0]);
     });
 
     it("supports votingEndsAt sort and status-only filtering", async () => {

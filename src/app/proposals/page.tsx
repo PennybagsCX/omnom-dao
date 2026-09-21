@@ -40,10 +40,10 @@ import {
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
+// Public tabs only — DRAFT and PENDING_REVIEW are never served by the public
+// list API (see NON_PUBLIC_STATUSES in proposal-service.ts).
 const STATUS_TABS: { value: "all" | ProposalStatus; label: string }[] = [
   { value: "all", label: "All" },
-  { value: ProposalStatus.DRAFT, label: "Draft" },
-  { value: ProposalStatus.PENDING_REVIEW, label: "Pending Review" },
   { value: ProposalStatus.ACTIVE, label: "Active" },
   { value: ProposalStatus.PASSED, label: "Passed" },
   { value: ProposalStatus.FAILED, label: "Failed" },
@@ -363,10 +363,13 @@ function ProposalsList({ seed }: { seed: ProposalsUrlSeed | null }) {
         <Card className="mt-6 p-4">
           {/* Status tabs */}
           <div
-            role="tablist"
             aria-label="Filter proposals by status"
-            className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-3 justify-center"
+            className="no-scrollbar -mx-1 overflow-x-auto px-1 pb-3"
           >
+            <div
+              role="tablist"
+              className="mx-auto flex w-max gap-1.5"
+            >
             {STATUS_TABS.map((tab) => {
               const active = statusFilter === tab.value;
               return (
@@ -387,6 +390,7 @@ function ProposalsList({ seed }: { seed: ProposalsUrlSeed | null }) {
                 </button>
               );
             })}
+            </div>
           </div>
 
           {/* Type / Sort / Search row */}

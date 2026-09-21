@@ -127,9 +127,18 @@ export async function listProposals(
   const where: string[] = [];
   const args: (string | number)[] = [];
 
+  // Drafts and pending-review items are never public: filters targeting them
+  // return an empty page, and the unfiltered list excludes them.
+  if (options.status && NON_PUBLIC_STATUSES.includes(options.status)) {
+    return { proposals: [], total: 0 };
+  }
+
   if (options.status) {
     where.push("status = ?");
     args.push(options.status);
+  } else {
+    where.push(`status NOT IN (${NON_PUBLIC_STATUSES.map(() => "?").join(", ")})`);
+    args.push(...NON_PUBLIC_STATUSES);
   }
   if (options.type) {
     where.push("type = ?");
@@ -164,6 +173,18 @@ const FINALIZED_STATUSES: ProposalStatus[] = [
   ProposalStatus.FAILED,
   ProposalStatus.EXPIRED,
   ProposalStatus.EXECUTED,
+];
+
+/**
+ * Statuses that are not public governance content: drafts are pre-submission
+ * author workspace, and pending-review items have not cleared moderation.
+ * The public list never serves them — admin surfaces use authed endpoints —
+ * which keeps seed/staging drafts from public exposure and stops spam
+ * submissions from buying public visibility.
+ */
+const NON_PUBLIC_STATUSES: ProposalStatus[] = [
+  ProposalStatus.DRAFT,
+  ProposalStatus.PENDING_REVIEW,
 ];
 
 /**

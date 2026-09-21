@@ -167,8 +167,8 @@ function coerceInValue(v: unknown): Cell {
 
 interface Condition {
   col: string;
-  op: "=" | "!=" | "<>" | ">" | ">=" | "<" | "<=" | "IN";
-  value: Cell | Cell[]; // PLACEHOLDER → resolve via cursor; arrays for IN
+  op: "=" | "!=" | "<>" | ">" | ">=" | "<" | "<=" | "IN" | "NOT_IN";
+  value: Cell | Cell[]; // PLACEHOLDER → resolve via cursor; arrays for IN / NOT IN
 }
 
 /**
@@ -259,6 +259,19 @@ function splitTopLevel(input: string, sep: string): string[] {
 function parseSingleCondition(raw: string, cursor: PlaceholderCursor): Condition | null {
   if (!raw) return null;
 
+  // col NOT IN ( a, b, c )
+  const notInMatch = raw.match(/^[`\[]?([\w.]+)[`\]]?\s+NOT\s+IN\s*\((.+)\)$/i);
+  if (notInMatch) {
+    const col = unquoteIdent(notInMatch[1]!);
+    const list = splitTopLevel(notInMatch[2]!, ",").map((t) => {
+      const lit = resolveLiteral(t.trim());
+      return (lit as unknown) === PLACEHOLDER
+        ? coerceInValue(cursor.args[cursor.index++])
+        : lit;
+    });
+    return { col, op: "NOT_IN", value: list };
+  }
+
   // col IN ( a, b, c )
   const inMatch = raw.match(/^[`\[]?([\w.]+)[`\]]?\s+IN\s*\((.+)\)$/i);
   if (inMatch) {
@@ -299,6 +312,11 @@ function rowMatches(row: Record<string, Cell>, conds: Condition[]): boolean {
     if (c.op === "IN") {
       const list = c.value as Cell[];
       if (!list.some((v) => cellsEqual(cellVal, v))) return false;
+      continue;
+    }
+    if (c.op === "NOT_IN") {
+      const list = c.value as Cell[];
+      if (list.some((v) => cellsEqual(cellVal, v))) return false;
       continue;
     }
     const rhs = c.value as Cell;

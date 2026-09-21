@@ -15,9 +15,12 @@
  * token) is deferred to the tokenomics arc (TOKENOMICS-OPTIONS.md). Neither is
  * seeded here.
  *
- * Every proposal is inserted as status 'DRAFT' authored by the admin wallet
- * (first entry of NEXT_PUBLIC_ADMIN_ADDRESSES), so the human gate is
- * preserved: an admin reviews, submits and approves through the existing UI.
+ * Every proposal is inserted authored by the admin wallet (first entry of
+ * NEXT_PUBLIC_ADMIN_ADDRESSES), so the human gate is preserved: an admin
+ * reviews and approves through the existing UI. Wave 1 seeds directly as
+ * 'PENDING_REVIEW' (there is no DRAFT→PENDING_REVIEW submit transition in
+ * the platform, so a seeded DRAFT could never be submitted); waves 2–3
+ * still seed as 'DRAFT'.
  *
  * The baseline values quoted in the descriptions were read from the code, not
  * the docs: TYPE_DEFAULTS (create wizard), proposal_templates seed,
@@ -73,6 +76,8 @@ interface DecisionSeed {
 interface Wave {
   wave: 1 | 2 | 3;
   theme: string;
+  /** Status the wave's rows are inserted with. */
+  seedStatus: "DRAFT" | "PENDING_REVIEW";
   decisions: readonly DecisionSeed[];
 }
 
@@ -97,6 +102,7 @@ const WAVES: readonly Wave[] = [
   {
     wave: 1,
     theme: "Voting rules",
+    seedStatus: "PENDING_REVIEW",
     decisions: [
       {
         ref: 2,
@@ -208,6 +214,7 @@ GOVERNANCE_MECHANICS.md §14, row 5 — "Per-type quorums"; PRD schedule §8.2, 
   {
     wave: 2,
     theme: "Process & access",
+    seedStatus: "DRAFT",
     decisions: [
       {
         ref: 4,
@@ -295,6 +302,7 @@ GOVERNANCE_MECHANICS.md §14, row 10 — "Emergency proposals"; PRD open questio
   {
     wave: 3,
     theme: "Holder protections",
+    seedStatus: "DRAFT",
     decisions: [
       {
         ref: 7,
@@ -446,12 +454,12 @@ function parseArgs(argv: readonly string[]): CliArgs | null {
   return { wave: wave as 1 | 2 | 3, dryRun };
 }
 
-function printDecision(d: DecisionSeed, author: string): void {
+function printDecision(d: DecisionSeed, author: string, status: string): void {
   console.log("─".repeat(72));
   console.log(`§14 row    : #${d.ref}`);
   console.log(`Title      : ${d.title}`);
   console.log("Type       : GENERAL");
-  console.log("Status     : DRAFT");
+  console.log(`Status     : ${status}`);
   console.log(`Author     : ${author}`);
   console.log(`Quorum     : ${d.quorum}% of total quadratic power`);
   console.log(`Tags       : ${JSON.stringify({ type: "base", links: [], tags: d.tags })}`);
@@ -478,11 +486,11 @@ async function main(): Promise<void> {
   if (args.dryRun) {
     console.log(
       `DRY RUN — wave ${wave.wave} (${wave.theme}): would insert ` +
-        `${wave.decisions.length} GENERAL proposal(s) as status 'DRAFT'. ` +
+        `${wave.decisions.length} GENERAL proposal(s) as status '${wave.seedStatus}'. ` +
         `No database connection was made.\n`,
     );
     for (const d of wave.decisions) {
-      printDecision(d, author);
+      printDecision(d, author, wave.seedStatus);
     }
     console.log("─".repeat(72));
     console.log(`DRY RUN complete — ${wave.decisions.length} proposal(s) printed, nothing written.`);
@@ -536,10 +544,11 @@ async function main(): Promise<void> {
     stmts.push({
       sql:
         "INSERT INTO proposals (title, description, type, status, author_address, quorum_required, metadata) " +
-        "VALUES (?, ?, 'GENERAL', 'DRAFT', ?, ?, ?)",
+        "VALUES (?, ?, 'GENERAL', ?, ?, ?, ?)",
       args: [
         d.title,
         d.description,
+        wave.seedStatus,
         adminAddress,
         d.quorum,
         JSON.stringify({ type: "base", links: [], tags: d.tags }),
@@ -550,11 +559,11 @@ async function main(): Promise<void> {
   await db.batch(stmts, "write");
 
   for (const d of toInsert) {
-    console.log(`   ✓ DRAFT #${d.ref}: ${d.title}`);
+    console.log(`   ✓ ${wave.seedStatus} #${d.ref}: ${d.title}`);
   }
   console.log(
-    `✅ Seeded ${toInsert.length} proposal(s) for wave ${wave.wave}. ` +
-      `Next: admin reviews and submits them at dao.omnom.dog (DRAFT → PENDING_REVIEW → ACTIVE).`,
+    `✅ Seeded ${toInsert.length} proposal(s) for wave ${wave.wave} as '${wave.seedStatus}'. ` +
+      `Next: admin reviews and approves them at dao.omnom.dog/admin (PENDING_REVIEW → ACTIVE).`,
   );
 }
 
