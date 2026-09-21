@@ -550,6 +550,7 @@ function DeleteAccountDialog() {
               } catch {
                 // Best-effort; proceed to sign out regardless.
               } finally {
+                // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- full reload through the logout endpoint is intentional after account deletion: it must clear the server session and every cached client state.
                 window.location.href = "/api/v1/logout";
               }
             }}

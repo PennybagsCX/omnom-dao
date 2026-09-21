@@ -76,6 +76,7 @@ export function ConnectWalletButton() {
     // Dev path: a full-page reload sidesteps the cache-repopulation race
     // entirely.
     if (isDevMockWalletActive()) {
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- deliberate full reload through the logout endpoint: client-side routing would skip the server session clear + state reset.
       window.location.href = "/api/v1/logout?next=/";
       return;
     }

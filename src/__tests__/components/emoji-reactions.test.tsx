@@ -67,7 +67,7 @@ describe("<EmojiBar>", () => {
   });
 
   it("marks the user's active chip with aria-pressed=true and the gold background class", () => {
-    const { container } = renderBar({ mine: "thumbs_up" });
+    renderBar({ mine: "thumbs_up" });
     const btn = screen.getByLabelText(/remove thumbs up reaction/i);
     expect(btn).toHaveAttribute("aria-pressed", "true");
     expect(btn.className).toContain("border-gold");

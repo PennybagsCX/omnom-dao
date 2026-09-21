@@ -58,7 +58,7 @@ export async function dismissWalletDialog(page: Page): Promise<void> {
 
     // Confirm dialog is gone
     await expect(dialog).toHaveCount(0, { timeout: 2000 });
-  } catch (_e) {
+  } catch {
     // Dismissal failed — log and continue (most assertions don't depend on it)
     console.log("Note: Dialog dismissal failed or dialog already gone");
   }

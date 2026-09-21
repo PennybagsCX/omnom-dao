@@ -183,7 +183,7 @@ describe("<ConnectWalletDialog> verify pipeline guards", () => {
   it("rejects an off-site ?next redirect target after a successful verify", async () => {
     respondHappyPath();
     h.nextParam = "https://evil.example/verify-again";
-    const { rerender } = await openConnected();
+    await openConnected();
     h.signResolve!("0xsigned");
     await screen.findByText(/you're verified/i);
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
@@ -193,7 +193,7 @@ describe("<ConnectWalletDialog> verify pipeline guards", () => {
   it("keeps a same-origin relative ?next redirect target", async () => {
     respondHappyPath();
     h.nextParam = "/governance-vote";
-    const { rerender } = await openConnected();
+    await openConnected();
     h.signResolve!("0xsigned");
     await screen.findByText(/you're verified/i);
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));

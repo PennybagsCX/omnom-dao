@@ -8,7 +8,7 @@ const RUN_E2E = !process.env.VITEST;
  */
 if (RUN_E2E) {
   test.describe("Foundational Governance Election", () => {
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(async () => {
       test.skip(true, "/governance-vote page not implemented - skipping governance election tests");
     });
 

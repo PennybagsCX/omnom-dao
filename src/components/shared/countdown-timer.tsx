@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, Clock, Sparkles, Timer } from "lucide-react";
+import { CheckCircle2, Clock, Timer } from "lucide-react";
 
 import { cn, getTimeRemaining } from "@/lib/utils";
 
