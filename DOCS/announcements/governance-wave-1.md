@@ -3,12 +3,16 @@
 > Announces the three Wave 1 governance-parameter votes (GOVERNANCE_MECHANICS
 > §14 #2 global quorum, #3 pass threshold, #5 per-type quorums). Decided
 > 2026-09-21: the convention votes run at the platform's **5% quorum floor**
-> with the bootstrap rationale disclosed in each proposal body and in these
-> posts — the v1 10% default was never ratified by any vote, and a quorum-fail
-> leaves the v1 rules in force. Simple majority, 7-day window each.
-> **Dates are set:** discussion from posting → voting opens Tue Sep 29 →
-> closes Tue Oct 6, 2026. Admin approves the drafts at `/admin` on Sep 29 to
-> start the windows.
+> with the bootstrap rationale disclosed in each proposal body — the v1 10%
+> default was never ratified by any vote, and a quorum-fail leaves the v1
+> rules in force. Simple majority, 7-day window each.
+>
+> **SCHEDULE UPDATE 2026-09-21:** the three proposals are **SEEDED in prod as
+> DRAFTs** (idempotent per title). The owner's own updates went out a week+
+> ago — no Sept 29 commitment was ever made publicly — so voting opens when
+> the admin submits + approves the drafts at `/admin` (target Tue Sep 22),
+> runs 7 days, and closes **Tue Sep 29**. At approval, post the "Voting is
+> LIVE" one-liner below.
 
 ---
 
@@ -16,7 +20,7 @@
 
 🗳️ **Governance Wave 1: the DAO votes on how it votes.**
 
-Quadratic voting is live. Now the community settles the rulebook itself — three governance parameters, one vote each, opening **September 29**:
+Quadratic voting is live. Now the community settles the rulebook itself — three governance parameters, one vote each, **voting opens September 22**:
 
 1️⃣ **Global quorum** — 5%, today's 10% default, or the PRD's 20%? How much turnout makes a result legitimate.
 
@@ -28,7 +32,7 @@ Quadratic voting is live. Now the community settles the rulebook itself — thre
 
 Every proposal lays out the decision, the current v1 baseline, every option with its trade-offs, and exactly what changes if it passes. Debate happens right in the comments.
 
-📅 Discuss now → voting opens **Sept 29** → closes **Oct 6**.
+📅 Voting opens **Sept 22** → closes **Sept 29**.
 
 If you held $OMNOM at any snapshot, you're already eligible. Read the options, argue your side, then vote at **dao.omnom.dog/proposals**.
 
@@ -48,6 +52,18 @@ Three governance parameters, one vote each:
 
 Transparency: these convention votes run at the 5% platform floor — the 10% default they replace was never itself voted on. Fail to reach quorum → rules stay as-is. Simple majority, 7-day window each.
 
-Opens Sept 29. Read the options and vote at dao.omnom.dog/proposals
+Opens Sept 22, closes Sept 29. Read the options and vote at dao.omnom.dog/proposals
+
+Your voice. Your $OMNOM. Your DAO. 🐕🧡
+
+---
+
+## "Voting is LIVE" one-liner (post at approval)
+
+🗳️ **VOTING IS LIVE** on $OMNOM DAO — Governance Wave 1: the DAO votes on how it votes.
+
+Three rulebook votes, one week: global quorum · pass threshold · per-type quorums. Full transparency: these convention votes run at the 5% platform floor — the 10% default they replace was never itself voted on. Fail to reach quorum → rules stay as-is.
+
+Closes **Sept 29**. Read, argue in the comments, then vote at **dao.omnom.dog/proposals**
 
 Your voice. Your $OMNOM. Your DAO. 🐕🧡

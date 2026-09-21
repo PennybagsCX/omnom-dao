@@ -21,7 +21,7 @@ The Foundational Governance Election (the DAO's first vote) closed **2026-09-12*
 
 ## Deliberately pending — owner decisions
 
-**No votes have been run or seeded since the election.** Wave 1 strategy was settled by the owner on 2026-09-21:
+**No votes have been RUN since the election.** Wave 1 strategy was settled by the owner on 2026-09-21, and the three Wave 1 proposals were **SEEDED into prod as DRAFTs the same day** (idempotent per title):
 
 1. ✅ **Governance waves strategy — DECIDED** — three themed waves of separate GENERAL proposals — Wave 1 voting rules (§14 #2, #3, #5) → Wave 2 process & access (#4, #6, #10) → Wave 3 holder protections (#7, #8, #9, #11); #12 deferred to the migration arc. **Wave 1 runs at the platform's 5% quorum floor** — a bootstrap convention vote whose container quorum is disclosed in each proposal body (the 10% v1 default was never ratified; a quorum-fail leaves the v1 rules in force). Seed script and announcements updated to match.
 2. ✅ **Announcements — POSTED 2026-09-21** (owner confirmed): the three FGE result posts and the Wave 1 announcement are live. The Wave 1 discussion window is running.
@@ -30,18 +30,20 @@ The Foundational Governance Election (the DAO's first vote) closed **2026-09-12*
 
 ## Resuming — the exact steps
 
-Wave 1 execution (strategy settled 2026-09-21):
+Wave 1 is **seeded** (2026-09-21, verified in prod: 3 DRAFT rows, quorum 5%). What remains:
 
 ```bash
-npx tsx scripts/seed-governance-decisions.ts --wave 1 --dry-run   # preview
-npx tsx scripts/seed-governance-decisions.ts --wave 1             # creates DRAFTs (admin wallet author)
-# → Tue Sep 29: admin submits + approves at /admin → 7-day vote opens
+# Nothing to run — the drafts already exist. Admin flow at dao.omnom.dog/admin:
+# → submit + approve each of the 3 drafts (DRAFT → PENDING_REVIEW → ACTIVE)
+#   Target: Tue Sep 22 — approval is the moment the 7-day clocks start
 #   (Wave 1 rows: 5% quorum of total quadratic power, simple majority — the
 #    disclosed convention-vote floor; Waves 2–3 use the 10% GENERAL default)
-# → Tue Oct 6: window closes; then /admin → "Record outcome" on each result
+# → ~Tue Sep 29: windows close (30-min cron finalizes automatically)
+#   then /admin → "Record outcome" on each result
+# → Post the "Voting is LIVE" one-liner from DOCS/announcements/governance-wave-1.md at approval
 ```
 
-Wave 1's announcement is at `DOCS/announcements/governance-wave-1.md` (dates filled: discuss from posting → vote opens Sep 29 → closes Oct 6). Later waves keep the `[DATE]`-placeholder pattern until their turn.
+If the drafts ever need re-creation, the seed is idempotent per title: `npx tsx --env-file=.env.local scripts/seed-governance-decisions.ts --wave 1` skips existing titles. Wave 1's announcement record (incl. the one-liner) is at `DOCS/announcements/governance-wave-1.md`. Later waves keep the `[DATE]`-placeholder pattern until their turn.
 
 ## Ops reference
 
