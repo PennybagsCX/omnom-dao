@@ -92,4 +92,33 @@ describe("ProposalCard — reaction tallies", () => {
     });
     expect(screen.getByTestId("emoji-bar")).toBeInTheDocument();
   });
+
+  it("shows a comment-count chip when the proposal has comments", () => {
+    renderCard({ status: ProposalStatus.PASSED, commentCount: 4 });
+    const chip = screen.getByTitle("4 comments");
+    expect(chip).toHaveTextContent("4");
+  });
+
+  it("uses singular phrasing for one comment", () => {
+    renderCard({ status: ProposalStatus.PASSED, commentCount: 1 });
+    expect(screen.getByTitle("1 comment")).toBeInTheDocument();
+  });
+
+  it("hides the comment chip when commentCount is 0 or unknown", () => {
+    renderCard({ status: ProposalStatus.PASSED, commentCount: 0 });
+    expect(screen.queryByTitle("0 comments")).not.toBeInTheDocument();
+    renderCard({ status: ProposalStatus.FAILED, commentCount: undefined });
+    expect(screen.queryByTitle(/comments?/)).not.toBeInTheDocument();
+  });
+
+  it("shows comment chip and emoji tallies together in one engagement row", () => {
+    const counts = { ...emptyEmojiCounts(), thumbs_up: 2 };
+    renderCard({
+      status: ProposalStatus.ACTIVE,
+      commentCount: 3,
+      emojiReactionCounts: counts,
+    });
+    expect(screen.getByTitle("3 comments")).toBeInTheDocument();
+    expect(screen.getByTestId("chip-thumbs_up")).toBeInTheDocument();
+  });
 });

@@ -1,6 +1,6 @@
 import { memo } from "react";
 import Link from "next/link";
-import { Clock, PenLine } from "lucide-react";
+import { Clock, MessageSquare, PenLine } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { CountdownTimer } from "@/components/shared/countdown-timer";
@@ -38,6 +38,8 @@ export const ProposalCard = memo(function ProposalCard({
     ? Object.values(proposal.emojiReactionCounts).reduce((sum, n) => sum + n, 0)
     : 0;
   const showEmojiBar = totalEmojis > 0 || proposal.myEmojiReaction !== null;
+  const commentCount = proposal.commentCount ?? 0;
+  const showEngagementRow = showEmojiBar || commentCount > 0;
 
   return (
     <Link
@@ -94,22 +96,33 @@ export const ProposalCard = memo(function ProposalCard({
             )}
           </div>
 
-          {showEmojiBar && (
+          {showEngagementRow && (
             <div
-              className="mt-2"
+              className="mt-2 flex flex-wrap items-center justify-center gap-1.5"
               /* Stop propagation so clicking an emoji chip doesn't also trigger
                  the parent <Link> navigation. The chip is a real button; the
                  parent link is for the rest of the card surface. */
               onClick={(e) => e.stopPropagation()}
             >
-              <EmojiReactionsBar
-                surface="proposal"
-                proposalId={proposal.id}
-                emojiReactionCounts={proposal.emojiReactionCounts}
-                myEmojiReaction={proposal.myEmojiReaction}
-                isAuthenticated={false}
-                compact
-              />
+              {commentCount > 0 && (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground"
+                  title={`${commentCount} comment${commentCount === 1 ? "" : "s"}`}
+                >
+                  <MessageSquare className="h-3.5 w-3.5" aria-hidden />
+                  {commentCount}
+                </span>
+              )}
+              {showEmojiBar && (
+                <EmojiReactionsBar
+                  surface="proposal"
+                  proposalId={proposal.id}
+                  emojiReactionCounts={proposal.emojiReactionCounts}
+                  myEmojiReaction={proposal.myEmojiReaction}
+                  isAuthenticated={false}
+                  compact
+                />
+              )}
             </div>
           )}
         </CardContent>

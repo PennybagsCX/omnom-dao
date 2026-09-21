@@ -274,6 +274,8 @@ export interface Proposal {
   emojiReactionCounts: EmojiReactionCounts;
   /** The current user's emoji reaction on this proposal (one of the 8 keys, or null). */
   myEmojiReaction: EmojiKey | null;
+  /** Non-deleted comment count (hydrated by list/detail queries; undefined = unknown). */
+  commentCount?: number;
 }
 
 /** Pre-defined template to standardize common proposal types. */

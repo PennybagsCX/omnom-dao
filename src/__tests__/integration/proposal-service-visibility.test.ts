@@ -173,4 +173,46 @@ describe("listProposals — non-public statuses", () => {
     expect(emojiStmt.sql).toContain("IN (?)");
     expect(emojiStmt.args).toEqual(["p1"]);
   });
+
+  it("attaches non-deleted comment counts to list results", async () => {
+    const { listProposals } = await import("@/lib/proposal-service");
+    hoisted.execute.mockImplementation(async (stmt: { sql: string }) => {
+      if (stmt.sql.startsWith("SELECT COUNT")) {
+        return { rows: [{ cnt: 1 }], columns: [], rowsAffected: 0, lastInsertRowid: undefined };
+      }
+      if (stmt.sql.includes("FROM proposals")) {
+        return {
+          rows: [proposalRow({ id: "p1", status: "ACTIVE" })],
+          columns: [],
+          rowsAffected: 0,
+          lastInsertRowid: undefined,
+        };
+      }
+      if (stmt.sql.includes("FROM proposal_emoji_reactions")) {
+        return { rows: [], columns: [], rowsAffected: 0, lastInsertRowid: undefined };
+      }
+      if (stmt.sql.includes("FROM comments")) {
+        return {
+          rows: [
+            { proposal_id: "p1", deleted_at: null },
+            { proposal_id: "p1", deleted_at: null },
+            { proposal_id: "p1", deleted_at: "2026-06-02T00:00:00.000Z" },
+          ],
+          columns: [],
+          rowsAffected: 0,
+          lastInsertRowid: undefined,
+        };
+      }
+      return { rows: [], columns: [], rowsAffected: 0, lastInsertRowid: undefined };
+    });
+
+    const result = await listProposals({ limit: 20, offset: 0 });
+    // Soft-deleted comments don't count — same as the detail page.
+    expect(result.proposals[0]!.commentCount).toBe(2);
+    const commentStmt = hoisted.execute.mock.calls.find(
+      (c) => (c[0] as { sql: string }).sql.includes("FROM comments"),
+    )![0] as { sql: string; args: unknown[] };
+    expect(commentStmt.sql).toContain("IN (?)");
+    expect(commentStmt.args).toEqual(["p1"]);
+  });
 });

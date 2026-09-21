@@ -108,6 +108,30 @@ async function attachEmojiCounts(proposals: Proposal[]): Promise<void> {
   }
 }
 
+/**
+ * Batch-attach non-deleted comment counts — the same number the detail page
+ * shows ("N comments" = rows without deleted_at). Raw rows fetched and
+ * counted in JS to stay mock-db safe.
+ */
+async function attachCommentCounts(proposals: Proposal[]): Promise<void> {
+  if (proposals.length === 0) return;
+  const ids = proposals.map((p) => p.id);
+  const placeholders = ids.map(() => "?").join(",");
+  const res = await db.execute({
+    sql: `SELECT proposal_id, deleted_at FROM comments WHERE proposal_id IN (${placeholders})`,
+    args: ids,
+  });
+  const countsById = new Map<string, number>();
+  for (const r of res.rows) {
+    if (r.deleted_at) continue;
+    const pid = r.proposal_id as string;
+    countsById.set(pid, (countsById.get(pid) ?? 0) + 1);
+  }
+  for (const p of proposals) {
+    p.commentCount = countsById.get(p.id) ?? 0;
+  }
+}
+
 async function attachHolderClasses(proposals: Proposal[]): Promise<void> {
   if (proposals.length === 0) return;
   const addresses = proposals.flatMap((p) =>
@@ -192,6 +216,7 @@ export async function listProposals(
   );
   await attachHolderClasses(proposals);
   await attachEmojiCounts(proposals);
+  await attachCommentCounts(proposals);
   return { proposals, total };
 }
 
@@ -231,6 +256,7 @@ export async function listFinalizedProposals(): Promise<Proposal[]> {
   );
   await attachHolderClasses(proposals);
   await attachEmojiCounts(proposals);
+  await attachCommentCounts(proposals);
   return proposals;
 }
 
