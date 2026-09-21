@@ -16,7 +16,8 @@ The Foundational Governance Election (the DAO's first vote) closed **2026-09-12*
 | **Public `/results` page** | Election results + every finalized proposal in one place, nav-linked. |
 | **30-minute cron** | GitHub Actions pinger (`cron-finalize.yml`, secret `CRON_SECRET` set) drives finalize + ending-soon reminders; daily Vercel cron is the fallback. Sweep now runs *before* finalize so expiring votes don't miss their reminder. |
 | **Accuracy pass** | Every "1 token = 1 vote" / "% of total supply" claim (UI + docs) corrected to the shipped quadratic model — plus the homepage follow-up (`4a6599d`): "Voting model TBD by community" → "Quadratic voting — community-elected", and the election countdown (whose past-date state read "Voting is now live") replaced with a closed banner linking to `/results`. Lesson recorded: staleness sweeps must be conceptual, not phrase-lists — rendered component defaults can be stale even when source strings are right. |
-| **Governance wave prep** | `scripts/seed-governance-decisions.ts --wave 1\|2\|3` creates the 11 open governance parameters ([GOVERNANCE_MECHANICS §14](GOVERNANCE_MECHANICS.md)) as DRAFT proposals — plus a Wave 1 announcement draft. |
+| **Governance wave prep** | `scripts/seed-governance-decisions.ts --wave 1\|2\|3` creates the 11 open governance parameters ([GOVERNANCE_MECHANICS §14](GOVERNANCE_MECHANICS.md)) — **Wave 1 seeds as PENDING_REVIEW** (there is no DRAFT→PENDING_REVIEW submit transition in the platform, so a seeded DRAFT could never be submitted); waves 2–3 seed as DRAFT. Wave 1 seeded into prod 2026-09-21: 3 PENDING_REVIEW rows, 5% quorum each, plain-language TL;DR at the top of every body. Announcement pack (3-week staggered cadence) at `DOCS/announcements/governance-wave-1.md`. |
+| **Draft visibility fix** (2026-09-21) | The public proposals list no longer serves DRAFT or PENDING_REVIEW items — filters targeting them return empty and the unfiltered list excludes them (`NON_PUBLIC_STATUSES` in `src/lib/proposal-service.ts`); the public filter bar drops the Draft/Pending tabs. Closes a leak where seed/staging drafts and unreviewed spam submissions were publicly browsable. Admin review queue unaffected (authed endpoint). Mock DB gained `NOT IN` support so mock mode mirrors prod. |
 | **Admin proposal deletion** (2026-09-19) | Admin can hard-delete **FAILED** proposals (rejected / quorum-failed) from the detail page or the new `/admin` "Failed proposals" cleanup section — votes, comments, and reactions go with it; notifications detach; a `PROPOSAL_DELETED` entry stays in the public audit log. Ships with per-type voting duration defaults (14d chain-selection/tokenomics, 7d fallback) fixing the approve route's hardcoded 168h window. **Prod migration done 2026-09-20** (`db:migrate:proposal-deleted`: audit_log rebuilt, 1 row preserved, re-run verified idempotent) — deletes are audit-safe as of now. |
 
 ## Deliberately pending — owner decisions
@@ -30,20 +31,15 @@ The Foundational Governance Election (the DAO's first vote) closed **2026-09-12*
 
 ## Resuming — the exact steps
 
-Wave 1 is **seeded** (2026-09-21, verified in prod: 3 DRAFT rows, quorum 5%). What remains:
+Wave 1 is **seeded and waiting in the admin queue** (2026-09-21: 3 PENDING_REVIEW rows, 5% quorum each, TL;DR-topped bodies). **Cadence: one vote per week** — approve ONLY the current week's item:
 
-```bash
-# Nothing to run — the drafts already exist. Admin flow at dao.omnom.dog/admin:
-# → submit + approve each of the 3 drafts (DRAFT → PENDING_REVIEW → ACTIVE)
-#   Target: Tue Sep 22 — approval is the moment the 7-day clocks start
-#   (Wave 1 rows: 5% quorum of total quadratic power, simple majority — the
-#    disclosed convention-vote floor; Waves 2–3 use the 10% GENERAL default)
-# → ~Tue Sep 29: windows close (30-min cron finalizes automatically)
-#   then /admin → "Record outcome" on each result
-# → Post the "Voting is LIVE" full announcement from DOCS/announcements/governance-wave-1.md at approval
-```
+| Week | Approve this item only | Window |
+|---|---|---|
+| 1 | Governance parameter: global default quorum | Sep 22 → closes Sep 29 |
+| 2 | Governance parameter: pass threshold (simple majority vs supermajority) | Sep 29 → closes Oct 6 |
+| 3 | Governance parameter: per-type quorum schedule | Oct 6 → closes Oct 13 |
 
-If the drafts ever need re-creation, the seed is idempotent per title: `npx tsx --env-file=.env.local scripts/seed-governance-decisions.ts --wave 1` skips existing titles. Wave 1's announcement record (incl. the one-liner) is at `DOCS/announcements/governance-wave-1.md`. Later waves keep the `[DATE]`-placeholder pattern until their turn.
+Weekly flow: approve the week's item at `dao.omnom.dog/admin` (approval starts the 7-day clock; the 30-min cron finalizes) → post that week's announcement from `DOCS/announcements/governance-wave-1.md` (Week 1 full post + X; Weeks 2–3 short posts) → after close, `/admin` → "Record outcome".
 
 ## Ops reference
 
