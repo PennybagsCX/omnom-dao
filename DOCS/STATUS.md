@@ -21,26 +21,27 @@ The Foundational Governance Election (the DAO's first vote) closed **2026-09-12*
 
 ## Deliberately pending — owner decisions
 
-**No votes have been run or seeded since the election.** The owner explicitly deferred everything voting-related pending strategy discussions "over the next few days":
+**No votes have been run or seeded since the election.** Wave 1 strategy was settled by the owner on 2026-09-21:
 
-1. **Governance waves strategy** — which decisions go first, how to frame quorum/threshold options given the 0.14% turnout reality, timing between waves. Recommended shape (from planning): three themed waves of separate GENERAL proposals — Wave 1 voting rules (§14 #2, #3, #5) → Wave 2 process & access (#4, #6, #10) → Wave 3 holder protections (#7, #8, #9, #11); #12 deferred to the migration arc.
-2. **FGE result announcements** — drafted but unposted: `DOCS/announcements/telegram-full.md`, `telegram-caption.md`, `x-draft.md`.
+1. ✅ **Governance waves strategy — DECIDED** — three themed waves of separate GENERAL proposals — Wave 1 voting rules (§14 #2, #3, #5) → Wave 2 process & access (#4, #6, #10) → Wave 3 holder protections (#7, #8, #9, #11); #12 deferred to the migration arc. **Wave 1 runs at the platform's 5% quorum floor** — a bootstrap convention vote whose container quorum is disclosed in each proposal body (the 10% v1 default was never ratified; a quorum-fail leaves the v1 rules in force). Seed script and announcements updated to match.
+2. **FGE result announcements** — drafted but unposted: `DOCS/announcements/telegram-full.md`, `telegram-caption.md`, `x-draft.md`. Post at the start of the discussion window.
 3. **Admin review queue** — 4 proposals sit in PENDING_REVIEW at `dao.omnom.dog/admin` (needs the admin wallet).
 4. **Longer arc, after Wave 1**: Chain Selection vote → 6-round tokenomics framework ([TOKENOMICS-OPTIONS.md](../TOKENOMICS-OPTIONS.md) §9) → decision #12 resolved within it.
 
 ## Resuming — the exact steps
 
-When the strategy is settled, running Wave 1 is:
+Wave 1 execution (strategy settled 2026-09-21):
 
 ```bash
 npx tsx scripts/seed-governance-decisions.ts --wave 1 --dry-run   # preview
 npx tsx scripts/seed-governance-decisions.ts --wave 1             # creates DRAFTs (admin wallet author)
-# → admin submits + approves at /admin → 7-day vote runs under current v1 rules
-#   (GENERAL: 10% quorum of total quadratic power, simple majority)
-# → after close: /admin → "Record outcome" on each result
+# → Tue Sep 29: admin submits + approves at /admin → 7-day vote opens
+#   (Wave 1 rows: 5% quorum of total quadratic power, simple majority — the
+#    disclosed convention-vote floor; Waves 2–3 use the 10% GENERAL default)
+# → Tue Oct 6: window closes; then /admin → "Record outcome" on each result
 ```
 
-Each wave needs its announcement draft (Wave 1's is at `DOCS/announcements/governance-wave-1.md`, dates as `[DATE]` placeholders) and a discussion period before the vote opens.
+Wave 1's announcement is at `DOCS/announcements/governance-wave-1.md` (dates filled: discuss from posting → vote opens Sep 29 → closes Oct 6). Later waves keep the `[DATE]`-placeholder pattern until their turn.
 
 ## Ops reference
 
@@ -51,7 +52,6 @@ Each wave needs its announcement draft (Wave 1's is at `DOCS/announcements/gover
 
 ## Known non-urgent follow-ups
 
-- Approve route hardcodes a 168h (7-day) window regardless of the per-type defaults the create flow advertises.
 - Push channels (email/Telegram) are removed; in-app only. Revisit if turnout justifies.
 - Seed script is idempotent per single run but has no guard against two concurrent runs (operator-run tool; theoretical).
 - Vercel Hobby caps the native cron at daily — the GitHub Actions pinger covers 30-min cadence.
