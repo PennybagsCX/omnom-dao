@@ -58,12 +58,44 @@ Your voice. Your $OMNOM. Your DAO. 🐕🧡
 
 ---
 
-## "Voting is LIVE" one-liner (post at approval)
+## "Voting is LIVE" full post (post at approval)
 
-🗳️ **VOTING IS LIVE** on $OMNOM DAO — Governance Wave 1: the DAO votes on how it votes.
+🗳️ **GOVERNANCE WAVE 1 IS LIVE: the DAO votes on how it votes.**
 
-Three rulebook votes, one week: global quorum · pass threshold · per-type quorums. Full transparency: these convention votes run at the 5% platform floor — the 10% default they replace was never itself voted on. Fail to reach quorum → rules stay as-is.
+Quick recap: in the Foundational Governance Election you elected **Quadratic Voting** with 65.7% of the vote. Before the DAO takes any big decisions — chain migration, tokenomics — it needs a rulebook everyone actually agreed on. That's what Wave 1 is: **three votes where the community sets the rules of voting itself.**
 
-Closes **Sept 29**. Read, argue in the comments, then vote at **dao.omnom.dog/proposals**
+**What's on the ballot** (one vote each, FOR / AGAINST / ABSTAIN):
+
+1️⃣ **Global default quorum** — the minimum participation for any vote to count. 5%? Today's per-type 5–10%? The PRD's 20%?
+
+2️⃣ **Pass threshold** — simple majority for everything, 60% supermajority for everything, or today's split (majority for low-stakes votes, supermajority for chain, tokenomics and technical)?
+
+3️⃣ **Per-type quorum schedule** — keep today's 10–15% for all proposal types, or adopt the PRD schedule (5% for general discussion, up to 25% for chain & tokenomics)?
+
+**Why these first?** Every future vote inherits these rules. Settle the rulebook now, and every big decision after this gets made properly.
+
+**Full transparency — please read this part:** these three "convention" votes are stored with a **5% quorum — the platform's minimum** — instead of the usual 10% default. Why? Because the 10% default was never ratified by anyone; it shipped as an engineering placeholder. A rulebook vote that no realistic turnout could legitimize would settle nothing. So this convention runs at the lowest bar the platform allows — and says so right inside each proposal. **If any vote fails to reach quorum, nothing changes: the current rules simply stay in force.**
+
+**Your voting power:** quadratic — floor(√ your snapshot balance). If you held $OMNOM at the pinned snapshot, you're already eligible. Abstentions count toward quorum but not toward the outcome. Each vote is decided by simple majority under the current rules.
+
+📅 Voting closes **Tuesday, September 29** (7-day window).
+
+Read the full proposals, argue your side in the comments, then vote 👉 **dao.omnom.dog/proposals**
+
+**What's next:** Wave 2 — process & access (review timeouts, who can create proposals, an emergency track). Wave 3 — holder protections (anti-whale safeguards, snapshot disputes, whale vote transparency). Then the big arc: chain selection and the tokenomics framework.
+
+Your voice. Your $OMNOM. Your DAO. 🐕🧡
+
+---
+
+## X — short version
+
+🗳️ Governance Wave 1 is LIVE on $OMNOM DAO: the DAO votes on how it votes.
+
+Three rulebook votes: global quorum · pass threshold · per-type quorums. Settle the rules first — then the big decisions get made properly.
+
+Transparency: convention votes run at the 5% platform floor (the 10% default was never voted on). Quorum-fail → rules stay as-is.
+
+Closes Sept 29. Vote 👉 dao.omnom.dog/proposals
 
 Your voice. Your $OMNOM. Your DAO. 🐕🧡

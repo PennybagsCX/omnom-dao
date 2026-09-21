@@ -40,7 +40,7 @@ Wave 1 is **seeded** (2026-09-21, verified in prod: 3 DRAFT rows, quorum 5%). Wh
 #    disclosed convention-vote floor; Waves 2–3 use the 10% GENERAL default)
 # → ~Tue Sep 29: windows close (30-min cron finalizes automatically)
 #   then /admin → "Record outcome" on each result
-# → Post the "Voting is LIVE" one-liner from DOCS/announcements/governance-wave-1.md at approval
+# → Post the "Voting is LIVE" full announcement from DOCS/announcements/governance-wave-1.md at approval
 ```
 
 If the drafts ever need re-creation, the seed is idempotent per title: `npx tsx --env-file=.env.local scripts/seed-governance-decisions.ts --wave 1` skips existing titles. Wave 1's announcement record (incl. the one-liner) is at `DOCS/announcements/governance-wave-1.md`. Later waves keep the `[DATE]`-placeholder pattern until their turn.
