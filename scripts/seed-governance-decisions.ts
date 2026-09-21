@@ -112,29 +112,46 @@ const WAVES: readonly Wave[] = [
         quorum: WAVE1_QUORUM,
         description: `## TL;DR
 
-**One question: how many people need to vote before a result counts?** Today it's roughly 10% of all voting power — a default that was never voted on. Choose 5% (easiest), keep ~10%, or require 20% (strictest). Everything below is the detail.
+**One question: how many people need to vote before a result counts?**
 
-## The Decision
+- 🟢 **VOTE FOR** to adopt a single **5% global default quorum** — the lowest bar the platform allows, ratified by you.
+- 🔴 **VOTE AGAINST** to keep the current per-type defaults (10–15%, set by nobody).
 
-Pick **one global default quorum** that applies to every proposal type — the minimum share of total quadratic voting power that must cast a ballot (FOR + AGAINST + ABSTAIN) for a result to be valid at all.
+Everything below is the full analysis, including the real turnout math.
 
-## About This Vote's Quorum
+## How To Vote
 
-This proposal is stored with a **5% quorum** — the platform's minimum — rather than the 10% GENERAL default, and it says so openly: the 10% default was never ratified by any vote; it shipped as a v1 placeholder. A rulebook vote that no realistic turnout could legitimize would settle nothing, so this convention vote runs at the lowest bar the platform allows. **If this vote fails to reach quorum, nothing changes — the current v1 rules stay in force.**
+The ballot is FOR / AGAINST / ABSTAIN:
+
+- **FOR** = adopt a **5% global default quorum** for every proposal type. From now on, a result counts when ≥5% of all voting power participates.
+- **AGAINST** = keep today's rules: per-type defaults of 10–15% that were never ratified by any vote.
+- **ABSTAIN** counts toward turnout (quorum) but not toward the outcome.
+- Whichever way you lean: a result only counts at all if the 5% turnout bar is met — see the math below.
+
+## The Turnout Math (full transparency)
+
+Real numbers from the pinned snapshot (25,686 ever-held wallets, block 5,992,210):
+
+- **Total voting power:** 581,973,790 — the sum of √(balance) across every wallet ever holding $OMNOM.
+- **The 5% bar** (this vote's own quorum floor) = **29,098,690 power ≈ 1,284 average-power wallets voting.**
+- The old 10% default ≈ 2,569 average-power wallets. The PRD's 20% ≈ 5,137.
+- **Peak turnout ever:** the Foundational Governance Election — our most-promoted vote — reached **15,865,230 power = 2.73% of total**, from 35 voters.
+
+Honest read: the 5% bar is roughly **2× the best turnout this community has ever produced**. The old 10% default was ~3.7× peak. That is why this convention vote runs at the platform floor (5%) instead of the never-ratified 10% default: a rulebook vote no realistic turnout could legitimize would settle nothing. **If this vote fails to reach quorum, nothing changes — the current rules stay in force.**
 
 ## Current Baseline (v1)
 
 There is no single global value today. Seeded per-type defaults apply: Chain Selection 15%, Tokenomics Change 15%, Treasury 10%, Technical 10%, Community Guideline 10%, General Discussion 10%. Quorum counts every ballot (abstentions included) against **total quadratic power** — the sum of floor(sqrt(balance)) across the snapshot. The source documents disagreed (schema default 10%, creation-UI floor 5%, PRD recommendation 20%); that disagreement is exactly what this vote settles.
 
-## Options
+## Options Considered
 
-- **5% global** — lowest friction, easiest legitimacy; risk: a small early electorate decides for everyone.
-- **Keep the per-type 5–10% band** (current practice, formalized) — proven in production; risk: two different legitimacy standards coexist.
-- **20% global** (PRD recommendation) — strongest mandate; risk: chronic "Quorum Not Met" failures given holdings dispersed across 25,686 eligible wallets.
+- **5% global** (recommended — VOTE FOR) — lowest friction, easiest legitimacy; risk: a small early electorate decides for everyone.
+- **Keep the per-type 10–15% band** (AGAINST) — the status quo; risk: never ratified, and at measured turnout it can never be met.
+- **20% global** (PRD recommendation, dropped from this ballot) — strongest mandate; at 2.73% peak turnout it is unreachable for years. Anyone may propose it later once participation grows.
 
 ## What Changes If Adopted
 
-The \`default_quorum\` values in \`proposal_templates\` and the create-proposal wizard defaults. The finalization engine itself is unchanged.
+The "default_quorum" values in "proposal_templates" and the create-proposal wizard defaults become 5% for every type. The finalization engine itself is unchanged.
 
 ## Reference
 
@@ -147,29 +164,45 @@ GOVERNANCE_MECHANICS.md §14, row 2 — "Global default quorum"; conflict docume
         quorum: WAVE1_QUORUM,
         description: `## TL;DR
 
-**One question: how many "yes" votes does it take to win?** Today most proposals need more yes than no; big ones (chain, tokenomics, technical) need 60% yes. Keep that split, make everything simple-majority, or require 60% everywhere. Detail below.
+**One question: how many "yes" votes does it take to win?**
 
-## The Decision
+- 🟢 **VOTE FOR** to **ratify the current split**: everyday proposals pass on simple majority; chain, tokenomics and technical changes need a 60% supermajority.
+- 🔴 **VOTE AGAINST** for simple majority everywhere (no supermajority for anything).
 
-Should every proposal pass on a **simple majority**, should the **60% supermajority** apply to all types — or should today's split by type stay?
+This vote **ratifies rules that until now were never voted on** — a yes makes them officially yours. Full analysis below.
 
-## About This Vote's Quorum
+## How To Vote
 
-This proposal is stored with a **5% quorum** — the platform's minimum — rather than the 10% GENERAL default, and it says so openly: the 10% default was never ratified by any vote; it shipped as a v1 placeholder. A rulebook vote that no realistic turnout could legitimize would settle nothing, so this convention vote runs at the lowest bar the platform allows. **If this vote fails to reach quorum, nothing changes — the current v1 rules stay in force.**
+The ballot is FOR / AGAINST / ABSTAIN:
+
+- **FOR** = ratify today's split: simple majority (more yes than no) for Treasury, Community Guideline and General Discussion; **≥60% supermajority** of yes/no power for Chain Selection, Tokenomics Change and Technical — the decisions that can reshape the whole project.
+- **AGAINST** = abolish the supermajority: every proposal type passes on simple majority.
+- **ABSTAIN** counts toward turnout (quorum) but not toward the outcome.
+
+## The Turnout Math (full transparency)
+
+Real numbers from the pinned snapshot (25,686 ever-held wallets, block 5,992,210):
+
+- **Total voting power:** 581,973,790 — the sum of √(balance) across every wallet ever holding $OMNOM.
+- **The 5% bar** (this vote's own quorum floor) = **29,098,690 power ≈ 1,284 average-power wallets voting.**
+- The old 10% default ≈ 2,569 average-power wallets.
+- **Peak turnout ever:** the Foundational Governance Election reached **15,865,230 power = 2.73% of total**, from 35 voters.
+
+Honest read: the 5% bar is roughly **2× the best turnout this community has ever produced**. That is why this convention vote runs at the platform floor (5%) instead of the never-ratified 10% default: a rulebook vote no realistic turnout could legitimize would settle nothing. **If this vote fails to reach quorum, nothing changes — the current rules stay in force.**
 
 ## Current Baseline (v1)
 
-Split by type. Simple majority (FOR > AGAINST) for Treasury, Community Guideline and General Discussion; **≥60% supermajority** of (FOR + AGAINST) for Chain Selection, Tokenomics Change and Technical. Abstentions never count toward the outcome — only toward quorum.
+Split by type. Simple majority (FOR > AGAINST) for Treasury, Community Guideline and General Discussion; **≥60% supermajority** of (FOR + AGAINST) for Chain Selection, Tokenomics Change and Technical. Abstentions never count toward the outcome — only toward quorum. These defaults shipped with the platform and were never ratified by a vote; that is exactly what this ballot fixes.
 
-## Options
+## Options Considered
 
-- **Simple majority for all** — maximizes throughput; high-impact decisions become materially easier to pass.
-- **60% supermajority for all** — maximizes consensus; more proposals fail even with healthy turnout.
-- **Keep the per-type split** (status quo) — high-impact stays harder to pass; no code change.
+- **Ratify the current split** (recommended — VOTE FOR) — big decisions stay harder to pass; everyday ones stay easy.
+- **Simple majority for all** (AGAINST) — maximizes throughput; high-impact decisions become materially easier to pass.
+- **60% supermajority for all** (dropped from this ballot) — maximizes consensus but makes every proposal harder at exactly the time turnout is the binding constraint. Anyone may propose it later.
 
 ## What Changes If Adopted
 
-The finalize engine's supermajority type set (which types require the 60% gate) and the documented thresholds. Choosing the status quo changes nothing.
+Formally ratified thresholds. The finalize engine's supermajority type set stays as-is — this vote turns placeholder defaults into community-ratified rules. Choosing AGAINST removes Chain Selection, Tokenomics Change and Technical from that set.
 
 ## Reference
 
@@ -182,29 +215,47 @@ GOVERNANCE_MECHANICS.md §14, row 3 — "Global pass threshold"; per-type table 
         quorum: WAVE1_QUORUM,
         description: `## TL;DR
 
-**One question: should bigger decisions need more voters?** Today every proposal type has a similar turnout bar (10–15%). Option: grade it — everyday proposals easy (5%), big decisions like chain & tokenomics harder (up to 25%). Or keep today's flat defaults. Detail below.
+**One question: should bigger decisions need more voters than small ones?**
 
-## The Decision
+- 🟢 **VOTE FOR** to adopt a **graded turnout bar**: everyday chat 5% · standard proposals 10% · chain & tokenomics 25%.
+- 🔴 **VOTE AGAINST** to keep today's flat 10–15% defaults for every type.
 
-Adopt the PRD's per-type quorum schedule (up to 25% for high-impact types, 5% for General Discussion) or keep the seeded 10–15% defaults.
+This is week 3 of the rulebook: it builds on the turnout default set in week 1 and the win condition set in week 2. Full analysis below.
 
-## About This Vote's Quorum
+## How To Vote
 
-This proposal is stored with a **5% quorum** — the platform's minimum — rather than the 10% GENERAL default, and it says so openly: the 10% default was never ratified by any vote; it shipped as a v1 placeholder. A rulebook vote that no realistic turnout could legitimize would settle nothing, so this convention vote runs at the lowest bar the platform allows. **If this vote fails to reach quorum, nothing changes — the current v1 rules stay in force.**
+The ballot is FOR / AGAINST / ABSTAIN:
+
+- **FOR** = adopt the graded schedule: **General Discussion 5% · Treasury, Community Guideline, Technical 10% · Chain Selection, Tokenomics Change 25%.** Everyday proposals stay easy; the decisions that could reshape the project need the deepest participation.
+- **AGAINST** = keep the flat seeded defaults (10–15% for every type).
+- **ABSTAIN** counts toward turnout (quorum) but not toward the outcome.
+- Interplay: if week 1 adopted the 5% global default, this schedule becomes the per-type refinement of it; if week 1 failed, this vote still decides the schedule on its own.
+
+## The Turnout Math (full transparency)
+
+Real numbers from the pinned snapshot (25,686 ever-held wallets, block 5,992,210):
+
+- **Total voting power:** 581,973,790 — the sum of √(balance) across every wallet ever holding $OMNOM.
+- **The 5% bar** (this vote's own quorum floor) = **29,098,690 power ≈ 1,284 average-power wallets voting.**
+- Under the graded schedule, the General Discussion bar (5%) ≈ 1,284 average wallets, the 10% standard bar ≈ 2,569, and the 25% chain/tokenomics bar ≈ 6,421.
+- **Peak turnout ever:** the Foundational Governance Election reached **15,865,230 power = 2.73% of total**, from 35 voters.
+
+Honest read: the 5% bar is roughly **2× the best turnout this community has ever produced**, and the 25% bar for chain-level decisions is a deliberate statement: the biggest calls wait for the deepest participation. That is why this convention vote runs at the platform floor (5%) instead of the never-ratified 10% default. **If this vote fails to reach quorum, nothing changes — the current rules stay in force.**
 
 ## Current Baseline (v1)
 
 Seeded defaults: Chain Selection 15%, Tokenomics Change 15%, Treasury 10%, Technical 10%, Community Guideline 10%, General Discussion 10% (default voting window 7 days; 14 days for Chain Selection and Tokenomics Change). A proposer may override quorum at creation within a 5–50% floor.
 
-## Options
+## Options Considered
 
-- **Keep seeded 10–15%** (status quo).
-- **Adopt the PRD §9 schedule** — Chain Selection 25%, Tokenomics Change 25%, Treasury 15%, Community Guideline 10%, Technical 15%, General Discussion 5%.
-- **Hybrid** — community-amended schedule proposed during discussion.
+- **Adopt the graded schedule** (recommended — VOTE FOR): 5% / 10% / 25% by weight of the decision.
+- **Keep seeded 10–15% flat** (AGAINST) — the status quo; never ratified.
+- **PRD §9 variant** (considered) — Chain Selection 25%, Tokenomics Change 25%, Treasury 15%, Community Guideline 10%, Technical 15%, General Discussion 5%; the recommended schedule above is a lightly flattened version of it.
+- **Hybrid** — community-amended schedule proposed during discussion; amend via comments and a follow-up vote.
 
 ## What Changes If Adopted
 
-\`default_quorum\` on the seeded \`proposal_templates\` and the per-type defaults in the create wizard. Already-active proposals keep their locked quorum.
+"default_quorum" on the seeded "proposal_templates" and the per-type defaults in the create wizard become the graded schedule. Already-active proposals keep their locked quorum.
 
 ## Reference
 

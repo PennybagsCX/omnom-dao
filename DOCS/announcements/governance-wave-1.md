@@ -26,6 +26,10 @@ You chose quadratic voting. Now the DAO needs its official rulebook — and YOU 
 
 **This week's question:** how many people need to vote for a result to count?
 
+🟢 **VOTE FOR** = adopt a simple **5% bar** — the lowest the platform allows, finally ratified by you.
+
+🔴 **VOTE AGAINST** = keep the old rules (10–15%, set by nobody, mathematically unreachable).
+
 Coming next:
 
 • **Week 2 (Sep 29 – Oct 6):** how many "yes" votes does it take to win?
@@ -43,6 +47,8 @@ Simple questions. Your answers become the DAO's constitution.
 • Ever held $OMNOM? You're already eligible — just connect your wallet
 
 • These first votes use the LOWEST possible pass bar, because the old rules were never voted on by anyone. If turnout is too low, nothing changes — the rules simply stay as they are.
+
+• 📊 **Real talk, in numbers:** total voting power = 581,973,790. Our record turnout (the leadership election) reached **2.73%** of it — 35 voters. The 5% bar ≈ 1,284 average wallets voting. That's the honest bar for ratifying a rulebook. The full breakdown is inside each proposal.
 
 • This week's vote closes **September 29**
 
@@ -74,6 +80,8 @@ Closes Sept 29 👉 dao.omnom.dog/proposals
 
 Last week the community set the turnout bar. This week: **how many "yes" votes does it take to win?**
 
+🟢 FOR = ratify today's split (big decisions need 60% yes) · 🔴 AGAINST = simple majority for everything.
+
 Closes Oct 6. Vote at **dao.omnom.dog/proposals** 🐕🧡
 
 ---
@@ -82,7 +90,9 @@ Closes Oct 6. Vote at **dao.omnom.dog/proposals** 🐕🧡
 
 🗳️ **Final week of the $OMNOM rulebook vote.**
 
-Turnout bar ✅ Win condition ✅ This week decides: **should big decisions need more voters than small ones?**
+Turnout bar ✅ Win condition ✅ This week: **should big decisions need more voters than small ones?**
+
+🟢 FOR = graded bars (chat 5% · standard 10% · chain & tokenomics 25%) · 🔴 AGAINST = keep the flat rules.
 
 Closes Oct 13. Finish the rulebook — vote at **dao.omnom.dog/proposals** 🐕🧡
 
@@ -90,15 +100,15 @@ Closes Oct 13. Finish the rulebook — vote at **dao.omnom.dog/proposals** 🐕�
 
 ## Optional deep-dive reply (for comments asking for detail)
 
-For anyone who wants the specifics — the three proposals, in plain terms:
+For anyone who wants the specifics — what FOR and AGAINST actually mean on each ballot:
 
-1️⃣ **Turnout bar:** should a vote count with 5% of all voting power participating, today's ~10%, or a strict 20%? (This week's vote runs at the 5% platform minimum — the old default was never voted on. Quorum miss = rules stay.)
+1️⃣ **Week 1 — turnout bar:** 🟢 FOR = one simple 5% bar for everything. 🔴 AGAINST = keep the old per-type 10–15% defaults (never voted on). A 20% bar (the old PRD idea) is documented in the proposal as considered and dropped — at 2.73% peak turnout it's unreachable for years.
 
-2️⃣ **Win condition:** more yes than no (simple majority), 60% yes (supermajority), or the current mix (big majority for routine stuff, 60% for chain / tokenomics / technical changes)?
+2️⃣ **Week 2 — win condition:** 🟢 FOR = ratify today's split (everyday proposals: more yes than no; chain / tokenomics / technical: 60% yes). 🔴 AGAINST = simple majority for everything.
 
-3️⃣ **One size or graded:** same turnout bar for every proposal type, or higher bars for bigger decisions (up to 25% for chain & tokenomics, 5% for general chatter)?
+3️⃣ **Week 3 — one size or graded:** 🟢 FOR = graded bars — General Discussion 5%, standard types 10%, chain & tokenomics 25%. 🔴 AGAINST = keep the flat 10–15%.
 
-Full breakdowns — current rules, every option, exactly what changes if each passes — are in the proposals themselves at dao.omnom.dog/proposals. Debate happens right in the comments.
+**The numbers (from the pinned snapshot, 25,686 ever-held wallets):** total voting power = **581,973,790**. The 5% bar = 29,098,690 power ≈ **1,284 average-power wallets**. 10% ≈ 2,569. 20% ≈ 5,137. Peak turnout ever (the leadership election) = **2.73% of total power**, 35 voters. Every proposal contains this breakdown — and states plainly that a quorum miss changes nothing.
 
 Voting power math, for the curious: quadratic — roughly the square root of your snapshot balance, so doubling your holdings does NOT double your vote. Whales are loud, not dictators.
 
