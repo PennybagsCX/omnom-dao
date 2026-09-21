@@ -66,7 +66,7 @@ interface DecisionSeed {
   title: string;
   description: string;
   tags: string[];
-  /** quorum_required stored on the row — GENERAL v1 default (10%). */
+  /** quorum_required stored on the row — 5% floor for Wave 1, GENERAL v1 default (10%) otherwise. */
   quorum: number;
 }
 
@@ -77,12 +77,21 @@ interface Wave {
 }
 
 /**
- * v1 GENERAL rules the Wave 1 votes themselves run under (verified in code):
- * 10% quorum of total quadratic power, simple majority, 168h default window.
- * Seeded rows use the GENERAL defaults so admin submission via the UI needs
- * no overrides.
+ * v1 GENERAL rules (verified in code): 10% quorum of total quadratic power,
+ * simple majority, 168h default window. Waves 2–3 rows use the GENERAL
+ * defaults so admin submission via the UI needs no overrides.
  */
 const GENERAL_V1_QUORUM = 10.0;
+
+/**
+ * Wave 1 — the convention vote that settles the rulebook itself — is seeded
+ * at the platform's 5% quorum floor instead. The v1 10% default was never
+ * ratified by any vote (it shipped as an engineering placeholder), and at
+ * current turnout it is unreachable; a rulebook vote no turnout could
+ * legitimize would settle nothing. Each Wave 1 proposal body discloses the
+ * 5% container explicitly, and a quorum-fail leaves the v1 rules in force.
+ */
+const WAVE1_QUORUM = 5.0;
 
 const WAVES: readonly Wave[] = [
   {
@@ -93,10 +102,14 @@ const WAVES: readonly Wave[] = [
         ref: 2,
         title: "Governance parameter: global default quorum",
         tags: ["governance", "voting-rules"],
-        quorum: GENERAL_V1_QUORUM,
+        quorum: WAVE1_QUORUM,
         description: `## The Decision
 
 Pick **one global default quorum** that applies to every proposal type — the minimum share of total quadratic voting power that must cast a ballot (FOR + AGAINST + ABSTAIN) for a result to be valid at all.
+
+## About This Vote's Quorum
+
+This proposal is stored with a **5% quorum** — the platform's minimum — rather than the 10% GENERAL default, and it says so openly: the 10% default was never ratified by any vote; it shipped as a v1 placeholder. A rulebook vote that no realistic turnout could legitimize would settle nothing, so this convention vote runs at the lowest bar the platform allows. **If this vote fails to reach quorum, nothing changes — the current v1 rules stay in force.**
 
 ## Current Baseline (v1)
 
@@ -120,10 +133,14 @@ GOVERNANCE_MECHANICS.md §14, row 2 — "Global default quorum"; conflict docume
         ref: 3,
         title: "Governance parameter: pass threshold (simple majority vs supermajority)",
         tags: ["governance", "voting-rules"],
-        quorum: GENERAL_V1_QUORUM,
+        quorum: WAVE1_QUORUM,
         description: `## The Decision
 
 Should every proposal pass on a **simple majority**, should the **60% supermajority** apply to all types — or should today's split by type stay?
+
+## About This Vote's Quorum
+
+This proposal is stored with a **5% quorum** — the platform's minimum — rather than the 10% GENERAL default, and it says so openly: the 10% default was never ratified by any vote; it shipped as a v1 placeholder. A rulebook vote that no realistic turnout could legitimize would settle nothing, so this convention vote runs at the lowest bar the platform allows. **If this vote fails to reach quorum, nothing changes — the current v1 rules stay in force.**
 
 ## Current Baseline (v1)
 
@@ -147,10 +164,14 @@ GOVERNANCE_MECHANICS.md §14, row 3 — "Global pass threshold"; per-type table 
         ref: 5,
         title: "Governance parameter: per-type quorum schedule",
         tags: ["governance", "voting-rules"],
-        quorum: GENERAL_V1_QUORUM,
+        quorum: WAVE1_QUORUM,
         description: `## The Decision
 
 Adopt the PRD's per-type quorum schedule (up to 25% for high-impact types, 5% for General Discussion) or keep the seeded 10–15% defaults.
+
+## About This Vote's Quorum
+
+This proposal is stored with a **5% quorum** — the platform's minimum — rather than the 10% GENERAL default, and it says so openly: the 10% default was never ratified by any vote; it shipped as a v1 placeholder. A rulebook vote that no realistic turnout could legitimize would settle nothing, so this convention vote runs at the lowest bar the platform allows. **If this vote fails to reach quorum, nothing changes — the current v1 rules stay in force.**
 
 ## Current Baseline (v1)
 
