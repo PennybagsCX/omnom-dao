@@ -127,8 +127,8 @@ export async function listProposals(
   const where: string[] = [];
   const args: (string | number)[] = [];
 
-  // Drafts and pending-review items are never public: filters targeting them
-  // return an empty page, and the unfiltered list excludes them.
+  // Drafts are never public: filters targeting them return an empty page,
+  // and the unfiltered list excludes them.
   if (options.status && NON_PUBLIC_STATUSES.includes(options.status)) {
     return { proposals: [], total: 0 };
   }
@@ -176,16 +176,14 @@ const FINALIZED_STATUSES: ProposalStatus[] = [
 ];
 
 /**
- * Statuses that are not public governance content: drafts are pre-submission
- * author workspace, and pending-review items have not cleared moderation.
- * The public list never serves them — admin surfaces use authed endpoints —
- * which keeps seed/staging drafts from public exposure and stops spam
- * submissions from buying public visibility.
+ * Statuses that are not public governance content. DRAFT is pre-submission
+ * author workspace: seed/staging drafts must not be publicly browsable.
+ * PENDING_REVIEW stays PUBLIC by design — submitted proposals are meaningful
+ * governance content (they are the only proposals this DAO has in its early
+ * stage), and hiding them in 2026-09 emptied the entire public list.
+ * Admin surfaces use authed endpoints either way.
  */
-const NON_PUBLIC_STATUSES: ProposalStatus[] = [
-  ProposalStatus.DRAFT,
-  ProposalStatus.PENDING_REVIEW,
-];
+const NON_PUBLIC_STATUSES: ProposalStatus[] = [ProposalStatus.DRAFT];
 
 /**
  * All finalized proposals, newest voting window first. Backs the public

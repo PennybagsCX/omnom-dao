@@ -3,10 +3,10 @@ import { ProposalStatus } from "@/types";
 
 /**
  * Visibility rules for the public proposals list (proposal-service.ts):
- * DRAFT and PENDING_REVIEW proposals are never served publicly — filters
- * targeting them return an empty page and the unfiltered list excludes them.
- * Admin surfaces (review queue) use authed endpoints with their own queries
- * and are unaffected.
+ * DRAFT proposals are never served publicly — filters targeting them return
+ * an empty page and the unfiltered list excludes them. PENDING_REVIEW is
+ * public by design (submitted proposals are governance content; hiding them
+ * in 2026-09 emptied the live list). Admin surfaces use authed endpoints.
  */
 
 const hoisted = vi.hoisted(() => ({
@@ -64,14 +64,15 @@ describe("listProposals — non-public statuses", () => {
     expect(hoisted.execute).not.toHaveBeenCalled();
   });
 
-  it("returns an empty page for status=PENDING_REVIEW without touching the database", async () => {
+  it("serves PENDING_REVIEW as a normal public filter (submitted proposals are content)", async () => {
     const { listProposals } = await import("@/lib/proposal-service");
     const result = await listProposals({ status: ProposalStatus.PENDING_REVIEW, limit: 20, offset: 0 });
-    expect(result).toEqual({ proposals: [], total: 0 });
-    expect(hoisted.execute).not.toHaveBeenCalled();
+    expect(result.proposals).toHaveLength(1);
+    const queries = hoisted.execute.mock.calls.map((c) => (c[0] as { sql: string }).sql);
+    expect(queries.every((sql) => !sql.includes("NOT IN"))).toBe(true);
   });
 
-  it("excludes drafts and pending-review items from the unfiltered list", async () => {
+  it("excludes drafts from the unfiltered list", async () => {
     const { listProposals } = await import("@/lib/proposal-service");
     const result = await listProposals({ limit: 20, offset: 0 });
     expect(result.proposals).toHaveLength(1);
@@ -82,11 +83,11 @@ describe("listProposals — non-public statuses", () => {
     const countStmt = hoisted.execute.mock.calls.find(
       (c) => (c[0] as { sql: string }).sql.startsWith("SELECT COUNT"),
     )![0] as { args: unknown[] };
-    expect(countStmt.args).toEqual(["DRAFT", "PENDING_REVIEW"]);
+    expect(countStmt.args).toEqual(["DRAFT"]);
     const listStmt = hoisted.execute.mock.calls.find(
       (c) => (c[0] as { sql: string }).sql.includes("LIMIT"),
     )![0] as { args: unknown[] };
-    expect(listStmt.args).toEqual(["DRAFT", "PENDING_REVIEW", 20, 0]);
+    expect(listStmt.args).toEqual(["DRAFT", 20, 0]);
   });
 
   it("keeps explicit public status filters working (no NOT IN clause)", async () => {

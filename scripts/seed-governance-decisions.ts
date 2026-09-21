@@ -15,12 +15,13 @@
  * token) is deferred to the tokenomics arc (TOKENOMICS-OPTIONS.md). Neither is
  * seeded here.
  *
- * Every proposal is inserted authored by the admin wallet (first entry of
- * NEXT_PUBLIC_ADMIN_ADDRESSES), so the human gate is preserved: an admin
- * reviews and approves through the existing UI. Wave 1 seeds directly as
- * 'PENDING_REVIEW' (there is no DRAFT→PENDING_REVIEW submit transition in
- * the platform, so a seeded DRAFT could never be submitted); waves 2–3
- * still seed as 'DRAFT'.
+ * Every proposal is inserted as 'PENDING_REVIEW' authored by the admin
+ * wallet (first entry of NEXT_PUBLIC_ADMIN_ADDRESSES), so the human gate is
+ * preserved: an admin reviews and approves through the existing UI. All
+ * waves seed as PENDING_REVIEW — there is no DRAFT→PENDING_REVIEW submit
+ * transition in the platform, so a seeded DRAFT could never be submitted
+ * (and would be invisible to the public list). Staggered cadence: the admin
+ * approves ONE Wave 1 item per week; later-wave items wait in the queue.
  *
  * The baseline values quoted in the descriptions were read from the code, not
  * the docs: TYPE_DEFAULTS (create wizard), proposal_templates seed,
@@ -214,7 +215,7 @@ GOVERNANCE_MECHANICS.md §14, row 5 — "Per-type quorums"; PRD schedule §8.2, 
   {
     wave: 2,
     theme: "Process & access",
-    seedStatus: "DRAFT",
+    seedStatus: "PENDING_REVIEW",
     decisions: [
       {
         ref: 4,
@@ -302,7 +303,7 @@ GOVERNANCE_MECHANICS.md §14, row 10 — "Emergency proposals"; PRD open questio
   {
     wave: 3,
     theme: "Holder protections",
-    seedStatus: "DRAFT",
+    seedStatus: "PENDING_REVIEW",
     decisions: [
       {
         ref: 7,

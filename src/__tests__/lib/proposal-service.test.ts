@@ -161,9 +161,9 @@ describe("proposal-service", () => {
 
       const list = executeMock.mock.calls[1]![0] as { sql: string; args: (string | number)[] };
       expect(list.sql).toContain("ORDER BY created_at DESC");
-      // Unfiltered lists never serve drafts or pending-review items.
+      // Unfiltered lists never serve drafts (pending-review stays public).
       expect(list.sql).toContain("status NOT IN");
-      expect(list.args).toEqual(["DRAFT", "PENDING_REVIEW", 5, 0]);
+      expect(list.args).toEqual(["DRAFT", 5, 0]);
     });
 
     it("supports votingEndsAt sort and status-only filtering", async () => {

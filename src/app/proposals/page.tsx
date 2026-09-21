@@ -40,10 +40,12 @@ import {
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-// Public tabs only — DRAFT and PENDING_REVIEW are never served by the public
-// list API (see NON_PUBLIC_STATUSES in proposal-service.ts).
+// Public tabs. DRAFT is never served by the public list API (see
+// NON_PUBLIC_STATUSES in proposal-service.ts) so there is no Draft tab;
+// PENDING_REVIEW is public — submitted proposals are governance content.
 const STATUS_TABS: { value: "all" | ProposalStatus; label: string }[] = [
   { value: "all", label: "All" },
+  { value: ProposalStatus.PENDING_REVIEW, label: "Pending Review" },
   { value: ProposalStatus.ACTIVE, label: "Active" },
   { value: ProposalStatus.PASSED, label: "Passed" },
   { value: ProposalStatus.FAILED, label: "Failed" },
