@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { lookupHolderClasses } from "@/lib/snapshot";
 import { type Proposal, ProposalStatus } from "@/types";
-import { emptyEmojiCounts } from "@/lib/emoji-reactions";
+import { EMOJI_KEYS, emptyEmojiCounts, type EmojiKey } from "@/lib/emoji-reactions";
 
 /**
  * Proposal data-access service.
@@ -81,6 +81,33 @@ const SELECT_COLS =
  * `authorHolderClass`, and rejected proposals also resolve the rejecting
  * admin's `rejectedByHolderClass` from metadata.
  */
+/**
+ * Batch-attach emoji reaction counts so list cards can show tallies without
+ * N+1 queries. Raw rows are fetched and grouped in JS — deliberately no
+ * GROUP BY, which the mock DB cannot do across two columns.
+ */
+async function attachEmojiCounts(proposals: Proposal[]): Promise<void> {
+  if (proposals.length === 0) return;
+  const ids = proposals.map((p) => p.id);
+  const placeholders = ids.map(() => "?").join(",");
+  const res = await db.execute({
+    sql: `SELECT proposal_id, emoji FROM proposal_emoji_reactions WHERE proposal_id IN (${placeholders})`,
+    args: ids,
+  });
+  const countsById = new Map<string, Record<EmojiKey, number>>();
+  for (const r of res.rows) {
+    const key = r.emoji as EmojiKey;
+    if (!EMOJI_KEYS.includes(key)) continue;
+    const pid = r.proposal_id as string;
+    const counts = countsById.get(pid) ?? emptyEmojiCounts();
+    counts[key] += 1;
+    countsById.set(pid, counts);
+  }
+  for (const p of proposals) {
+    p.emojiReactionCounts = countsById.get(p.id) ?? emptyEmojiCounts();
+  }
+}
+
 async function attachHolderClasses(proposals: Proposal[]): Promise<void> {
   if (proposals.length === 0) return;
   const addresses = proposals.flatMap((p) =>
@@ -164,6 +191,7 @@ export async function listProposals(
     rowToProposal(r as unknown as Record<string, unknown>),
   );
   await attachHolderClasses(proposals);
+  await attachEmojiCounts(proposals);
   return { proposals, total };
 }
 
@@ -202,6 +230,7 @@ export async function listFinalizedProposals(): Promise<Proposal[]> {
     rowToProposal(r as unknown as Record<string, unknown>),
   );
   await attachHolderClasses(proposals);
+  await attachEmojiCounts(proposals);
   return proposals;
 }
 

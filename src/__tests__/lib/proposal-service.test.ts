@@ -122,6 +122,12 @@ describe("proposal-service", () => {
   });
 
   describe("listProposals", () => {
+    beforeEach(() => {
+      // Default for the emoji-reaction hydration query that runs after the
+      // count + list queries (tests below queue their own Onces for those).
+      executeMock.mockResolvedValue(result([]));
+    });
+
     it("runs a count query then the filtered, ordered, paginated query", async () => {
       executeMock
         .mockResolvedValueOnce(result([{ cnt: 1 }]))

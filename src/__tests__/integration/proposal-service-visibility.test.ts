@@ -129,4 +129,48 @@ describe("listProposals — non-public statuses", () => {
       ProposalStatus.EXECUTED,
     ]);
   });
+
+  it("attaches emoji reaction tallies to list results", async () => {
+    const { listProposals } = await import("@/lib/proposal-service");
+    hoisted.execute.mockImplementation(async (stmt: { sql: string }) => {
+      if (stmt.sql.startsWith("SELECT COUNT")) {
+        return { rows: [{ cnt: 1 }], columns: [], rowsAffected: 0, lastInsertRowid: undefined };
+      }
+      if (stmt.sql.includes("FROM proposals")) {
+        return {
+          rows: [proposalRow({ id: "p1", status: "ACTIVE" })],
+          columns: [],
+          rowsAffected: 0,
+          lastInsertRowid: undefined,
+        };
+      }
+      if (stmt.sql.includes("FROM proposal_emoji_reactions")) {
+        return {
+          rows: [
+            { proposal_id: "p1", emoji: "thumbs_up" },
+            { proposal_id: "p1", emoji: "thumbs_up" },
+            { proposal_id: "p1", emoji: "heart" },
+            { proposal_id: "p1", emoji: "not_a_real_emoji" },
+          ],
+          columns: [],
+          rowsAffected: 0,
+          lastInsertRowid: undefined,
+        };
+      }
+      return { rows: [], columns: [], rowsAffected: 0, lastInsertRowid: undefined };
+    });
+
+    const result = await listProposals({ limit: 20, offset: 0 });
+    expect(result.proposals[0]!.emojiReactionCounts).toMatchObject({
+      thumbs_up: 2,
+      heart: 1,
+      cry: 0,
+    });
+    // One batched lookup with the page's proposal ids — no N+1.
+    const emojiStmt = hoisted.execute.mock.calls.find(
+      (c) => (c[0] as { sql: string }).sql.includes("FROM proposal_emoji_reactions"),
+    )![0] as { sql: string; args: unknown[] };
+    expect(emojiStmt.sql).toContain("IN (?)");
+    expect(emojiStmt.args).toEqual(["p1"]);
+  });
 });

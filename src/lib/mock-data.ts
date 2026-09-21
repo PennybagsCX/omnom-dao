@@ -734,7 +734,31 @@ function buildSeed(): MockStore {
     governance_election_ballot_events: [...governanceElectionBallotEventsSeed],
     election_comments: [] as MockElectionCommentRow[],
     election_comment_reactions: [] as MockElectionReactionRow[],
-    proposal_emoji_reactions: [] as MockProposalEmojiReactionRow[],
+    proposal_emoji_reactions: [
+      // Community favourites — so list cards and the detail page show real
+      // engagement in mock mode.
+      ...(["0xaaa1", "0xaaa2", "0xaaa3", "0xaaa4", "0xaaa5", "0xaaa6", "0xaaa7", "0xaaa8"]).map(
+        (addr, i) => ({
+          id: `per-tg-${i}`,
+          proposal_id: "prop-passed-treasury-grant",
+          user_address: `${addr}000000000000000000000000000000000000`,
+          emoji: "thumbs_up",
+          created_at: "2026-06-13T12:00:00.000Z",
+        }),
+      ),
+      ...(["0xbbb1", "0xbbb2", "0xbbb3"]).map((addr, i) => ({
+        id: `per-tg-heart-${i}`,
+        proposal_id: "prop-passed-treasury-grant",
+        user_address: `${addr}000000000000000000000000000000000000`,
+        emoji: "heart",
+        created_at: "2026-06-13T12:05:00.000Z",
+      })),
+      { id: "per-cc-1", proposal_id: "prop-passed-code-of-conduct", user_address: "0xccc1000000000000000000000000000000000000", emoji: "tada", created_at: "2026-06-10T09:00:00.000Z" },
+      { id: "per-cc-2", proposal_id: "prop-passed-code-of-conduct", user_address: "0xccc2000000000000000000000000000000000000", emoji: "thumbs_up", created_at: "2026-06-10T09:01:00.000Z" },
+      { id: "per-cc-3", proposal_id: "prop-passed-code-of-conduct", user_address: "0xccc3000000000000000000000000000000000000", emoji: "thumbs_up", created_at: "2026-06-10T09:02:00.000Z" },
+      { id: "per-burn-1", proposal_id: "prop-active-tokenomics-burn", user_address: "0xddd1000000000000000000000000000000000000", emoji: "heart", created_at: "2026-09-01T10:00:00.000Z" },
+      { id: "per-burn-2", proposal_id: "prop-active-tokenomics-burn", user_address: "0xddd2000000000000000000000000000000000000", emoji: "thinking", created_at: "2026-09-01T10:01:00.000Z" },
+    ] as MockProposalEmojiReactionRow[],
     comment_emoji_reactions: [] as MockCommentEmojiReactionRow[],
     election_comment_emoji_reactions: [] as MockElectionCommentEmojiReactionRow[],
   };

@@ -541,10 +541,12 @@ function handleSelect(sql: string, upper: string, rawArgs: InArgs): ResultSet {
   const rest = restRaw.slice(tableMatch[0].length).trim();
   const clauses = splitClauses(rest);
 
-  let groupByCol = "";
+  let groupByCols: string[] = [];
   let orderCol = "";
   let orderDir: "ASC" | "DESC" = "ASC";
-  if (clauses.groupBy) groupByCol = unquoteIdent(clauses.groupBy.trim());
+  if (clauses.groupBy) {
+    groupByCols = clauses.groupBy.split(",").map((c) => unquoteIdent(c.trim()));
+  }
   if (clauses.orderBy) {
     const obParts = clauses.orderBy.trim().split(/\s+/);
     orderCol = unquoteIdent(obParts[0]!);
@@ -576,7 +578,7 @@ function handleSelect(sql: string, upper: string, rawArgs: InArgs): ResultSet {
 
   // Aggregate path: SUM(col) AS x ... GROUP BY col  OR  COUNT(*) AS cnt
   if (hasAgg) {
-    const rs = aggregateSelect(filtered, cols, groupByCol);
+    const rs = aggregateSelect(filtered, cols, groupByCols);
     // ORDER BY / LIMIT / OFFSET apply to the aggregated rows too (e.g.
     // `GROUP BY x ORDER BY cnt DESC LIMIT ?` ranks the groups themselves).
     if (orderCol) {
@@ -661,27 +663,32 @@ function parseSelectList(raw: string): SelectColumn[] {
 function aggregateSelect(
   rows: Record<string, Cell>[],
   cols: SelectColumn[],
-  groupByCol: string,
+  groupByCols: string[],
 ): ResultSet {
   const resultRows: Record<string, Cell>[] = [];
 
-  if (groupByCol) {
-    const groups = new Map<Cell, Record<string, Cell>[]>();
+  if (groupByCols.length > 0) {
+    // Composite key supports multi-column GROUP BY (e.g. the emoji hydration
+    // queries group by (proposal_id, emoji)).
+    const groupKeyOf = (r: Record<string, Cell>) =>
+      JSON.stringify(groupByCols.map((c) => r[c] ?? null));
+    const groups = new Map<string, Record<string, Cell>[]>();
     for (const r of rows) {
-      const key = r[groupByCol] ?? null;
+      const key = groupKeyOf(r);
       const arr = groups.get(key) ?? [];
       arr.push(r);
       groups.set(key, arr);
     }
-    for (const [key, group] of groups) {
+    for (const group of groups.values()) {
       const out: Record<string, Cell> = {};
       for (const c of cols) {
         if (c.agg === "SUM") {
           out[c.out] = group.reduce((sum, r) => sum + Number(r[c.source] ?? 0), 0);
         } else if (c.agg === "COUNT") {
           out[c.out] = group.length;
-        } else if (c.source === groupByCol) {
-          out[c.out] = key;
+        } else if (groupByCols.includes(c.source)) {
+          // Grouped column: every row in the group shares the value.
+          out[c.out] = group[0]![c.source] ?? null;
         }
       }
       resultRows.push(out);
