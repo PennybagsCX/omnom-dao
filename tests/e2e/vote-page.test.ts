@@ -83,6 +83,16 @@ if (RUN_E2E) {
       await expect(results.getByRole("progressbar")).toBeVisible();
     });
 
+    test("who-has-voted breakdown renders the holder-class rows", async ({
+      page,
+    }) => {
+      await expect(
+        page.getByText("Who has voted"),
+      ).toBeVisible({ timeout: 15_000 });
+      // Rows render for every holder class, even at zero ballots.
+      await expect(page.getByText(/wallets voted/).first()).toBeVisible();
+    });
+
     test("past votes link to their dedicated pages", async ({ page }) => {
       await expect(
         page.getByRole("heading", { name: /past votes/i }),

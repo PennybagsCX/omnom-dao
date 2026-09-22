@@ -4,22 +4,31 @@ import {
   ArrowRight,
   CalendarClock,
   History,
+  Users,
   Vote as VoteIcon,
 } from "lucide-react";
 
+import { HolderBadge } from "@/components/shared/holder-badge";
+import { Markdown } from "@/components/shared/markdown";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import {
   ProposalBallotCards,
   ProposalVoteDiscussion,
   ProposalVoteResults,
 } from "@/components/proposals/proposal-vote-actions";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CountdownTimer } from "@/components/shared/countdown-timer";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PROPOSAL_TYPE_CONFIG } from "@/lib/constants";
 import { FGE_VOTING_ENDS_AT, FGE_VOTING_STARTS_AT } from "@/lib/election";
 import { buildResults, loadElection, tally } from "@/lib/election-tally";
-import { listFinalizedProposals, listProposals } from "@/lib/proposal-service";
-import { formatDateTime } from "@/lib/utils";
+import {
+  listFinalizedProposals,
+  listProposals,
+  tallyProposalByHolderClass,
+  type ProposalClassTally,
+} from "@/lib/proposal-service";
+import { cn, formatDateTime } from "@/lib/utils";
 import { totalQuadraticPower } from "@/lib/voting-power";
 import { ProposalStatus, type Proposal } from "@/types";
 
@@ -54,17 +63,6 @@ function formatWindowLabel(p: Proposal): string | null {
     return `Voted ${formatDay(p.votingStartsAt)} – ${formatDay(p.votingEndsAt)}`;
   }
   return p.votingEndsAt ? `Closed ${formatDay(p.votingEndsAt)}` : null;
-}
-
-/** Collapse the markdown body to a plain-text teaser for the subtitle. */
-function excerpt(markdown: string): string {
-  const plain = markdown
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/[#*_>`]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-  return plain.length > 220 ? `${plain.slice(0, 220).trimEnd()}…` : plain;
 }
 
 export default async function VotePage() {
@@ -108,6 +106,13 @@ export default async function VotePage() {
     // Stats read as zero turnout; the page still renders.
   }
 
+  // Per-holder-class breakdown of the current vote (FGE "Who has voted"
+  // analogue). Empty when nothing is live.
+  const classTallies = current
+    ? await tallyProposalByHolderClass(current.id)
+    : [];
+  const ballotsCast = classTallies.reduce((sum, row) => sum + row.count, 0);
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       {current ? (
@@ -126,10 +131,29 @@ export default async function VotePage() {
             <h1 className="text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
               {current.title}
             </h1>
-            <p className="mx-auto mt-2 max-w-2xl text-sm text-muted-foreground">
-              {excerpt(current.description)}
-            </p>
           </div>
+
+          {/* Full proposal body — complete, never truncated; the proposal
+              page remains one click away for timeline + reactions. */}
+          <Card className="mt-6">
+            <CardHeader className="text-center">
+              <CardTitle className="inline-flex items-center justify-center gap-2 text-base">
+                <VoteIcon className="h-4 w-4" aria-hidden /> Proposal
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Markdown>{current.description}</Markdown>
+              <div className="mt-6 border-t border-border pt-3 text-center">
+                <Link
+                  href={`/proposals/${current.id}`}
+                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-gold"
+                >
+                  View the full proposal page{" "}
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Countdown — same column and panel as the FGE page. Explicit
               closed-state text: the component default reads as stale copy. */}
@@ -234,7 +258,32 @@ export default async function VotePage() {
             </div>
           </section>
 
-          {/* Discussion — same shared thread surface as the proposal detail
+          {/* Who has voted — FGE's holder-class turnout breakdown, adapted
+              to the FOR/AGAINST/ABSTAIN ballot. */}
+          <section aria-label="Who has voted" className="mt-10">
+            <Card>
+              <CardHeader className="text-center">
+                <CardTitle className="inline-flex items-center justify-center gap-2 text-base">
+                  <Users className="h-4 w-4" aria-hidden /> Who has voted
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {ballotsCast === 0 ? (
+                  <EmptyState
+                    icon={<VoteIcon className="h-12 w-12" />}
+                    title="No ballots yet"
+                    description="Check back as holders cast their ballots — this breakdown updates with every vote."
+                  />
+                ) : (
+                  classTallies.map((row) => (
+                    <ProposalClassRow key={row.holderClass} row={row} />
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </section>
+
+              {/* Discussion — same shared thread surface as the proposal detail
               page; one thread, two windows into it. */}
           <section aria-labelledby="discussion-heading" className="mt-10">
             <div className="mb-4 text-center">
@@ -369,3 +418,80 @@ export default async function VotePage() {
     </div>
   );
 }
+
+/* ── Holder-class breakdown row (clone of the FGE page's HolderClassRow,
+   adapted to the three-choice proposal ballot) ─────────────────────── */
+
+function ProposalClassRow({ row }: { row: ProposalClassTally }) {
+  return (
+    <div
+      className={cn(
+        "rounded-lg border border-border bg-bg-elevated/30 p-3 transition-colors",
+        row.count > 0 && "border-border/80",
+      )}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <HolderBadge holderClass={row.holderClass} size="sm" plain />
+          <span className="text-xs text-text-dim">
+            {row.count.toLocaleString()} of {row.eligibleCount.toLocaleString()}{" "}
+            wallets voted
+          </span>
+        </div>
+        <div className="text-right">
+          <div className="font-mono font-bold text-gold">
+            {row.turnoutPercentage.toFixed(1)}%
+          </div>
+          <div className="text-[10px] uppercase tracking-widest text-text-dim">
+            turnout
+          </div>
+        </div>
+      </div>
+
+      {/* Mini stacked bar: one segment per choice, proportional to the
+          choice's share of this class's ballots. */}
+      <div
+        className="mt-2 flex h-2 w-full overflow-hidden rounded-full bg-bg-elevated"
+        role="img"
+        aria-label={`${row.label} vote breakdown by choice`}
+      >
+        {row.count === 0 ? (
+          <div className="h-full w-full bg-bg-elevated" aria-hidden />
+        ) : (
+          row.byChoice.map((bc) => {
+            const widthPct = (bc.count / row.count) * 100;
+            if (widthPct === 0) return null;
+            return (
+              <div
+                key={bc.choice}
+                className={cn("h-full transition-all duration-500", VOTE_BAR_CLASS[bc.choice])}
+                style={{ width: `${widthPct}%` }}
+                title={`${bc.label}: ${bc.count}`}
+              />
+            );
+          })
+        )}
+      </div>
+
+      {/* Per-choice label strip below the bar — gold counts, dim labels. */}
+      <div className="mt-2 grid grid-cols-3 gap-x-3 gap-y-1 text-xs">
+        {row.byChoice.map((bc) => (
+          <div key={bc.choice} className="flex items-baseline gap-1.5">
+            <span className="font-mono font-bold text-gold tabular-nums">
+              {bc.count}
+            </span>
+            <span className="truncate text-text-dim" title={bc.label}>
+              {bc.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const VOTE_BAR_CLASS: Record<string, string> = {
+  FOR: "bg-emerald-500",
+  AGAINST: "bg-rose-500",
+  ABSTAIN: "bg-slate-500",
+};

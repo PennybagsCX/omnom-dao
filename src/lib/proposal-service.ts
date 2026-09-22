@@ -1,6 +1,13 @@
 import { db } from "@/lib/db";
 import { lookupHolderClasses } from "@/lib/snapshot";
-import { type Proposal, ProposalStatus } from "@/types";
+import { DISTRIBUTION_KEY, HOLDER_CLASS_CONFIG, HOLDER_CLASS_ORDER, SNAPSHOT } from "@/lib/constants";
+import { VOTE_CHOICE_CONFIG } from "@/lib/constants";
+import {
+  HolderClass,
+  type Proposal,
+  ProposalStatus,
+  VoteChoice,
+} from "@/types";
 import { EMOJI_KEYS, emptyEmojiCounts, type EmojiKey } from "@/lib/emoji-reactions";
 
 /**
@@ -262,3 +269,103 @@ export async function listFinalizedProposals(): Promise<Proposal[]> {
 }
 
 export type { ProposalRow };
+
+/* ── Per-holder-class vote breakdown (the proposal analogue of
+   election-tally's tallyByHolderClass) ──────────────────────────── */
+
+const CHOICES: VoteChoice[] = [VoteChoice.FOR, VoteChoice.AGAINST, VoteChoice.ABSTAIN];
+
+export interface ProposalClassTally {
+  holderClass: HolderClass;
+  label: string;
+  emoji: string;
+  /** Wallets in this class that cast a ballot on the proposal. */
+  count: number;
+  /** Snapshot wallets in this class (any of them may vote). */
+  eligibleCount: number;
+  turnoutPercentage: number;
+  byChoice: Array<{
+    choice: VoteChoice;
+    label: string;
+    count: number;
+    percentage: number;
+  }>;
+}
+
+/**
+ * Bucket raw (voter_address, choice) rows into holder classes. Pure so it is
+ * unit-testable without a database. FISH (legacy alias) and snapshot-unknown
+ * addresses collapse into SEAHORSE — losing votes silently would be worse
+ * than a noisy bucket (same convention as election-tally).
+ */
+export function bucketProposalVotesByClass(
+  rows: Array<{ voterAddress: string; choice: VoteChoice }>,
+  classesByAddress: Map<string, HolderClass | null>,
+): Map<HolderClass, Map<VoteChoice, number>> {
+  const buckets = new Map<HolderClass, Map<VoteChoice, number>>();
+  for (const cls of HOLDER_CLASS_ORDER) {
+    buckets.set(
+      cls,
+      new Map<VoteChoice, number>([
+        [VoteChoice.FOR, 0],
+        [VoteChoice.AGAINST, 0],
+        [VoteChoice.ABSTAIN, 0],
+      ]),
+    );
+  }
+  const seahorse = buckets.get(HolderClass.SEAHORSE)!;
+
+  for (const row of rows) {
+    const address = row.voterAddress.toLowerCase();
+    const cls = classesByAddress.get(address) ?? null;
+    const target =
+      cls === null || cls === HolderClass.FISH || !buckets.has(cls)
+        ? seahorse
+        : buckets.get(cls)!;
+    target.set(row.choice, (target.get(row.choice) ?? 0) + 1);
+  }
+  return buckets;
+}
+
+/**
+ * Turnout and per-choice breakdown of one proposal's votes, bucketed by
+ * snapshot holder class — backs the /vote page's "Who has voted" section.
+ */
+export async function tallyProposalByHolderClass(
+  proposalId: string,
+): Promise<ProposalClassTally[]> {
+  const res = await db.execute({
+    sql: `SELECT voter_address, choice FROM votes WHERE proposal_id = ?`,
+    args: [proposalId],
+  });
+  const rows = res.rows.map((r) => ({
+    voterAddress: r.voter_address as string,
+    choice: r.choice as VoteChoice,
+  }));
+  const classesByAddress = await lookupHolderClasses(
+    rows.map((r) => r.voterAddress.toLowerCase()),
+  );
+  const buckets = bucketProposalVotesByClass(rows, classesByAddress);
+
+  return HOLDER_CLASS_ORDER.map((cls) => {
+    const cfg = HOLDER_CLASS_CONFIG[cls];
+    const perChoice = buckets.get(cls)!;
+    const count = [...perChoice.values()].reduce((sum, n) => sum + n, 0);
+    const eligibleCount = SNAPSHOT.expectedDistribution[DISTRIBUTION_KEY[cls]] ?? 0;
+    return {
+      holderClass: cls,
+      label: cfg.label,
+      emoji: cfg.emoji,
+      count,
+      eligibleCount,
+      turnoutPercentage: eligibleCount > 0 ? (count / eligibleCount) * 100 : 0,
+      byChoice: CHOICES.map((choice) => ({
+        choice,
+        label: VOTE_CHOICE_CONFIG[choice].label,
+        count: perChoice.get(choice) ?? 0,
+        percentage:
+          count > 0 ? ((perChoice.get(choice) ?? 0) / count) * 100 : 0,
+      })),
+    };
+  });
+}
