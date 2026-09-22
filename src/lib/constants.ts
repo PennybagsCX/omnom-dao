@@ -495,7 +495,10 @@ export const PRIMARY_NAV_ITEMS: readonly NavItem[] = [
   { label: "Home", href: "/", emoji: "🏠", iconName: "Home" },
   { label: "Proposals", href: "/proposals", emoji: "📋", iconName: "ClipboardList" },
   { label: "Results", href: "/results", emoji: "🏆", iconName: "Trophy" },
-  { label: "Vote", href: "/governance-vote", emoji: "🗳️", iconName: "Vote" },
+  // "Vote" points at the /vote hub (live votes + past-votes archive).
+  // /governance-vote remains live as the FGE deep-dive/archive for URL
+  // stability — linked from the hub's past-votes panel.
+  { label: "Vote", href: "/vote", emoji: "🗳️", iconName: "Vote" },
   { label: "Create", href: "/proposals/create", emoji: "➕", iconName: "Plus" },
   { label: "Explorer", href: "/snapshot-explorer", emoji: "🔍", iconName: "Search" },
   { label: "FAQ", href: "/faq", emoji: "❓", iconName: "HelpCircle" },
