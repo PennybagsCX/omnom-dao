@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -36,9 +36,8 @@ import { QuorumProgress } from "@/components/shared/quorum-progress";
 import { VoteBar } from "@/components/shared/vote-bar";
 import { AdminRejectionBanner } from "@/components/proposals/admin-rejection-banner";
 import { DeleteProposalDialog } from "@/components/proposals/delete-proposal-dialog";
+import { VoteButton } from "@/components/proposals/proposal-vote-actions";
 import {
-  useCastVote,
-  useChangeVote,
   useCreateComment,
   useToggleReaction,
   useToggleCommentEmojiReaction,
@@ -46,6 +45,7 @@ import {
   useProposalDetail,
   type ProposalDetailData,
 } from "@/lib/api";
+import { useProposalVote } from "@/lib/use-proposal-vote";
 import {
   formatCompact,
   formatDate,
@@ -78,52 +78,13 @@ export default function ProposalDetailPage() {
 
   const { data, isLoading, isError, error } = useProposalDetail(proposalId);
   const { data: me } = useCurrentUser({ retry: false });
-  const castVote = useCastVote(proposalId);
-  const changeVote = useChangeVote(proposalId);
+  // Cast/change-vote state machine — extracted verbatim into a shared hook so
+  // the /vote hub's live cards run the same code path (same query key, same
+  // optimistic myVote handling). VotePanel/MobileVoteBar markup is unchanged.
+  const vote = useProposalVote(proposalId);
   const createComment = useCreateComment(proposalId);
   const toggleReaction = useToggleReaction(proposalId);
   const toggleCommentEmoji = useToggleCommentEmojiReaction(proposalId);
-
-  // Track the user's vote. The detail payload now includes the current user's
-  // ballot (C2.1) so returning voters see their choice on load; we also update
-  // it optimistically after a successful cast.
-  const [myVote, setMyVote] = useState<VoteChoice | null>(
-    () => data?.myVote?.choice ?? null,
-  );
-  const [prevServerChoice, setPrevServerChoice] = useState(data?.myVote?.choice);
-
-  // Keep local state in sync if the API result changes (e.g. refetch, navigation).
-  // Uses the "adjust state during render" pattern recommended by the React team
-  // to avoid setState-in-effect cascading renders.
-  const serverChoice = data?.myVote?.choice;
-  if (serverChoice !== prevServerChoice) {
-    setPrevServerChoice(serverChoice);
-    setMyVote(serverChoice ?? null);
-  }
-
-  const onVote = useCallback(
-    async (choice: VoteChoice) => {
-      try {
-        await castVote.mutateAsync(choice);
-        setMyVote(choice);
-      } catch {
-        // toast surfaced by the mutation hook; keep button state clean.
-      }
-    },
-    [castVote],
-  );
-
-  const onChangeVote = useCallback(
-    async (choice: VoteChoice) => {
-      try {
-        await changeVote.mutateAsync(choice);
-        setMyVote(choice);
-      } catch {
-        // toast surfaced by the mutation hook.
-      }
-    },
-    [changeVote],
-  );
 
   if (isLoading) {
     return (
@@ -177,7 +138,7 @@ export default function ProposalDetailPage() {
   // server-side at finalize and recorded on the proposal. We fall back to 0
   // until the proposal's recorded quorum fields are available.
   const quorumAchieved = proposal.quorumAchieved ?? 0;
-  const userVoted = myVote !== null;
+  const userVoted = vote.myVote !== null;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
@@ -370,13 +331,13 @@ export default function ProposalDetailPage() {
               isActive={isActive}
               isClosed={isClosed}
               userVoted={userVoted}
-              myVote={myVote}
+              myVote={vote.myVote}
               isAuthenticated={Boolean(me)}
               votingPower={me?.votingPower}
-              onVote={onVote}
-              isVoting={castVote.isPending}
-              onChangeVote={onChangeVote}
-              isChangingVote={changeVote.isPending}
+              onVote={vote.onVote}
+              isVoting={vote.isVoting}
+              onChangeVote={vote.onChangeVote}
+              isChangingVote={vote.isChangingVote}
             />
           </div>
         </aside>
@@ -387,12 +348,12 @@ export default function ProposalDetailPage() {
         <MobileVoteBar
           isActive={isActive}
           userVoted={userVoted}
-          myVote={myVote}
+          myVote={vote.myVote}
           isAuthenticated={Boolean(me)}
-          onVote={onVote}
-          isVoting={castVote.isPending}
-          onChangeVote={onChangeVote}
-          isChangingVote={changeVote.isPending}
+          onVote={vote.onVote}
+          isVoting={vote.isVoting}
+          onChangeVote={vote.onChangeVote}
+          isChangingVote={vote.isChangingVote}
         />
       )}
     </div>
@@ -593,33 +554,6 @@ function VotePanel({
         )}
       </CardContent>
     </Card>
-  );
-}
-
-function VoteButton({
-  choice,
-  onVote,
-  disabled,
-}: {
-  choice: VoteChoice;
-  onVote: (c: VoteChoice) => void;
-  disabled: boolean;
-}) {
-  const cfg = VOTE_CHOICE_CONFIG[choice];
-  const styles: Record<VoteChoice, string> = {
-    [VoteChoice.FOR]: "border-emerald-600/50 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20",
-    [VoteChoice.AGAINST]: "border-rose-600/50 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20",
-    [VoteChoice.ABSTAIN]: "border-slate-600/50 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20",
-  };
-  return (
-    <button
-      type="button"
-      onClick={() => onVote(choice)}
-      disabled={disabled}
-      className={`flex items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${styles[choice]}`}
-    >
-      <DynamicIcon name={cfg.iconName} className="h-4 w-4" aria-hidden /> {cfg.label}
-    </button>
   );
 }
 
