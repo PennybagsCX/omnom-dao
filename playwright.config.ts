@@ -17,7 +17,12 @@ export default defineConfig({
   workers: 1,
   reporter: "line",
   timeout: 60_000,
-  expect: { timeout: 10_000 },
+  // 30s: dev-mode compiles routes on demand, and a cold route hit behind a
+  // queue of other first-compile requests regularly exceeds 10s before any
+  // SSR content exists in the DOM (symptom: SSR-presence assertions failing
+  // on untouched pages mid-suite, passing in isolation). Same assertions,
+  // headroom for the documented compile-latency mode.
+  expect: { timeout: 30_000 },
   use: {
     baseURL: "http://localhost:3000",
     actionTimeout: 10_000,

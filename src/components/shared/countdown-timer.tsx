@@ -216,7 +216,10 @@ function PanelCountdown({ target, label, closedText, ariaLabel, className }: Tar
 
       <ol
         aria-label={`Time remaining${label ? `: ${label}` : ""}`}
-        aria-live="polite"
+        // aria-live off: the cells tick every second — polite announcements
+        // would queue continuous SR chatter (the compact mode already models
+        // this with role="timer" alone).
+        aria-live="off"
         className="grid grid-cols-4 gap-2 sm:gap-3"
       >
         <Cell value={parts.days} label="Days" />
