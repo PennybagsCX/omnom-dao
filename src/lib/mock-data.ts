@@ -293,6 +293,7 @@ const U = {
 const P = {
   activeChain: "prop-active-chain-selection",
   activeTokenomics: "prop-active-tokenomics-burn",
+  activeQuorum: "prop-active-quorum-default",
   passedTreasury: "prop-passed-treasury-grant",
   passedGuideline: "prop-passed-code-of-conduct",
   failedGeneral: "prop-failed-submission-fee",
@@ -316,9 +317,14 @@ function relativeNow(offsetMs: number): string {
 
 const governanceVotesSeed: MockGovernanceVoteRow[] = [];
 
-const nowMs = Date.now();
-const electionStart = new Date(nowMs).toISOString();
-const electionEnd = new Date(nowMs + 14 * 24 * 60 * 60 * 1000).toISOString();
+/**
+ * The mock election mirrors the REAL closed FGE (window + outcome per
+ * DOCS/ELECTION-RESULTS.md) so local dev/CI renders the same archive state
+ * prod does — the election is over, Quadratic voting won 23/35 ballots.
+ * Dates match FGE_VOTING_STARTS_AT/ENDS_AT in src/lib/election.ts.
+ */
+const electionStart = "2026-08-29T00:00:00.000Z";
+const electionEnd = "2026-09-12T00:00:00.000Z";
 
 const governanceElectionSeed: MockElectionRow[] = [
   {
@@ -335,7 +341,48 @@ const governanceElectionSeed: MockElectionRow[] = [
   },
 ];
 
-const governanceElectionBallotsSeed: MockElectionBallotRow[] = [];
+/**
+ * 35 deterministic ballots mirroring the official FGE result
+ * (DOCS/ELECTION-RESULTS.md): QUADRATIC 23 · LINEAR 6 · ONE_WALLET_ONE_VOTE 5
+ * · TIERED 1. Voter addresses are synthetic (ballots are unique per wallet,
+ * and only 8 MOCK_HOLDERS exist) — tallyByHolderClass buckets them into
+ * SEAHORSE with a console warning, which is harmless mock-mode noise.
+ * Timestamps spread across the real window; first ballot matches the
+ * documented 2026-08-29T01:33:49Z.
+ */
+const FGE_BALLOT_MIX: Array<{ choice: MockElectionBallotRow["choice"]; count: number }> = [
+  { choice: "QUADRATIC", count: 23 },
+  { choice: "LINEAR", count: 6 },
+  { choice: "ONE_WALLET_ONE_VOTE", count: 5 },
+  { choice: "TIERED", count: 1 },
+];
+
+const syntheticVoter = (i: number): string =>
+  `0x${(i + 1).toString(16).padStart(40, "0")}`;
+
+const ballotMs = (i: number): string =>
+  new Date(
+    new Date("2026-08-29T01:33:49.000Z").getTime() +
+      // Spread the 35 ballots evenly across the 14-day window (~8.2h apart).
+      i * (14 * 24 * 60 * 60 * 1000 / 35),
+  ).toISOString();
+
+const governanceElectionBallotsSeed: MockElectionBallotRow[] = (() => {
+  const rows: MockElectionBallotRow[] = [];
+  let i = 0;
+  for (const { choice, count } of FGE_BALLOT_MIX) {
+    for (let n = 0; n < count; n++, i++) {
+      rows.push({
+        id: `ballot-${i + 1}`,
+        election_key: "foundational-2026",
+        voter_address: syntheticVoter(i),
+        choice,
+        cast_at: ballotMs(i),
+      });
+    }
+  }
+  return rows;
+})();
 const governanceElectionBallotEventsSeed: MockElectionBallotEventRow[] = [];
 
 function buildSeed(): MockStore {
@@ -404,6 +451,28 @@ function buildSeed(): MockStore {
         targetAmount: "1.0%",
         description: "1% of every transfer burned to a verifiable dead address.",
       }),
+    },
+    {
+      // Wave 1 / Week 1 — mirrors the live prod vote (title-idempotent with
+      // scripts/seed-governance-decisions.ts; body per the prod TL;DR +
+      // Turnout-Math convention in DOCS/STATUS.md).
+      id: P.activeQuorum,
+      title: "Governance parameter: global default quorum",
+      description:
+        "## TL;DR\n\n**One question: how many people need to vote before a result counts?**\n\n- 🟢 **VOTE FOR** to adopt a single **5% global default quorum** — the lowest bar the platform allows, ratified by you.\n- 🔴 **VOTE AGAINST** to keep the current per-type defaults (10–15%, set by nobody).\n\nEverything below is the full analysis, including the real turnout math.\n\n## How To Vote\n\nThe ballot is FOR / AGAINST / ABSTAIN:\n\n- **FOR** = adopt a **5% global default quorum** for every proposal type. From now on, a result counts when ≥5% of all voting power participates.\n- **AGAINST** = keep today's rules: per-type defaults of 10–15% that were never ratified by any vote.\n- **ABSTAIN** counts toward turnout (quorum) but not toward the outcome.\n- Whichever way you lean: a result only counts at all if the 5% turnout bar is met — see the math below.\n\n## The Turnout Math (full transparency)\n\nReal numbers from the pinned snapshot (25,686 ever-held wallets, block 5,992,210):\n\n- **Total voting power:** 581,973,790 — the sum of √(balance) across every wallet ever holding $OMNOM.\n- **The 5% bar** (this vote's own quorum floor) = **29,098,690 power ≈ 1,284 average-power wallets voting.**\n- The old 10% default ≈ 2,569 average-power wallets. The PRD's 20% ≈ 5,137.\n- **Peak turnout ever:** the Foundational Governance Election — our most-promoted vote — reached **15,865,230 power = 2.73% of total**, from 35 voters.\n\nHonest read: the 5% bar is roughly **2× the best turnout this community has ever produced**. The old 10% default was ~3.7× peak. That is why this convention vote runs at the platform floor (5%) instead of the never-ratified 10% default: a rulebook vote no realistic turnout could legitimize would settle nothing. **If this vote fails to reach quorum, nothing changes — the current rules stay in force.**\n\n## Current Baseline (v1)\n\nThere is no single global value today. Seeded per-type defaults apply: Chain Selection 15%, Tokenomics Change 15%, Treasury 10%, Technical 10%, Community Guideline 10%, General Discussion 10%. Quorum counts every ballot (abstentions included) against **total quadratic power** — the sum of floor(sqrt(balance)) across the snapshot. The source documents disagreed (schema default 10%, creation-UI floor 5%, PRD recommendation 20%); that disagreement is exactly what this vote settles.\n\n## Options Considered\n\n- **5% global** (recommended — VOTE FOR) — lowest friction, easiest legitimacy; risk: a small early electorate decides for everyone.\n- **Keep the per-type 10–15% band** (AGAINST) — the status quo; risk: never ratified, and at measured turnout it can never be met.\n- **20% global** (PRD recommendation, dropped from this ballot) — strongest mandate; at 2.73% peak turnout it is unreachable for years. Anyone may propose it later once participation grows.\n\n## What Changes If Adopted\n\nThe \"default_quorum\" values in \"proposal_templates\" and the create-proposal wizard defaults become 5% for every type. The finalization engine itself is unchanged.\n\n## Reference\n\n[GOVERNANCE_MECHANICS.md §14, row 2](https://github.com/PennybagsCX/omnom-dao/blob/main/DOCS/GOVERNANCE_MECHANICS.md#14-open-governance-decisions) — \"Global default quorum\"; conflict documented in [§8](https://github.com/PennybagsCX/omnom-dao/blob/main/DOCS/GOVERNANCE_MECHANICS.md#8-quorum--pass-thresholds).",
+      type: "GENERAL",
+      status: "ACTIVE",
+      author_address: MOCK_HOLDERS.whale1.address,
+      created_at: relativeNow(-26 * 60 * 60 * 1000),
+      updated_at: null,
+      voting_starts_at: relativeNow(-25 * 60 * 60 * 1000),
+      voting_ends_at: relativeNow(6 * 24 * 60 * 60 * 1000),
+      quorum_required: 5.0,
+      quorum_achieved: null,
+      votes_for: 9_867_109,
+      votes_against: 5_348_732,
+      votes_abstain: 14_524,
+      metadata: JSON.stringify({ type: "base", links: [], tags: ["governance", "voting-rules"] }),
     },
     {
       id: P.passedTreasury,
@@ -625,6 +694,12 @@ function buildSeed(): MockStore {
     { id: "vote-2a", proposal_id: P.activeTokenomics, voter_address: MOCK_HOLDERS.whale2.address, choice: "FOR", voting_power: MOCK_HOLDERS.whale2.votingPower, created_at: "2026-06-22T10:00:00.000Z", tx_hash: null },
     { id: "vote-2b", proposal_id: P.activeTokenomics, voter_address: MOCK_HOLDERS.dolphin2.address, choice: "AGAINST", voting_power: MOCK_HOLDERS.dolphin2.votingPower, created_at: "2026-06-22T11:30:00.000Z", tx_hash: null },
     { id: "vote-2c", proposal_id: P.activeTokenomics, voter_address: MOCK_HOLDERS.fish3.address, choice: "ABSTAIN", voting_power: MOCK_HOLDERS.fish3.votingPower, created_at: "2026-06-22T12:05:00.000Z", tx_hash: null },
+
+    // Proposal — active quorum vote (tallies = sum of voting_power per choice)
+    { id: "vote-qa", proposal_id: P.activeQuorum, voter_address: MOCK_HOLDERS.whale1.address, choice: "FOR", voting_power: MOCK_HOLDERS.whale1.votingPower, created_at: relativeNow(-24 * 60 * 60 * 1000), tx_hash: null },
+    { id: "vote-qb", proposal_id: P.activeQuorum, voter_address: MOCK_HOLDERS.dolphin1.address, choice: "FOR", voting_power: MOCK_HOLDERS.dolphin1.votingPower, created_at: relativeNow(-22 * 60 * 60 * 1000), tx_hash: null },
+    { id: "vote-qc", proposal_id: P.activeQuorum, voter_address: MOCK_HOLDERS.whale2.address, choice: "AGAINST", voting_power: MOCK_HOLDERS.whale2.votingPower, created_at: relativeNow(-20 * 60 * 60 * 1000), tx_hash: null },
+    { id: "vote-qd", proposal_id: P.activeQuorum, voter_address: MOCK_HOLDERS.fish2.address, choice: "ABSTAIN", voting_power: MOCK_HOLDERS.fish2.votingPower, created_at: relativeNow(-18 * 60 * 60 * 1000), tx_hash: null },
 
     // Proposal 3 — passed treasury
     { id: "vote-3a", proposal_id: P.passedTreasury, voter_address: MOCK_HOLDERS.whale1.address, choice: "FOR", voting_power: MOCK_HOLDERS.whale1.votingPower, created_at: "2026-06-06T12:00:00.000Z", tx_hash: null },
