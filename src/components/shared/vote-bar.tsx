@@ -108,7 +108,8 @@ function LegendItem({
       <span className="font-medium text-foreground">{label}</span>
       <span className="font-mono">{pct.toFixed(1)}%</span>
       <span className="font-mono text-text-dim">
-        ({value.toLocaleString(undefined, { maximumFractionDigits: 2 })})
+        {/* en-US pinned: SSR hydration must match the client for non-en browsers. */}
+        ({value.toLocaleString("en-US", { maximumFractionDigits: 2 })})
       </span>
     </span>
   );

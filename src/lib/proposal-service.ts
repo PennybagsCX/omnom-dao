@@ -160,7 +160,7 @@ export async function getProposalById(id: string): Promise<Proposal | null> {
 export interface ListProposalsOptions {
   status?: ProposalStatus;
   type?: string;
-  sortBy?: "createdAt" | "votingEndsAt" | "votesFor";
+  sortBy?: "createdAt" | "votingStartsAt" | "votingEndsAt" | "votesFor";
   sortOrder?: "asc" | "desc";
   limit: number;
   offset: number;
@@ -168,6 +168,7 @@ export interface ListProposalsOptions {
 
 const SORT_COLUMNS: Record<string, string> = {
   createdAt: "created_at",
+  votingStartsAt: "voting_starts_at",
   votingEndsAt: "voting_ends_at",
   votesFor: "votes_for",
 };

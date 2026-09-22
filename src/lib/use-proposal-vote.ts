@@ -20,6 +20,10 @@ export interface UseProposalVoteResult {
   isVoting: boolean;
   isChangingVote: boolean;
   detail?: ProposalDetailData;
+  /** True when the detail query failed (retry: false — no auto-retry). */
+  detailErrored: boolean;
+  /** Re-run the detail query (e.g. after a failure). */
+  refetchDetail: () => void;
 }
 
 /**
@@ -36,7 +40,11 @@ export function useProposalVote(proposalId: string): UseProposalVoteResult {
   const { data: me } = useCurrentUser({ retry: false });
   const castVote = useCastVote(proposalId);
   const changeVote = useChangeVote(proposalId);
-  const { data: detail } = useProposalDetail(proposalId);
+  const {
+    data: detail,
+    isError: detailErrored,
+    refetch: refetchDetail,
+  } = useProposalDetail(proposalId);
 
   // Track the user's vote. The detail payload now includes the current user's
   // ballot (C2.1) so returning voters see their choice on load; we also update
@@ -88,5 +96,9 @@ export function useProposalVote(proposalId: string): UseProposalVoteResult {
     isVoting: castVote.isPending,
     isChangingVote: changeVote.isPending,
     detail,
+    detailErrored,
+    refetchDetail: () => {
+      void refetchDetail();
+    },
   };
 }
