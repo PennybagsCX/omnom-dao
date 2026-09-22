@@ -9,7 +9,8 @@ import {
 
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import {
-  ProposalVotePanel,
+  ProposalBallotCards,
+  ProposalVoteDiscussion,
   ProposalVoteResults,
 } from "@/components/proposals/proposal-vote-actions";
 import { CountdownTimer } from "@/components/shared/countdown-timer";
@@ -178,22 +179,25 @@ export default async function VotePage() {
               </p>
             )}
 
-          {/* Ballot — same centered section rhythm as the FGE page */}
+          {/* Ballot — FGE choice cards, full template width */}
           <section aria-labelledby="cast-vote-heading" className="mt-8">
             <div className="mb-4 text-center">
               <h2 id="cast-vote-heading" className="text-xl font-bold text-foreground">
-                Cast your vote
+                Cast your ballot
               </h2>
               <p className="text-sm text-muted-foreground">
-                FOR / AGAINST / ABSTAIN — abstentions count toward turnout.
+                FOR / AGAINST / ABSTAIN — one ballot per snapshot wallet,
+                changeable until close. Abstentions count toward turnout.
               </p>
             </div>
-            <div className="mx-auto max-w-xl">
-              <ProposalVotePanel
-                proposalId={current.id}
-                closedLabel="Voting closed — outcome pending"
-              />
-            </div>
+            <ProposalBallotCards
+              proposalId={current.id}
+              isActive
+              closedLabel="Voting closed — outcome pending"
+              votesFor={current.votesFor}
+              votesAgainst={current.votesAgainst}
+              votesAbstain={current.votesAbstain}
+            />
             {total > 1 && (
               <p className="mt-4 text-center text-sm text-muted-foreground">
                 {total - 1} more {total - 1 === 1 ? "proposal is" : "proposals are"} voting
@@ -228,6 +232,21 @@ export default async function VotePage() {
                 totalPower={totalPower}
               />
             </div>
+          </section>
+
+          {/* Discussion — same shared thread surface as the proposal detail
+              page; one thread, two windows into it. */}
+          <section aria-labelledby="discussion-heading" className="mt-10">
+            <div className="mb-4 text-center">
+              <h2 id="discussion-heading" className="text-xl font-bold text-foreground">
+                Discussion
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                The same thread as the proposal page — question the body before
+                you commit a ballot.
+              </p>
+            </div>
+            <ProposalVoteDiscussion proposalId={current.id} />
           </section>
         </>
       ) : (

@@ -1,37 +1,53 @@
 "use client";
 
-import { useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { CommentsSection } from "@/components/shared/comments-section";
 import { DynamicIcon } from "@/components/shared/dynamic-icon";
 import { QuorumProgress } from "@/components/shared/quorum-progress";
-import { VoteBar } from "@/components/shared/vote-bar";
 import { ConnectCta } from "@/components/wallet/connect-cta";
+import {
+  useCreateComment,
+  useToggleCommentEmojiReaction,
+  useToggleReaction,
+  useCurrentUser,
+  useProposalDetail,
+} from "@/lib/api";
 import { VOTE_CHOICE_CONFIG } from "@/lib/constants";
 import { useProposalVote } from "@/lib/use-proposal-vote";
-import { cn, formatCompact } from "@/lib/utils";
-import { ProposalStatus, VoteChoice } from "@/types";
+import { cn } from "@/lib/utils";
+import { ProposalStatus, VoteChoice, type ProposalComment } from "@/types";
 
 const CHOICES: VoteChoice[] = [VoteChoice.FOR, VoteChoice.AGAINST, VoteChoice.ABSTAIN];
 
 /**
- * FOR / AGAINST / ABSTAIN button. Shared by the proposal detail page and the
- * /vote hub so both voting surfaces render one set of pixels:
- *
- *  - `variant="stack"` (default) — the detail page's full-width buttons.
- *  - `variant="hero"` — the /vote hub's larger 44px full-width buttons.
+ * What each ballot choice means — the per-choice card copy, mirroring the
+ * FGE ballot cards' structure (title + summary + live % + Select button).
+ */
+const CHOICE_SUMMARIES: Record<VoteChoice, string> = {
+  [VoteChoice.FOR]:
+    "Adopt the proposal. If quorum is met and FOR wins, the outcome is recorded and the change proceeds.",
+  [VoteChoice.AGAINST]:
+    "Reject the proposal. The current rules stay in force — nothing changes.",
+  [VoteChoice.ABSTAIN]:
+    "Skip the outcome but count toward turnout — abstentions help reach quorum.",
+};
+
+/**
+ * FOR / AGAINST / ABSTAIN button — the proposal detail page's ballot button,
+ * exported here so the detail page and the /vote card flow share one set of
+ * pixels and one import site.
  */
 export function VoteButton({
   choice,
   onVote,
   disabled,
-  variant = "stack",
 }: {
   choice: VoteChoice;
   onVote: (c: VoteChoice) => void;
   disabled: boolean;
-  variant?: "stack" | "hero";
 }) {
   const cfg = VOTE_CHOICE_CONFIG[choice];
   const styles: Record<VoteChoice, string> = {
@@ -44,70 +60,108 @@ export function VoteButton({
       type="button"
       onClick={() => onVote(choice)}
       disabled={disabled}
-      className={cn(
-        "flex items-center justify-center gap-2 rounded-md border text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-        variant === "stack" ? "px-4 py-2.5" : "min-h-11 w-full px-4 py-3",
-        styles[choice],
-      )}
+      className={`flex items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${styles[choice]}`}
     >
       <DynamicIcon name={cfg.iconName} className="h-4 w-4" aria-hidden /> {cfg.label}
     </button>
   );
 }
 
-/** Shared hook wiring for both /vote islands (one detail query, deduped). */
-function useVoteState(proposalId: string) {
-  const vote = useProposalVote(proposalId);
-  const isActive = vote.detail
-    ? vote.detail.proposal.status === ProposalStatus.ACTIVE
-    : true;
-  return { vote, isActive };
+/** Total voting power across all choices, for per-choice percentages. */
+function powerVoted(tallies: { for: number; against: number; abstain: number }): number {
+  return tallies.for + tallies.against + tallies.abstain;
 }
 
-interface ProposalVotePanelProps {
+export function shareOfPower(choice: VoteChoice, tallies: {
+  for: number;
+  against: number;
+  abstain: number;
+}): number {
+  const total = powerVoted(tallies);
+  if (total <= 0) return 0;
+  const value = tallies[choice === VoteChoice.FOR ? "for" : choice === VoteChoice.AGAINST ? "against" : "abstain"];
+  return (value / total) * 100;
+}
+
+interface ProposalBallotCardsProps {
   proposalId: string;
+  /** Server-rendered ACTIVE hint, trusted only until the detail query resolves. */
+  isActive: boolean;
   /** Text shown when voting is closed. */
   closedLabel?: string;
+  /** Server-rendered fallback tallies for the per-card live percentages. */
+  votesFor: number;
+  votesAgainst: number;
+  votesAbstain: number;
   className?: string;
 }
 
 /**
- * Cast/change-vote panel for the /vote hub — the FGE ballot area's design
- * (centered instruction, stacked full-width choice buttons, gold
- * "current ballot" confirmation). Shares {@link useProposalVote} with the
- * detail page, so a cast from either surface updates both.
+ * The ballot — FGE choice cards adapted to a FOR/AGAINST/ABSTAIN proposal:
+ * one card per choice with a summary, its live share of voting power on the
+ * right, and click-to-vote (clicking a different card changes an existing
+ * ballot, exactly like the election page). Shares {@link useProposalVote}
+ * with the detail page, so a cast from either surface updates both.
  */
-export function ProposalVotePanel({
+export function ProposalBallotCards({
   proposalId,
+  isActive: serverIsActive,
   closedLabel = "Voting has ended",
+  votesFor: fallbackFor,
+  votesAgainst: fallbackAgainst,
+  votesAbstain: fallbackAbstain,
   className,
-}: ProposalVotePanelProps) {
-  const { vote, isActive } = useVoteState(proposalId);
-  const [isChanging, setIsChanging] = useState(false);
-
+}: ProposalBallotCardsProps) {
+  const vote = useProposalVote(proposalId);
+  const isActive = vote.detail
+    ? vote.detail.proposal.status === ProposalStatus.ACTIVE
+    : serverIsActive;
   const userVoted = vote.myVote !== null;
-  const changing = userVoted && isChanging;
+  const isMutating = vote.isVoting || vote.isChangingVote;
 
-  const handleVoteChange = async (choice: VoteChoice) => {
-    await vote.onChangeVote(choice);
-    setIsChanging(false);
+  const live = vote.detail?.proposal;
+  const tallies = {
+    for: live?.votesFor ?? fallbackFor,
+    against: live?.votesAgainst ?? fallbackAgainst,
+    abstain: live?.votesAbstain ?? fallbackAbstain,
+  };
+
+  const canVote =
+    isActive &&
+    vote.isAuthenticated &&
+    vote.detail !== undefined &&
+    !vote.detailErrored &&
+    !isMutating;
+
+  const handleChoice = (choice: VoteChoice) => {
+    if (!canVote || choice === vote.myVote) return;
+    if (userVoted) {
+      void vote.onChangeVote(choice);
+    } else {
+      void vote.onVote(choice);
+    }
   };
 
   return (
-    <div className={cn("space-y-4", className)} data-testid="proposal-vote-panel">
+    <div className={cn("space-y-4", className)} data-testid="proposal-vote-ballot">
       {!isActive ? (
         <div className="rounded-xl border border-border bg-bg-elevated/40 p-6 text-center">
           <p className="text-sm font-medium text-muted-foreground">{closedLabel}</p>
         </div>
-      ) : !vote.isAuthenticated ? (
+      ) : null}
+
+      {!vote.isAuthenticated && isActive && (
+        // FGE parity: the connect box sits above the (browsable) cards.
         <div className="rounded-xl border border-border bg-bg-elevated/40 p-6 text-center">
           <p className="mb-1 text-sm font-medium text-foreground">Connect to vote</p>
           <p className="mb-4 text-sm text-muted-foreground">
-            One ballot per snapshot wallet — power-weighted by √(balance).
+            One ballot per snapshot wallet, weighted by √(balance).
           </p>
-          <ConnectCta className="min-h-11">Connect Wallet</ConnectCta>
+          <ConnectCta>Connect Wallet</ConnectCta>
         </div>
-      ) : vote.detailErrored && vote.detail === undefined ? (
+      )}
+
+      {isActive && vote.detailErrored && vote.detail === undefined ? (
         // The detail query never retries on its own — without this branch a
         // single failed fetch would leave the ballot stuck on "Checking".
         <div className="rounded-xl border border-border bg-bg-elevated/40 p-6 text-center">
@@ -123,78 +177,88 @@ export function ProposalVotePanel({
           </Button>
         </div>
       ) : vote.detail === undefined ? (
-        // Neutral state while myVote/auth settle — prevents clicking a cast
-        // button that would fire a doomed POST (already-voted / not-yet-authed).
+        // Neutral state while myVote/auth settle — prevents a click that
+        // would fire a doomed POST (already-voted / not-yet-authed).
         <div
           className="flex items-center justify-center gap-2 rounded-xl border border-border bg-bg-elevated/40 p-6 text-sm text-muted-foreground"
           role="status"
         >
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Checking your vote…
         </div>
-      ) : !userVoted || changing ? (
-        <>
-          <div className="grid grid-cols-1 gap-2">
-            {CHOICES.map((choice) => (
-              <VoteButton
-                key={choice}
-                variant="hero"
-                choice={choice}
-                onVote={changing ? handleVoteChange : vote.onVote}
-                disabled={changing ? vote.isChangingVote : vote.isVoting}
-              />
-            ))}
-          </div>
-          {changing && (
-            <div className="text-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="min-h-11 sm:min-h-9"
-                onClick={() => setIsChanging(false)}
-                disabled={vote.isChangingVote}
-              >
-                Cancel
-              </Button>
-            </div>
-          )}
-        </>
-      ) : (
-        vote.myVote && (
-          <div
-            aria-live="polite"
-            className="rounded-xl border border-gold/40 bg-gold/5 p-5 text-center"
+      ) : null}
+
+      {CHOICES.map((choice) => {
+        const cfg = VOTE_CHOICE_CONFIG[choice];
+        const selected = vote.myVote === choice;
+        const share = shareOfPower(choice, tallies);
+        return (
+          <Card
+            key={choice}
+            data-testid={`ballot-card-${choice.toLowerCase()}`}
+            className={cn(
+              "transition-all cursor-pointer",
+              selected && "border-gold/40 bg-gold/5",
+              canVote && !selected && "hover:border-border/50",
+            )}
+            onClick={() => handleChoice(choice)}
           >
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-gold/15 px-2.5 py-0.5 text-xs font-medium text-gold">
-              <CheckCircle2 className="h-3 w-3" aria-hidden />
-              Current ballot
-            </span>
-            <p className="mt-2 text-sm font-medium text-foreground">
-              You voted:{" "}
-              <span
-                className={`inline-flex items-center gap-1 ${VOTE_CHOICE_CONFIG[vote.myVote].accentClass}`}
-              >
-                <DynamicIcon
-                  name={VOTE_CHOICE_CONFIG[vote.myVote].iconName}
-                  className="h-3.5 w-3.5"
-                  aria-hidden
-                />
-                {VOTE_CHOICE_CONFIG[vote.myVote].label}
-              </span>
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Your vote has been recorded.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-3 min-h-11 sm:min-h-9"
-              onClick={() => setIsChanging(true)}
-            >
-              Change Vote
-            </Button>
-          </div>
-        )
-      )}
+            <CardContent className="p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3
+                      className={cn(
+                        "inline-flex items-center gap-1.5 text-base font-semibold",
+                        selected ? "text-gold" : "text-foreground",
+                      )}
+                    >
+                      <DynamicIcon name={cfg.iconName} className="h-4 w-4" aria-hidden />
+                      {cfg.label}
+                    </h3>
+                    {selected && (
+                      <span className="flex items-center gap-1 rounded-full bg-gold/15 px-2 py-0.5 text-xs text-gold">
+                        <CheckCircle2 className="h-3 w-3" aria-hidden />
+                        Current ballot
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {CHOICE_SUMMARIES[choice]}
+                  </p>
+                  {choice === VoteChoice.ABSTAIN && (
+                    <p className="mt-2 text-xs text-text-dim">
+                      Turnout counts every ballot against total quadratic power
+                      (√ of snapshot balance).
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <div className="text-center">
+                    <div className="font-mono text-lg font-bold text-gold">
+                      {share.toFixed(1)}%
+                    </div>
+                    <div className="text-xs text-text-dim">Current results</div>
+                  </div>
+                  {canVote && (
+                    <Button
+                      size="sm"
+                      variant={selected ? "default" : "outline"}
+                      className={cn("shrink-0", selected && "bg-gold text-gold-foreground hover:bg-gold/90")}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleChoice(choice);
+                      }}
+                    >
+                      {selected ? "Selected" : "Select"}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
 
       {(vote.isVoting || vote.isChangingVote) && (
         <div
@@ -212,9 +276,7 @@ export function ProposalVotePanel({
           title="Quadratic voting (community-chosen): your power is the square root of your snapshot balance."
         >
           Your voting power (√ balance):{" "}
-          <span className="font-mono text-muted-foreground">
-            {formatCompact(vote.votingPower)}
-          </span>
+          <span className="font-mono text-muted-foreground">{vote.votingPower.toLocaleString("en-US")}</span>
         </p>
       )}
     </div>
@@ -235,10 +297,10 @@ interface ProposalVoteResultsProps {
 }
 
 /**
- * Live results for the /vote hub's "Current results" section — VoteBar,
- * per-choice power cells, and live turnout vs the quorum threshold.
- * Tallies come from the shared detail query, so a cast from the panel above
- * (or the detail page) updates this section in place.
+ * Live results in the FGE per-choice bar style: one gold-percentage row per
+ * choice, then the turnout-vs-quorum progress. Tallies come from the shared
+ * detail query, so a cast from the ballot above (or the detail page) updates
+ * this section in place.
  */
 export function ProposalVoteResults({
   proposalId,
@@ -249,52 +311,98 @@ export function ProposalVoteResults({
   totalPower,
   className,
 }: ProposalVoteResultsProps) {
-  const { vote } = useVoteState(proposalId);
+  const vote = useProposalVote(proposalId);
   const live = vote.detail?.proposal;
-  const votesFor = live?.votesFor ?? fallbackFor;
-  const votesAgainst = live?.votesAgainst ?? fallbackAgainst;
-  const votesAbstain = live?.votesAbstain ?? fallbackAbstain;
-  const powerVoted = votesFor + votesAgainst + votesAbstain;
-  const turnout = totalPower > 0 ? (powerVoted / totalPower) * 100 : 0;
+  const tallies = {
+    for: live?.votesFor ?? fallbackFor,
+    against: live?.votesAgainst ?? fallbackAgainst,
+    abstain: live?.votesAbstain ?? fallbackAbstain,
+  };
+  const voted = powerVoted(tallies);
+  const turnout = totalPower > 0 ? (voted / totalPower) * 100 : 0;
 
   return (
-    <div className={cn("space-y-5", className)} data-testid="proposal-vote-results">
-      <VoteBar votesFor={votesFor} votesAgainst={votesAgainst} votesAbstain={votesAbstain} />
-
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
-        <Cell value={votesFor} label="For" valueClass="text-emerald-300" />
-        <Cell value={votesAgainst} label="Against" valueClass="text-rose-300" />
-        <Cell value={votesAbstain} label="Abstain" valueClass="text-gold" />
-        <div>
-          <div className="font-mono text-sm font-bold text-gold">
-            {turnout.toFixed(1)}
-            <span className="text-xs font-normal text-text-dim"> / {quorumRequired}%</span>
+    <div className={cn("space-y-3", className)} data-testid="proposal-vote-results">
+      {CHOICES.map((choice) => {
+        const share = shareOfPower(choice, tallies);
+        const value =
+          tallies[choice === VoteChoice.FOR ? "for" : choice === VoteChoice.AGAINST ? "against" : "abstain"];
+        const selected = vote.myVote === choice;
+        return (
+          <div key={choice} className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className={cn("font-medium", selected ? "text-gold" : "text-foreground")}>
+                {VOTE_CHOICE_CONFIG[choice].label}
+              </span>
+              <span className="font-mono font-bold text-gold">{share.toFixed(1)}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-bg-elevated">
+              <div
+                className={cn("h-full transition-all duration-500", VOTE_CHOICE_CONFIG[choice].barClass)}
+                style={{ width: `${share}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-xs text-text-dim">
+              <span>{choice === VoteChoice.FOR ? "Voting power for" : choice === VoteChoice.AGAINST ? "Voting power against" : "Voting power withheld"}</span>
+              <span>{value.toLocaleString("en-US")}</span>
+            </div>
           </div>
-          <div className="text-xs text-text-dim">Quorum</div>
-        </div>
-      </div>
+        );
+      })}
 
-      <QuorumProgress achieved={turnout} required={quorumRequired} />
+      <QuorumProgress className="pt-2" achieved={turnout} required={quorumRequired} />
     </div>
   );
 }
 
-function Cell({
-  value,
-  label,
-  valueClass,
-}: {
-  value: number;
-  label: string;
-  valueClass: string;
-}) {
+interface ProposalVoteDiscussionProps {
+  proposalId: string;
+  className?: string;
+}
+
+/**
+ * Discussion island for the /vote page — the same shared CommentsSection the
+ * detail page uses, fed by the shared detail query (no extra fetch) and the
+ * same comment mutations, so both surfaces see one thread.
+ */
+export function ProposalVoteDiscussion({
+  proposalId,
+  className,
+}: ProposalVoteDiscussionProps) {
+  const { data: me } = useCurrentUser({ retry: false });
+  const { data: detail, isError } = useProposalDetail(proposalId);
+  const createComment = useCreateComment(proposalId);
+  const toggleReaction = useToggleReaction(proposalId);
+  const toggleCommentEmoji = useToggleCommentEmojiReaction(proposalId);
+
+  if (isError) {
+    return (
+      <p className="py-6 text-center text-sm text-muted-foreground">
+        Comments are unavailable right now.
+      </p>
+    );
+  }
+
   return (
-    <div>
-      <div className={cn("font-mono text-sm font-bold", valueClass)}>
-        {/* en-US pinned: SSR hydration must match the client for non-en browsers. */}
-        {value.toLocaleString("en-US", { maximumFractionDigits: 2 })}
-      </div>
-      <div className="text-xs text-text-dim">{label}</div>
+    <div className={className}>
+      <CommentsSection<ProposalComment>
+        comments={detail?.comments ?? []}
+        isAuthenticated={Boolean(me)}
+        myAddress={me?.address}
+        onSubmit={async (content) => {
+          await createComment.mutateAsync({ content });
+        }}
+        onReply={async (parentId, content) => {
+          await createComment.mutateAsync({ content, parentId });
+        }}
+        onReact={(commentId, type) => toggleReaction.mutate({ commentId, type })}
+        onReactEmoji={(commentId, emoji) =>
+          toggleCommentEmoji.mutate({ commentId, emoji })
+        }
+        isSubmitting={createComment.isPending}
+        isReacting={toggleReaction.isPending}
+        isReactingEmoji={toggleCommentEmoji.isPending}
+      />
     </div>
   );
 }
