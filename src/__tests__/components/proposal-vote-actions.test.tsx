@@ -5,7 +5,11 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { ProposalVoteActions } from "@/components/proposals/proposal-vote-actions";
+import {
+  ProposalVotePanel,
+  ProposalVoteResults,
+  VoteButton,
+} from "@/components/proposals/proposal-vote-actions";
 import type { ProposalDetailData } from "@/lib/api";
 import type { UseProposalVoteResult } from "@/lib/use-proposal-vote";
 import { ProposalStatus, VoteChoice } from "@/types";
@@ -24,10 +28,22 @@ vi.mock("@/components/wallet/connect-cta", () => ({
   ),
 }));
 
-function detailWithStatus(status: ProposalStatus): ProposalDetailData {
+function detailWith(
+  status: ProposalStatus,
+  tallies: { for: number; against: number; abstain: number } = {
+    for: 0,
+    against: 0,
+    abstain: 0,
+  },
+): ProposalDetailData {
   return {
-    proposal: { status } as unknown as ProposalDetailData["proposal"],
-    votes: { totalFor: 0, totalAgainst: 0, totalAbstain: 0 },
+    proposal: {
+      status,
+      votesFor: tallies.for,
+      votesAgainst: tallies.against,
+      votesAbstain: tallies.abstain,
+    } as unknown as ProposalDetailData["proposal"],
+    votes: { totalFor: tallies.for, totalAgainst: tallies.against, totalAbstain: tallies.abstain },
     voterCount: 0,
     comments: [],
     myVote: null,
@@ -44,100 +60,96 @@ function baseVote(overrides: Partial<UseProposalVoteResult> = {}): UseProposalVo
     isVoting: false,
     isChangingVote: false,
     detail: undefined,
+    detailErrored: false,
+    refetchDetail: vi.fn(),
     ...overrides,
   };
 }
 
-function renderActions(
-  vote: UseProposalVoteResult,
-  props: { isActive?: boolean; closedLabel?: string } = {},
-) {
+function renderPanel(vote: UseProposalVoteResult, closedLabel?: string) {
   useProposalVoteMock.mockReturnValue(vote);
   return render(
-    <ProposalVoteActions
+    <ProposalVotePanel
       proposalId="prop-x"
-      isActive={props.isActive ?? true}
-      closedLabel={props.closedLabel ?? "Voting closed — outcome pending"}
+      closedLabel={closedLabel ?? "Voting closed — outcome pending"}
     />,
   );
 }
 
-describe("<ProposalVoteActions />", () => {
-  it("renders the live VoteBar from the server fallback tallies", () => {
-    useProposalVoteMock.mockReturnValue(baseVote());
+describe("<VoteButton />", () => {
+  it("stack variant keeps the detail page's 40px pixels", () => {
     render(
-      <ProposalVoteActions
-        proposalId="prop-x"
-        isActive
-        votesFor={60}
-        votesAgainst={30}
-        votesAbstain={10}
-      />,
+      <VoteButton choice={VoteChoice.FOR} onVote={() => {}} disabled={false} />,
     );
-    expect(screen.getByRole("img")).toHaveAttribute(
-      "aria-label",
-      "For 60.0%, Against 30.0%, Abstain 10.0%",
-    );
+    expect(screen.getByRole("button", { name: /for/i }).className).toContain("py-2.5");
   });
 
-  it("prefers the detail query's tallies once resolved (live bar after a cast)", () => {
-    const detail = detailWithStatus(ProposalStatus.ACTIVE);
-    detail.proposal = {
-      ...detail.proposal,
-      votesFor: 100,
-      votesAgainst: 10,
-      votesAbstain: 5,
-    } as ProposalDetailData["proposal"];
-    useProposalVoteMock.mockReturnValue(baseVote({ isAuthenticated: true, detail }));
+  it("hero variant is a full-width 44px touch target", () => {
     render(
-      <ProposalVoteActions
-        proposalId="prop-x"
-        isActive
-        votesFor={60}
-        votesAgainst={30}
-        votesAbstain={10}
+      <VoteButton
+        choice={VoteChoice.FOR}
+        onVote={() => {}}
+        disabled={false}
+        variant="hero"
       />,
     );
-    expect(screen.getByRole("img")).toHaveAttribute(
-      "aria-label",
-      "For 87.0%, Against 8.7%, Abstain 4.3%",
-    );
+    const btn = screen.getByRole("button", { name: /for/i });
+    expect(btn.className).toContain("min-h-11");
+    expect(btn.className).toContain("w-full");
   });
+});
 
-  it("unauthenticated + active: shows the connect prompt and zero choice buttons", () => {
-    renderActions(baseVote());
-    expect(screen.getByText(/connect your wallet to vote/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /connect to vote/i })).toBeInTheDocument();
+describe("<ProposalVotePanel />", () => {
+  it("unauthenticated + active: FGE-style connect card, zero choice buttons", () => {
+    renderPanel(baseVote());
+    expect(screen.getByText("Connect to vote")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /connect wallet/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^for$/i })).not.toBeInTheDocument();
   });
 
   it("authenticated but detail unresolved: neutral checking state (no doomed casts)", () => {
-    renderActions(baseVote({ isAuthenticated: true }));
+    renderPanel(baseVote({ isAuthenticated: true }));
     expect(screen.getByText(/checking your vote…/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^for$/i })).not.toBeInTheDocument();
   });
 
-  it("authenticated + unvoted + resolved: three 44px row-variant choice buttons", () => {
-    renderActions(
+  it("failed detail query: dead-end branch with a working retry", async () => {
+    const user = userEvent.setup();
+    const refetchDetail = vi.fn();
+    renderPanel(
+      baseVote({ isAuthenticated: true, detailErrored: true, refetchDetail }),
+    );
+    // The rendered text uses a typographic apostrophe (’), so wildcard it.
+    expect(screen.getByText(/couldn.t load your ballot status/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /try again/i }));
+    expect(refetchDetail).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: /^for$/i })).not.toBeInTheDocument();
+  });
+
+  it("authenticated + unvoted + resolved: stacked hero buttons + power footnote", () => {
+    renderPanel(
       baseVote({
         isAuthenticated: true,
-        detail: detailWithStatus(ProposalStatus.ACTIVE),
+        votingPower: 223_606,
+        detail: detailWith(ProposalStatus.ACTIVE),
       }),
     );
-    expect(screen.getByText("Cast your vote")).toBeInTheDocument();
     for (const name of [/^for$/i, /^against$/i, /^abstain$/i]) {
       const btn = screen.getByRole("button", { name });
       expect(btn.className).toContain("min-h-11");
+      expect(btn.className).toContain("w-full");
     }
+    expect(screen.getByText(/your voting power/i)).toBeInTheDocument();
+    expect(screen.getByText("223.61K")).toBeInTheDocument();
   });
 
   it("clicking FOR calls onVote with VoteChoice.FOR", async () => {
     const user = userEvent.setup();
     const onVote = vi.fn(async () => {});
-    renderActions(
+    renderPanel(
       baseVote({
         isAuthenticated: true,
-        detail: detailWithStatus(ProposalStatus.ACTIVE),
+        detail: detailWith(ProposalStatus.ACTIVE),
         onVote,
       }),
     );
@@ -145,16 +157,16 @@ describe("<ProposalVoteActions />", () => {
     expect(onVote).toHaveBeenCalledWith(VoteChoice.FOR);
   });
 
-  it("voted: shows the recorded choice chip and a Change Vote affordance", () => {
-    renderActions(
+  it("voted: gold 'Current ballot' chip and a Change Vote affordance", () => {
+    renderPanel(
       baseVote({
         isAuthenticated: true,
         myVote: VoteChoice.FOR,
-        detail: detailWithStatus(ProposalStatus.ACTIVE),
+        detail: detailWith(ProposalStatus.ACTIVE),
       }),
     );
+    expect(screen.getByText("Current ballot")).toBeInTheDocument();
     expect(screen.getByText(/you voted:/i)).toBeInTheDocument();
-    expect(screen.getByText(/your vote has been recorded/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /change vote/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^against$/i })).not.toBeInTheDocument();
   });
@@ -162,52 +174,103 @@ describe("<ProposalVoteActions />", () => {
   it("changing: buttons return with Cancel, and onChangeVote receives the new choice", async () => {
     const user = userEvent.setup();
     const onChangeVote = vi.fn(async () => {});
-    renderActions(
+    renderPanel(
       baseVote({
         isAuthenticated: true,
         myVote: VoteChoice.FOR,
         onChangeVote,
-        detail: detailWithStatus(ProposalStatus.ACTIVE),
+        detail: detailWith(ProposalStatus.ACTIVE),
       }),
     );
     await user.click(screen.getByRole("button", { name: /change vote/i }));
-    expect(screen.getByText("Change your vote")).toBeInTheDocument();
-    const against = screen.getByRole("button", { name: /^against$/i });
-    await user.click(against);
+    expect(screen.getByRole("button", { name: /^against$/i })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: /^against$/i }));
     await waitFor(() =>
       expect(onChangeVote).toHaveBeenCalledWith(VoteChoice.AGAINST),
     );
   });
 
-  it("casting: buttons are disabled and a status-announced casting indicator shows", () => {
-    renderActions(
+  it("casting: buttons disabled with a status-announced indicator", () => {
+    renderPanel(
       baseVote({
         isAuthenticated: true,
         isVoting: true,
-        detail: detailWithStatus(ProposalStatus.ACTIVE),
+        detail: detailWith(ProposalStatus.ACTIVE),
       }),
     );
     expect(screen.getByRole("button", { name: /^for$/i })).toBeDisabled();
-    const status = screen.getByRole("status");
-    expect(status).toHaveTextContent(/casting vote…/i);
+    expect(screen.getByRole("status")).toHaveTextContent(/casting vote…/i);
   });
 
-  it("closed (server hint): shows the closedLabel and no voting affordances", () => {
-    renderActions(baseVote(), { isActive: false });
-    expect(screen.getByText("Voting closed — outcome pending")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^for$/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /connect to vote/i })).not.toBeInTheDocument();
-  });
-
-  it("a stale ACTIVE card flips itself to closed once the server status resolves", () => {
-    // detail present with a finalized status — server hint is ignored.
-    renderActions(
+  it("closed (server status resolved): shows the closedLabel and no affordances", () => {
+    renderPanel(
       baseVote({
         isAuthenticated: true,
-        detail: detailWithStatus(ProposalStatus.PASSED),
+        detail: detailWith(ProposalStatus.PASSED),
       }),
     );
     expect(screen.getByText("Voting closed — outcome pending")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^for$/i })).not.toBeInTheDocument();
+  });
+});
+
+describe("<ProposalVoteResults />", () => {
+  const RESULTS_PROPS = {
+    proposalId: "prop-x",
+    votesFor: 60,
+    votesAgainst: 30,
+    votesAbstain: 10,
+    quorumRequired: 5,
+    totalPower: 1000,
+  };
+
+  it("renders the bar, per-choice power cells, and live turnout vs quorum", () => {
+    // No detail query resolved — the server fallback tallies render.
+    useProposalVoteMock.mockReturnValue(baseVote());
+    render(<ProposalVoteResults {...RESULTS_PROPS} />);
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "aria-label",
+      "For 60.0%, Against 30.0%, Abstain 10.0%",
+    );
+    expect(screen.getByText("60")).toBeInTheDocument();
+    expect(screen.getByText("30")).toBeInTheDocument();
+    expect(screen.getByText("10")).toBeInTheDocument();
+    // Turnout = (60+30+10)/1000 = 10.0% vs required 5% — the value shows in
+    // both the quorum cell and the VoteBar legend, and the progressbar pins it.
+    expect(screen.getAllByText(/10\.0/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Quorum reached/i)).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "10");
+  });
+
+  it("prefers the detail query's tallies once resolved (live bar after a cast)", () => {
+    useProposalVoteMock.mockReturnValue(
+      baseVote({
+        isAuthenticated: true,
+        detail: detailWith(ProposalStatus.ACTIVE, {
+          for: 100,
+          against: 10,
+          abstain: 5,
+        }),
+      }),
+    );
+    render(<ProposalVoteResults {...RESULTS_PROPS} />);
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "aria-label",
+      "For 87.0%, Against 8.7%, Abstain 4.3%",
+    );
+  });
+
+  it("renders zero-state turnout without dividing by a zero denominator", () => {
+    useProposalVoteMock.mockReturnValue(baseVote());
+    render(
+      <ProposalVoteResults
+        {...RESULTS_PROPS}
+        votesFor={0}
+        votesAgainst={0}
+        votesAbstain={0}
+        totalPower={0}
+      />,
+    );
+    expect(screen.getByText("0.0")).toBeInTheDocument();
   });
 });

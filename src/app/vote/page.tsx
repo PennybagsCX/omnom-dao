@@ -1,20 +1,25 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { History, Vote as VoteIcon } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarClock,
+  History,
+  Vote as VoteIcon,
+} from "lucide-react";
 
+import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
+import {
+  ProposalVotePanel,
+  ProposalVoteResults,
+} from "@/components/proposals/proposal-vote-actions";
+import { CountdownTimer } from "@/components/shared/countdown-timer";
 import { EmptyState } from "@/components/shared/empty-state";
-import {
-  LiveVoteCard,
-  type LiveVoteProps,
-} from "@/components/vote/live-vote-card";
-import {
-  PastVotesArchive,
-  type PastVoteItem,
-} from "@/components/vote/past-votes-archive";
 import { PROPOSAL_TYPE_CONFIG } from "@/lib/constants";
 import { FGE_VOTING_ENDS_AT, FGE_VOTING_STARTS_AT } from "@/lib/election";
 import { buildResults, loadElection, tally } from "@/lib/election-tally";
 import { listFinalizedProposals, listProposals } from "@/lib/proposal-service";
+import { formatDateTime } from "@/lib/utils";
+import { totalQuadraticPower } from "@/lib/voting-power";
 import { ProposalStatus, type Proposal } from "@/types";
 
 /** Live voting data — rendered per request, never prerendered at build time. */
@@ -43,156 +48,304 @@ function formatDay(iso: string): string {
   });
 }
 
-function proposalWindowLabel(p: Proposal): string | null {
+function formatWindowLabel(p: Proposal): string | null {
   if (p.votingStartsAt && p.votingEndsAt) {
-    return `${formatDay(p.votingStartsAt)} – ${formatDay(p.votingEndsAt)} (UTC)`;
+    return `Voted ${formatDay(p.votingStartsAt)} – ${formatDay(p.votingEndsAt)}`;
   }
   return p.votingEndsAt ? `Closed ${formatDay(p.votingEndsAt)}` : null;
 }
 
-function toLiveVoteProps(p: Proposal): LiveVoteProps {
-  return {
-    id: p.id,
-    title: p.title,
-    typeLabel: PROPOSAL_TYPE_CONFIG[p.type]?.label ?? p.type,
-    endsAt: p.votingEndsAt,
-    votesFor: p.votesFor,
-    votesAgainst: p.votesAgainst,
-    votesAbstain: p.votesAbstain,
-    quorumRequired: p.quorumRequired,
-    description: p.description,
-  };
-}
-
-function toPastVoteItem(p: Proposal): PastVoteItem {
-  return {
-    key: p.id,
-    kind: "PROPOSAL",
-    label: p.title,
-    status: p.status,
-    windowLabel: proposalWindowLabel(p),
-    tallies: { for: p.votesFor, against: p.votesAgainst, abstain: p.votesAbstain },
-    quorum: { achieved: p.quorumAchieved, required: p.quorumRequired },
-    href: `/proposals/${p.id}`,
-  };
+/** Collapse the markdown body to a plain-text teaser for the subtitle. */
+function excerpt(markdown: string): string {
+  const plain = markdown
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/[#*_>`]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return plain.length > 220 ? `${plain.slice(0, 220).trimEnd()}…` : plain;
 }
 
 export default async function VotePage() {
-  // Soonest-ending live vote first. Bounded at 50 concurrent ACTIVE
-  // proposals — far beyond this DAO's realistic throughput; each card also
-  // drives one detail fetch in its embedded vote island.
-  const { proposals: active } = await listProposals({
+  // The current vote: most recently OPENED ACTIVE proposal (voting starts at
+  // admin approval, so voting_starts_at — not draft createdAt — is "current").
+  // total drives the "more live votes" note.
+  const { proposals, total } = await listProposals({
     status: ProposalStatus.ACTIVE,
-    sortBy: "votingEndsAt",
-    sortOrder: "asc",
-    limit: 50,
+    sortBy: "votingStartsAt",
+    sortOrder: "desc",
+    limit: 1,
     offset: 0,
   });
-  const finalized = await listFinalizedProposals();
+  const current = proposals[0] ?? null;
+
+  // Past votes = proposals that actually went to a vote; admin-rejected rows
+  // (FAILED without a voting window) stay on /results and /proposals.
+  const finalized = (await listFinalizedProposals()).filter((p) => p.votingEndsAt);
 
   // FGE — fall back to the pinned constants when the election row is missing
   // (same graceful degradation as /results; the row exists in prod and mock).
   const election = await loadElection();
-  const startsAt = election?.voting_starts_at ?? FGE_VOTING_STARTS_AT;
-  const endsAt = election?.voting_ends_at ?? FGE_VOTING_ENDS_AT;
+  const fgeStartsAt = election?.voting_starts_at ?? FGE_VOTING_STARTS_AT;
+  const fgeEndsAt = election?.voting_ends_at ?? FGE_VOTING_ENDS_AT;
   const counts = await tally();
   const totalBallots = [...counts.values()].reduce((sum, n) => sum + n, 0);
-  const electionResults = buildResults(counts, totalBallots).map((r) => ({
-    choice: r.choice,
-    label: r.label,
-    count: r.count,
-    percentage: r.percentage,
-  }));
+  const results = buildResults(counts, totalBallots);
+  const winner =
+    results.reduce<(typeof results)[number] | null>(
+      (best, r) => (r.count > 0 && (best === null || r.count > best.count) ? r : best),
+      null,
+    ) ?? null;
 
-  // Flagship past vote first; then finalized proposals, newest window first
-  // (listFinalizedProposals ordering).
-  const pastItems: PastVoteItem[] = [
-    {
-      key: "fge-foundational-2026",
-      kind: "ELECTION",
-      label: "Foundational Governance Election",
-      windowLabel: `${formatDay(startsAt)} – ${formatDay(endsAt)} (UTC)`,
-      electionResults,
-      totalBallots,
-      href: "/governance-vote",
-    },
-    ...finalized.map(toPastVoteItem),
-  ];
+  // Quorum denominator (cached per process) — powers the live turnout stat.
+  // Degrade to 0 on artifact failure (same defense as the votes route and
+  // finalize) so a snapshot problem can never 500 the hub.
+  let totalPower = 0;
+  try {
+    totalPower = await totalQuadraticPower();
+  } catch {
+    // Stats read as zero turnout; the page still renders.
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="text-center">
-        <div className="mb-2 flex items-center justify-center gap-2">
-          <VoteIcon className="h-6 w-6 text-gold" aria-hidden />
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Vote
-          </h1>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Every live vote, and the full record of every decision before it.
-        </p>
-      </header>
+      {current ? (
+        <>
+          {/* Header — the live proposal, centered like the FGE page */}
+          <div className="text-center">
+            <div className="mb-2 flex flex-col items-center justify-center gap-2">
+              <VoteIcon className="h-6 w-6 text-gold" aria-hidden />
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <ProposalStatusBadge status={ProposalStatus.ACTIVE} pulse />
+                <span className="text-xs font-medium uppercase tracking-widest text-text-dim">
+                  {PROPOSAL_TYPE_CONFIG[current.type]?.label ?? current.type}
+                </span>
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+              {current.title}
+            </h1>
+            <p className="mx-auto mt-2 max-w-2xl text-sm text-muted-foreground">
+              {excerpt(current.description)}
+            </p>
+          </div>
 
-      {/* ── Section 1: live votes ───────────────────────────────────── */}
-      <section aria-labelledby="live-votes-heading" className="mt-10">
-        <h2
-          id="live-votes-heading"
-          className="flex items-center gap-2 text-xl font-bold text-foreground sm:text-2xl"
-        >
-          <span aria-hidden className="inline-block h-2 w-2 animate-pulse-glow rounded-full bg-emerald-400" />
-          Live now
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Voting is open — ballots are power-weighted (√ of snapshot balance),
-          and results stay provisional until the window closes.
-        </p>
+          {/* Countdown — same column and panel as the FGE page. Explicit
+              closed-state text: the component default reads as stale copy. */}
+          {current.votingEndsAt && (
+            <div className="mx-auto mt-6 max-w-xl">
+              <CountdownTimer
+                target={current.votingEndsAt}
+                label="Voting closes in"
+                closedText="Voting closed — outcome pending"
+                ariaLabel={`Voting closes in — ${current.title}`}
+              />
+            </div>
+          )}
 
-        {active.length === 0 ? (
+          {/* Stats — same gold grid as the FGE page */}
+          <div className="mt-6 grid gap-3 rounded-xl border border-border bg-bg-elevated/40 p-4 text-center sm:grid-cols-3">
+            <div>
+              <div className="font-mono text-lg font-bold text-gold">
+                {(current.votesFor + current.votesAgainst + current.votesAbstain).toLocaleString()}
+              </div>
+              <div className="text-xs text-text-dim">Voting power voted</div>
+            </div>
+            <div>
+              <div className="font-mono text-lg font-bold text-gold">
+                {totalPower > 0
+                  ? (((current.votesFor + current.votesAgainst + current.votesAbstain) / totalPower) * 100).toFixed(1)
+                  : "0.0"}
+                %
+              </div>
+              <div className="text-xs text-text-dim">Turnout</div>
+            </div>
+            <div>
+              <div className="font-mono text-lg font-bold text-gold">
+                {current.quorumRequired}%
+              </div>
+              <div className="text-xs text-text-dim">Quorum required</div>
+            </div>
+          </div>
+
+          {/* Status message — gated on the window still being open at render
+              time so it can't contradict a closed countdown. */}
+          {current.votingEndsAt &&
+            new Date().getTime() < new Date(current.votingEndsAt).getTime() && (
+              <p className="mt-4 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+                <CalendarClock className="h-4 w-4" aria-hidden />
+                <span>voting closes</span> {formatDateTime(current.votingEndsAt)}
+              </p>
+            )}
+
+          {/* Ballot — same centered section rhythm as the FGE page */}
+          <section aria-labelledby="cast-vote-heading" className="mt-8">
+            <div className="mb-4 text-center">
+              <h2 id="cast-vote-heading" className="text-xl font-bold text-foreground">
+                Cast your vote
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                FOR / AGAINST / ABSTAIN — abstentions count toward turnout.
+              </p>
+            </div>
+            <div className="mx-auto max-w-xl">
+              <ProposalVotePanel
+                proposalId={current.id}
+                closedLabel="Voting closed — outcome pending"
+              />
+            </div>
+            {total > 1 && (
+              <p className="mt-4 text-center text-sm text-muted-foreground">
+                {total - 1} more {total - 1 === 1 ? "proposal is" : "proposals are"} voting
+                now —{" "}
+                <Link
+                  href="/proposals?status=ACTIVE"
+                  className="text-gold transition-colors hover:text-gold/80"
+                >
+                  browse all live proposals
+                </Link>
+              </p>
+            )}
+          </section>
+
+          {/* Results — same centered section rhythm as the FGE page */}
+          <section aria-labelledby="current-results-heading" className="mt-10">
+            <div className="mb-4 text-center">
+              <h2 id="current-results-heading" className="text-xl font-bold text-foreground">
+                Current results
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Live tally of voting power · results stay provisional until the window closes.
+              </p>
+            </div>
+            <div className="mx-auto max-w-2xl">
+              <ProposalVoteResults
+                proposalId={current.id}
+                votesFor={current.votesFor}
+                votesAgainst={current.votesAgainst}
+                votesAbstain={current.votesAbstain}
+                quorumRequired={current.quorumRequired}
+                totalPower={totalPower}
+              />
+            </div>
+          </section>
+        </>
+      ) : (
+        <>
+          <div className="text-center">
+            <div className="mb-2 flex flex-col items-center justify-center gap-2">
+              <VoteIcon className="h-6 w-6 text-gold" aria-hidden />
+              <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                Vote
+              </h1>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              When a proposal enters its voting window, it appears here.
+            </p>
+          </div>
           <EmptyState
-            className="mt-4"
+            className="mt-8"
             icon={<VoteIcon className="h-12 w-12" />}
             title="No votes are live right now"
-            description="When the next proposal enters its voting window, it appears here. Meanwhile, browse open proposals or look back at past outcomes."
+            description="Browse open proposals, or look back at every past decision below."
             action={
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <Link
-                  href="/proposals"
-                  className="inline-flex min-h-11 items-center rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold sm:min-h-9"
-                >
-                  Browse proposals
-                </Link>
-                <Link
-                  href="/results"
-                  className="inline-flex min-h-11 items-center rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold sm:min-h-9"
-                >
-                  View past outcomes
-                </Link>
-              </div>
+              <Link
+                href="/proposals"
+                className="inline-flex min-h-11 items-center rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold sm:min-h-9"
+              >
+                Browse proposals
+              </Link>
             }
           />
-        ) : (
-          <div className="mt-4 space-y-6">
-            {active.map((p) => (
-              <LiveVoteCard key={p.id} {...toLiveVoteProps(p)} />
-            ))}
-          </div>
-        )}
-      </section>
+        </>
+      )}
 
-      {/* ── Section 2: past votes ───────────────────────────────────── */}
+      {/* Past votes — every decided vote, linked to its dedicated page */}
       <section aria-labelledby="past-votes-heading" className="mt-12">
-        <h2
-          id="past-votes-heading"
-          className="flex items-center gap-2 text-xl font-bold text-foreground sm:text-2xl"
-        >
-          <History className="h-5 w-5 text-gold" aria-hidden />
-          Past votes
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Every decided vote and how it ended — the Foundational Governance
-          Election and all finalized proposals.
-        </p>
-        <PastVotesArchive items={pastItems} />
+        <div className="mb-4 text-center">
+          <h2
+            id="past-votes-heading"
+            className="flex items-center justify-center gap-2 text-xl font-bold text-foreground"
+          >
+            <History className="h-5 w-5 text-gold" aria-hidden />
+            Past votes
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Every decided vote on its own page — outcome, tallies, and quorum.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {/* FGE — dedicated page: /governance-vote */}
+          <Link
+            href="/governance-vote"
+            data-testid="past-vote-fge"
+            className="block rounded-lg border border-border bg-bg-elevated/30 p-4 transition-colors hover:border-gold/40"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm font-semibold text-foreground">
+                Foundational Governance Election
+              </span>
+              <span className="inline-flex items-center gap-1 text-xs text-gold">
+                View election <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+              </span>
+            </div>
+            <div className="mt-1 text-xs text-text-dim">
+              {formatDay(fgeStartsAt)} – {formatDay(fgeEndsAt)} (UTC)
+            </div>
+            <div className="mt-2 text-sm">
+              {winner ? (
+                <span className="text-muted-foreground">
+                  Outcome: <span className="font-medium text-gold">{winner.label}</span>{" "}
+                  elected · {winner.percentage.toFixed(1)}% of{" "}
+                  {totalBallots.toLocaleString()} ballots
+                </span>
+              ) : (
+                <span className="text-muted-foreground">No ballots recorded</span>
+              )}
+            </div>
+          </Link>
+
+          {/* Finalized proposals — dedicated pages: /proposals/[id] */}
+          {finalized.map((p) => (
+            <Link
+              key={p.id}
+              href={`/proposals/${p.id}`}
+              data-testid={`past-vote-${p.id}`}
+              className="block rounded-lg border border-border bg-bg-elevated/30 p-4 transition-colors hover:border-gold/40"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="line-clamp-2 min-w-0 break-words text-sm font-semibold text-foreground">
+                  {p.title}
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  View outcome <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                </span>
+              </div>
+              <div className="mt-1 text-xs text-text-dim">
+                {PROPOSAL_TYPE_CONFIG[p.type]?.label ?? p.type}
+                {formatWindowLabel(p) ? ` · ${formatWindowLabel(p)}` : ""}
+              </div>
+              <div className="mt-2 text-sm text-muted-foreground">
+                Outcome: <ProposalStatusBadge status={p.status} />
+                {p.quorumAchieved !== null && (
+                  <span className="ml-2 font-mono text-xs text-text-dim">
+                    quorum {p.quorumAchieved.toFixed(1)}% / {p.quorumRequired}%
+                  </span>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        <div className="mt-4 text-center">
+          <Link
+            href="/results"
+            className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-gold sm:min-h-9"
+          >
+            Browse the full outcomes archive <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+          </Link>
+        </div>
       </section>
     </div>
   );
