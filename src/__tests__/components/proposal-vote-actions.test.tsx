@@ -68,13 +68,17 @@ function baseVote(overrides: Partial<UseProposalVoteResult> = {}): UseProposalVo
   };
 }
 
-function renderCards(vote: UseProposalVoteResult, props: { isActive?: boolean } = {}) {
+function renderCards(
+  vote: UseProposalVoteResult,
+  props: { isActive?: boolean; votingStartsAt?: string | null } = {},
+) {
   useProposalVoteMock.mockReturnValue(vote);
   return render(
     <ProposalBallotCards
       proposalId="prop-x"
       isActive={props.isActive ?? true}
       closedLabel="Voting closed — outcome pending"
+      votingStartsAt={props.votingStartsAt}
       {...TALLIES}
     />,
   );
@@ -113,6 +117,16 @@ describe("<ProposalBallotCards />", () => {
   it("authenticated but detail unresolved: neutral checking state (no doomed casts)", () => {
     renderCards(baseVote({ isAuthenticated: true }));
     expect(screen.getByText(/checking your vote…/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^select$/i })).not.toBeInTheDocument();
+  });
+
+  it("window opens in the future: shows the opens-at notice, no Select buttons", () => {
+    renderCards(
+      baseVote({ isAuthenticated: true, detail: detailWith(ProposalStatus.ACTIVE) }),
+      { votingStartsAt: "2026-09-23T16:00:00.000Z" },
+    );
+    expect(screen.getByText(/voting has not started yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/voting opens/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^select$/i })).not.toBeInTheDocument();
   });
 

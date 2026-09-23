@@ -226,6 +226,7 @@ export default async function VotePage() {
               proposalId={current.id}
               isActive
               closedLabel="Voting closed — outcome pending"
+              votingStartsAt={current.votingStartsAt}
               votesFor={current.votesFor}
               votesAgainst={current.votesAgainst}
               votesAbstain={current.votesAbstain}

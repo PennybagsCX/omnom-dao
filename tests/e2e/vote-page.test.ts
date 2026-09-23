@@ -63,12 +63,15 @@ if (RUN_E2E) {
       ).toBeVisible({ timeout: 30_000 });
       await expect(page.getByTestId("ballot-card-against")).toBeVisible();
       await expect(page.getByTestId("ballot-card-abstain")).toBeVisible();
-      // Dev-auth e2e usually auto-logs-in; anonymous visitors get the
-      // connect box instead of Select buttons (branch pinned in component
-      // tests — here we accept either settled state).
+      // Settled ballot states: Select buttons (window open + authed),
+      // the connect box (anonymous), or the opens-later notice (window
+      // opens at noon Toronto). Each branch is pinned in component tests.
       const selectBtn = page.getByTestId("ballot-card-for").getByRole("button", { name: /^select$/i });
       const connectPrompt = page.getByText("Connect to vote");
-      await expect(selectBtn.or(connectPrompt).first()).toBeVisible({ timeout: 30_000 });
+      const opensLater = page.getByText(/voting has not started yet/i);
+      await expect(
+        selectBtn.or(connectPrompt).or(opensLater).first(),
+      ).toBeVisible({ timeout: 30_000 });
     });
 
     test("current results section renders the live tally", async ({ page }) => {
@@ -76,9 +79,11 @@ if (RUN_E2E) {
       await expect(
         page.getByRole("heading", { name: /current results/i }),
       ).toBeVisible({ timeout: 15_000 });
-      // FGE-style per-choice rows: label + share + power count.
+      // FGE-style per-choice rows: label + share + power count. Counts are
+      // zero until ballots land (the demo window opens at noon Toronto), so
+      // assert the structure, not specific numbers.
       await expect(results.getByText("Voting power for")).toBeVisible();
-      await expect(results.getByText("9,867,109")).toBeVisible();
+      await expect(results.getByText("Voting power withheld")).toBeVisible();
       await expect(
         results.getByText("Quorum", { exact: true }).first(),
       ).toBeVisible();
@@ -91,8 +96,13 @@ if (RUN_E2E) {
       await expect(
         page.getByText("Who has voted"),
       ).toBeVisible({ timeout: 15_000 });
-      // Rows render for every holder class, even at zero ballots.
-      await expect(page.getByText(/wallets voted/).first()).toBeVisible();
+      // Zero-ballot reset: the empty state renders until ballots land; with
+      // ballots, the per-class rows do (spec survives both states).
+      await expect(
+        page
+          .getByText(/no ballots yet/i)
+          .or(page.getByText(/wallets voted/).first()),
+      ).toBeVisible({ timeout: 15_000 });
     });
 
     test("past votes link to their dedicated pages", async ({ page }) => {
@@ -168,7 +178,14 @@ if (RUN_E2E) {
       const forCardBtn = page
         .getByTestId("ballot-card-for")
         .getByRole("button", { name: /^(select|selected)$/i });
-      await expect(forCardBtn).toBeVisible({ timeout: 30_000 });
+      // The seeded demo window opens at noon Toronto — before that the
+      // ballot shows the opens-later notice and there is nothing to cast.
+      const notStarted = page.getByText(/voting has not started yet/i);
+      await expect(notStarted.or(forCardBtn).first()).toBeVisible({ timeout: 30_000 });
+      test.skip(
+        (await notStarted.count()) > 0,
+        "demo window opens at noon Toronto — cast path re-armed after the window opens",
+      );
 
       // Pick a target card that differs from the current ballot, so the run
       // is deterministic whether or not this wallet already voted.

@@ -17,7 +17,7 @@ import {
 } from "@/lib/api";
 import { VOTE_CHOICE_CONFIG } from "@/lib/constants";
 import { useProposalVote } from "@/lib/use-proposal-vote";
-import { cn } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 import { ProposalStatus, VoteChoice, type ProposalComment } from "@/types";
 
 const CHOICES: VoteChoice[] = [VoteChoice.FOR, VoteChoice.AGAINST, VoteChoice.ABSTAIN];
@@ -89,6 +89,8 @@ interface ProposalBallotCardsProps {
   isActive: boolean;
   /** Text shown when voting is closed. */
   closedLabel?: string;
+  /** Window opens in the future? Ballot shows "Voting opens at …" until then. */
+  votingStartsAt?: string | null;
   /** Server-rendered fallback tallies for the per-card live percentages. */
   votesFor: number;
   votesAgainst: number;
@@ -107,6 +109,7 @@ export function ProposalBallotCards({
   proposalId,
   isActive: serverIsActive,
   closedLabel = "Voting has ended",
+  votingStartsAt = null,
   votesFor: fallbackFor,
   votesAgainst: fallbackAgainst,
   votesAbstain: fallbackAbstain,
@@ -126,8 +129,14 @@ export function ProposalBallotCards({
     abstain: live?.votesAbstain ?? fallbackAbstain,
   };
 
+  // Window opens in the future? (server-side window: casts 409 until then —
+  // so the ballot must not offer choices yet)
+  const startMs = votingStartsAt ? Date.parse(votingStartsAt) : null;
+  const notStarted = isActive && startMs !== null && new Date().getTime() < startMs;
+
   const canVote =
     isActive &&
+    !notStarted &&
     vote.isAuthenticated &&
     vote.detail !== undefined &&
     !vote.detailErrored &&
@@ -150,7 +159,18 @@ export function ProposalBallotCards({
         </div>
       ) : null}
 
-      {!vote.isAuthenticated && isActive && (
+      {notStarted && votingStartsAt ? (
+        // Window opens in the future — the server rejects casts until then.
+        <div className="rounded-xl border border-border bg-bg-elevated/40 p-6 text-center">
+          <p className="mb-1 text-sm font-medium text-foreground">Voting has not started yet</p>
+          <p className="text-sm text-muted-foreground">
+            Voting opens {formatDateTime(votingStartsAt)} — the ballot unlocks
+            automatically.
+          </p>
+        </div>
+      ) : null}
+
+      {!vote.isAuthenticated && isActive && !notStarted && (
         // FGE parity: the connect box sits above the (browsable) cards.
         <div className="rounded-xl border border-border bg-bg-elevated/40 p-6 text-center">
           <p className="mb-1 text-sm font-medium text-foreground">Connect to vote</p>
@@ -203,9 +223,11 @@ export function ProposalBallotCards({
             onClick={() => handleChoice(choice)}
           >
             <CardContent className="p-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              {/* Centered on mobile / small screens (owner mark m8); the
+                  sm: breakpoint restores the left-aligned desktop layout. */}
+              <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:justify-between sm:text-left">
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                     <h3
                       className={cn(
                         "inline-flex items-center gap-1.5 text-base font-semibold",
@@ -233,7 +255,7 @@ export function ProposalBallotCards({
                   )}
                 </div>
 
-                <div className="flex shrink-0 flex-col items-end gap-2">
+                <div className="flex shrink-0 flex-col items-center gap-2 sm:items-end">
                   <div className="text-center">
                     <div className="font-mono text-lg font-bold text-gold">
                       {share.toFixed(1)}%

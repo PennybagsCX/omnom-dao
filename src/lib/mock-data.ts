@@ -315,7 +315,39 @@ function relativeNow(offsetMs: number): string {
   return new Date(Date.now() + offsetMs).toISOString();
 }
 
+/**
+ * Today's 12:00 noon in Toronto (America/Toronto), as UTC — the Wave-1 demo
+ * window anchor the owner asked for. Converges in ≤2 iterations: guess UTC
+ * noon, measure the resulting Toronto hour, shift by the difference
+ * (the offset is a whole hour in both EST and EDT).
+ */
+function torontoNoonToday(): Date {
+  const dateStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Toronto",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  let ts = Date.parse(`${dateStr}T12:00:00Z`);
+  for (let i = 0; i < 2; i++) {
+    const hourInToronto = Number(
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Toronto",
+        hour: "2-digit",
+        hour12: false,
+      }).format(new Date(ts)),
+    );
+    ts += (12 - hourInToronto) * 3_600_000;
+  }
+  return new Date(ts);
+}
+
 const governanceVotesSeed: MockGovernanceVoteRow[] = [];
+
+// Wave-1 demo window: opens 12:00 noon Toronto today, runs the standard
+// 7 days (owner-set schedule). Tallies start at zero — a reset.
+const quorumStart = torontoNoonToday();
+const quorumEnd = new Date(quorumStart.getTime() + 7 * 24 * 60 * 60 * 1000);
 
 /**
  * The mock election mirrors the REAL closed FGE (window + outcome per
@@ -455,7 +487,8 @@ function buildSeed(): MockStore {
     {
       // Wave 1 / Week 1 — mirrors the live prod vote (title-idempotent with
       // scripts/seed-governance-decisions.ts; body per the prod TL;DR +
-      // Turnout-Math convention in DOCS/STATUS.md).
+      // Turnout-Math convention in DOCS/STATUS.md). Window opens at 12:00
+      // noon Toronto TODAY and runs 7 days (owner-set demo schedule).
       id: P.activeQuorum,
       title: "Governance parameter: global default quorum",
       description:
@@ -465,13 +498,13 @@ function buildSeed(): MockStore {
       author_address: MOCK_HOLDERS.whale1.address,
       created_at: relativeNow(-26 * 60 * 60 * 1000),
       updated_at: null,
-      voting_starts_at: relativeNow(-25 * 60 * 60 * 1000),
-      voting_ends_at: relativeNow(6 * 24 * 60 * 60 * 1000),
+      voting_starts_at: quorumStart.toISOString(),
+      voting_ends_at: quorumEnd.toISOString(),
       quorum_required: 5.0,
       quorum_achieved: null,
-      votes_for: 9_867_109,
-      votes_against: 5_348_732,
-      votes_abstain: 14_524,
+      votes_for: 0,
+      votes_against: 0,
+      votes_abstain: 0,
       metadata: JSON.stringify({ type: "base", links: [], tags: ["governance", "voting-rules"] }),
     },
     {
@@ -695,11 +728,8 @@ function buildSeed(): MockStore {
     { id: "vote-2b", proposal_id: P.activeTokenomics, voter_address: MOCK_HOLDERS.dolphin2.address, choice: "AGAINST", voting_power: MOCK_HOLDERS.dolphin2.votingPower, created_at: "2026-06-22T11:30:00.000Z", tx_hash: null },
     { id: "vote-2c", proposal_id: P.activeTokenomics, voter_address: MOCK_HOLDERS.fish3.address, choice: "ABSTAIN", voting_power: MOCK_HOLDERS.fish3.votingPower, created_at: "2026-06-22T12:05:00.000Z", tx_hash: null },
 
-    // Proposal — active quorum vote (tallies = sum of voting_power per choice)
-    { id: "vote-qa", proposal_id: P.activeQuorum, voter_address: MOCK_HOLDERS.whale1.address, choice: "FOR", voting_power: MOCK_HOLDERS.whale1.votingPower, created_at: relativeNow(-24 * 60 * 60 * 1000), tx_hash: null },
-    { id: "vote-qb", proposal_id: P.activeQuorum, voter_address: MOCK_HOLDERS.dolphin1.address, choice: "FOR", voting_power: MOCK_HOLDERS.dolphin1.votingPower, created_at: relativeNow(-22 * 60 * 60 * 1000), tx_hash: null },
-    { id: "vote-qc", proposal_id: P.activeQuorum, voter_address: MOCK_HOLDERS.whale2.address, choice: "AGAINST", voting_power: MOCK_HOLDERS.whale2.votingPower, created_at: relativeNow(-20 * 60 * 60 * 1000), tx_hash: null },
-    { id: "vote-qd", proposal_id: P.activeQuorum, voter_address: MOCK_HOLDERS.fish2.address, choice: "ABSTAIN", voting_power: MOCK_HOLDERS.fish2.votingPower, created_at: relativeNow(-18 * 60 * 60 * 1000), tx_hash: null },
+    // (The active quorum vote seeds with zero ballots — it "opens" at noon
+    // Toronto today; votes land via the API as people cast them.)
 
     // Proposal 3 — passed treasury
     { id: "vote-3a", proposal_id: P.passedTreasury, voter_address: MOCK_HOLDERS.whale1.address, choice: "FOR", voting_power: MOCK_HOLDERS.whale1.votingPower, created_at: "2026-06-06T12:00:00.000Z", tx_hash: null },
