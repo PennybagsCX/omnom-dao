@@ -15,6 +15,11 @@
 > Week 2/3 proposals stay in the admin queue until their week — approve ONLY
 > the current week's item. Post style: plain language, memecoin-audience
 > first (owner feedback 2026-09-21).
+>
+> **2026-09-23:** the Vote page (`dao.omnom.dog/vote`) is live — voting is
+> embedded directly on the page (no detour through a proposal detail page),
+> and past votes stay browsable below the live ballot. Every CTA in this
+> file points there.
 
 ---
 
@@ -52,7 +57,7 @@ Simple questions. Your answers become the DAO's constitution.
 
 • This week's vote closes **September 29**
 
-👉 Read & vote: **dao.omnom.dog/proposals**
+👉 Read & vote: **dao.omnom.dog/vote** — the ballot is right on the page, and every past vote stays public below it.
 
 Show up once and you're a founding voter of this DAO. 🐕🧡
 
@@ -68,7 +73,7 @@ Your voice. Your $OMNOM. Your DAO.
 
 Holdings = voting power. Ever held $OMNOM? You're eligible.
 
-Closes Sept 29 👉 dao.omnom.dog/proposals
+Closes Sept 29 👉 dao.omnom.dog/vote
 
 🐕🧡
 
@@ -82,7 +87,7 @@ Last week the community set the turnout bar. This week: **how many "yes" votes d
 
 🟢 FOR = ratify today's split (big decisions need 60% yes) · 🔴 AGAINST = simple majority for everything.
 
-Closes Oct 6. Vote at **dao.omnom.dog/proposals** 🐕🧡
+Closes Oct 6. Vote at **dao.omnom.dog/vote** 🐕🧡
 
 ---
 
@@ -94,7 +99,7 @@ Turnout bar ✅ Win condition ✅ This week: **should big decisions need more vo
 
 🟢 FOR = graded bars (general proposals 5% · standard 10% · chain & tokenomics 25%) · 🔴 AGAINST = keep the flat rules.
 
-Closes Oct 13. Finish the rulebook — vote at **dao.omnom.dog/proposals** 🐕🧡
+Closes Oct 13. Finish the rulebook — vote at **dao.omnom.dog/vote** 🐕🧡
 
 ---
 

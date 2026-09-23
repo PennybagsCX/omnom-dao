@@ -433,6 +433,7 @@ export const ERROR_CODE_MAP: Record<ErrorCode, ErrorCodeConfig> = {
   },
   [ErrorCode.NOT_VERIFIED]: { message: "Wallet not verified.", status: 403 },
   [ErrorCode.VOTING_CLOSED]: { message: "Voting is closed for this proposal.", status: 409 },
+  [ErrorCode.VOTING_PAUSED]: { message: "Voting is paused.", status: 409 },
   [ErrorCode.ALREADY_VOTED]: { message: "You have already voted on this proposal.", status: 409 },
   [ErrorCode.INVALID_ADDRESS]: { message: "Invalid wallet address.", status: 400 },
   [ErrorCode.INVALID_CHOICE]: { message: "Invalid vote choice.", status: 400 },

@@ -1,4 +1,4 @@
-import { registerWalletDialogAutoDismiss } from "./helpers";
+import { hideDevAuthPanel, registerWalletDialogAutoDismiss } from "./helpers";
 import { expect, test } from "./auth.fixture";
 
 const RUN_E2E = !process.env.VITEST;
@@ -102,6 +102,50 @@ if (RUN_E2E) {
       // delete affordance.
       await expect(page.getByText(target!.title).first()).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: /delete proposal/i }).first()).toBeVisible();
+    });
+  });
+
+  test.describe("Draft author deletes their own draft", () => {
+    test("dashboard delete button removes the author's draft", async ({
+      page,
+      authenticated: _auth,
+    }) => {
+      test.setTimeout(120_000);
+      // The draft is created through the same API the create form uses.
+      const title = `Dashboard draft delete ${Date.now()}`;
+      const create = await page.request.post("/api/v1/proposals", {
+        data: {
+          title,
+          description:
+            "E2E draft for the dashboard author-delete flow — long enough for the fifty-character rule.",
+          type: "GENERAL",
+          saveAsDraft: true,
+        },
+        timeout: 60_000,
+      });
+      expect(create.ok()).toBeTruthy();
+      const created = (await create.json()) as {
+        data?: { proposal?: { id?: string; status?: string } };
+      };
+      const draftId = created.data?.proposal?.id ?? "";
+      expect(draftId).toBeTruthy();
+      expect(created.data?.proposal?.status).toBe("DRAFT");
+
+      await registerWalletDialogAutoDismiss(page);
+      await page.goto("/dashboard");
+      // The dev-auth panel (bottom-right) overlaps the draft rows otherwise.
+      await hideDevAuthPanel(page);
+      const row = page.getByRole("listitem").filter({ hasText: title });
+      await expect(row).toBeVisible({ timeout: 30_000 });
+
+      // Two-step confirm: Delete → Confirm. No dialog involved.
+      await row.getByRole("button", { name: new RegExp(`delete draft ${draftId}`, "i") }).click();
+      await row.getByRole("button", { name: /^confirm$/i }).click();
+      await expect(page.getByText(/draft deleted/i)).toBeVisible({ timeout: 30_000 });
+
+      // Server truth: the draft is gone, not merely hidden from the list.
+      const check = await page.request.get(`/api/v1/proposals/${draftId}`);
+      expect(check.status()).toBe(404);
     });
   });
 }

@@ -236,11 +236,29 @@ if (RUN_E2E) {
       // Comment from /vote — the discussion island posts through the same
       // mutation the detail page uses, so the thread is shared.
       const commentText = `Sync check ${Date.now()}`;
+
+      // Warm POST-only route modules before first use. In dev, a route
+      // compiles on first hit; a POST that triggers the compile can lose its
+      // body in the compile handoff, leaving the handler hung on
+      // `request.json()` and the write silently never happening. A cheap GET
+      // (or 405) forces the compile while there is nothing to lose.
+      await page
+        .request
+        .get("/api/v1/proposals/prop-active-quorum-default/comments")
+        .catch(() => {});
+      await page
+        .request
+        .get("/api/v1/proposals/prop-active-quorum-default/reactions")
+        .catch(() => {});
+
       const composer = page.getByRole("textbox", { name: /add a comment/i });
       await expect(composer).toBeVisible({ timeout: 15_000 });
       await composer.fill(commentText);
       await page.getByRole("button", { name: /post comment/i }).click();
-      await expect(page.getByText(commentText)).toBeVisible({ timeout: 15_000 });
+      // Scope to the thread list: a bare getByText also matches the
+      // composer's textarea content, which would pass even if the POST died.
+      const posted = page.getByRole("listitem").filter({ hasText: commentText });
+      await expect(posted).toBeVisible({ timeout: 15_000 });
 
       // Reaction from /vote — the seeded thumbs-up chip renders in the
       // Proposal card; toggling it counts the fixture wallet.
@@ -255,7 +273,9 @@ if (RUN_E2E) {
       // The detail page shares the same query key: comment AND reaction
       // must both be there.
       await page.goto("/proposals/prop-active-quorum-default");
-      await expect(page.getByText(commentText)).toBeVisible({ timeout: 30_000 });
+      await expect(
+        page.getByRole("listitem").filter({ hasText: commentText }),
+      ).toBeVisible({ timeout: 30_000 });
       await expect(
         page.getByRole("button", { name: /thumbs up.*you reacted/i }),
       ).toBeVisible({ timeout: 30_000 });

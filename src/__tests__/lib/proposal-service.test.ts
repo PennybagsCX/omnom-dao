@@ -60,6 +60,8 @@ describe("proposal-service", () => {
         votesAgainst: 40,
         votesAbstain: 10,
         metadata: { type: "base", links: ["https://x.test"], tags: ["a"] },
+        // Admin pause marker (rides in metadata JSON; null when unset).
+        pausedAt: null,
         // Emoji fields default to zero counts + null reaction at the row-only
         // mapping layer; callers that need hydrated reactions overwrite these.
         emojiReactionCounts: {

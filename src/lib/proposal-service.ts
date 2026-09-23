@@ -54,6 +54,11 @@ export function rowToProposal(row: Record<string, unknown>): Proposal {
     votesAgainst: row.votes_against as number,
     votesAbstain: row.votes_abstain as number,
     metadata: safeParseMetadata(row.metadata as string | null),
+    // Admin pause marker rides in the metadata JSON (no schema migration) but
+    // surfaces as a first-class field for voting surfaces + the finalize guard.
+    pausedAt:
+      (safeParseMetadata(row.metadata as string | null) as { pausedAt?: string })
+        .pausedAt ?? null,
     // The row-only path is used by callers that don't hydrate emoji fields
     // (e.g. dashboard's "authored proposals"). The list/detail endpoints that
     // care about reactions overwrite these with hydrated values. Keeping

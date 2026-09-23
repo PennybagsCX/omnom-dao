@@ -1,6 +1,8 @@
 "use client";
 
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, Loader2, PauseCircle, StopCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,13 +12,16 @@ import { EmojiReactionsBar } from "@/components/shared/emoji-reactions/emoji-rea
 import { QuorumProgress } from "@/components/shared/quorum-progress";
 import { ConnectCta } from "@/components/wallet/connect-cta";
 import {
+  fetchApi,
+  ApiRequestError,
+  queryKeys,
   useCreateComment,
   useToggleCommentEmojiReaction,
   useToggleReaction,
   useCurrentUser,
   useProposalDetail,
 } from "@/lib/api";
-import { VOTE_CHOICE_CONFIG } from "@/lib/constants";
+import { isAdminAddress, VOTE_CHOICE_CONFIG } from "@/lib/constants";
 import { emptyEmojiCounts } from "@/lib/emoji-reactions";
 import { useProposalVote } from "@/lib/use-proposal-vote";
 import { cn, formatDateTime } from "@/lib/utils";
@@ -121,6 +126,9 @@ export function ProposalBallotCards({
   const isActive = vote.detail
     ? vote.detail.proposal.status === ProposalStatus.ACTIVE
     : serverIsActive;
+  // Admin pause: while pausedAt is set the vote accepts no ballots and the
+  // finalize sweep skips it (guard in proposal-finalize).
+  const paused = Boolean(vote.detail?.proposal.pausedAt);
   const userVoted = vote.myVote !== null;
   const isMutating = vote.isVoting || vote.isChangingVote;
 
@@ -139,6 +147,7 @@ export function ProposalBallotCards({
   const canVote =
     isActive &&
     !notStarted &&
+    !paused &&
     vote.isAuthenticated &&
     vote.detail !== undefined &&
     !vote.detailErrored &&
@@ -158,6 +167,18 @@ export function ProposalBallotCards({
       {!isActive ? (
         <div className="rounded-xl border border-border bg-bg-elevated/40 p-6 text-center">
           <p className="text-sm font-medium text-muted-foreground">{closedLabel}</p>
+        </div>
+      ) : null}
+
+      {isActive && paused ? (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-6 text-center">
+          <p className="mb-1 flex items-center justify-center gap-2 text-sm font-medium text-foreground">
+            <PauseCircle className="h-4 w-4 text-amber-400" aria-hidden /> Voting paused
+          </p>
+          <p className="text-sm text-muted-foreground">
+            An administrator paused this vote — ballots are accepted again once
+            it resumes. The close shifts forward by the paused time.
+          </p>
         </div>
       ) : null}
 
@@ -458,6 +479,134 @@ export function ProposalVoteDiscussion({
         isReacting={toggleReaction.isPending}
         isReactingEmoji={toggleCommentEmoji.isPending}
       />
+    </div>
+  );
+}
+
+interface ProposalVoteAdminControlsProps {
+  proposalId: string;
+  className?: string;
+}
+
+/**
+ * Admin-only live-vote management for the /vote page: pause (ballots refused,
+ * finalize sweep skips), resume (close shifts forward by the paused duration),
+ * and stop (close now + run the standard finalizer). Hidden from everyone
+ * else; every action lands in the public audit log via the route.
+ */
+export function ProposalVoteAdminControls({
+  proposalId,
+  className,
+}: ProposalVoteAdminControlsProps) {
+  const { data: me } = useCurrentUser({ retry: false });
+  const qc = useQueryClient();
+  const [pending, setPending] = useState<"pause" | "resume" | "stop" | null>(null);
+  const [confirmStop, setConfirmStop] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const vote = useProposalVote(proposalId);
+
+  // All hooks run before any early return.
+  const isAdmin = Boolean(me && isAdminAddress(me.address));
+  const isActive = vote.detail
+    ? vote.detail.proposal.status === ProposalStatus.ACTIVE
+    : true;
+  const paused = Boolean(vote.detail?.proposal.pausedAt);
+
+  if (!isAdmin || !isActive) return null;
+
+  const act = async (action: "pause" | "resume" | "stop") => {
+    setPending(action);
+    setError(null);
+    try {
+      await fetchApi(`/api/v1/proposals/${proposalId}/vote-control`, {
+        method: "POST",
+        body: { action },
+      });
+      await qc.invalidateQueries({
+        queryKey: queryKeys.proposalDetail(proposalId),
+      });
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? err.message : "Action failed.");
+    } finally {
+      setPending(null);
+    }
+  };
+
+  return (
+    <div
+      className={cn(
+        "rounded-xl border border-amber-500/30 bg-amber-500/5 p-4",
+        className,
+      )}
+      data-testid="proposal-admin-controls"
+    >
+      <p className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-amber-400">
+        <StopCircle className="h-3.5 w-3.5" aria-hidden /> Admin controls
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        {paused ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-h-11 sm:min-h-9"
+            onClick={() => act("resume")}
+            disabled={pending !== null}
+          >
+            <PauseCircle className="h-4 w-4" aria-hidden /> Resume voting
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-h-11 sm:min-h-9"
+            onClick={() => act("pause")}
+            disabled={pending !== null}
+          >
+            <PauseCircle className="h-4 w-4" aria-hidden /> Pause voting
+          </Button>
+        )}
+        {confirmStop ? (
+          <>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="min-h-11 sm:min-h-9"
+              onClick={() => act("stop")}
+              disabled={pending !== null}
+            >
+              <StopCircle className="h-4 w-4" aria-hidden /> Confirm stop
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="min-h-11 sm:min-h-9"
+              onClick={() => setConfirmStop(false)}
+              disabled={pending !== null}
+            >
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-h-11 border-rose-600/40 text-rose-400 hover:bg-rose-500/10 sm:min-h-9"
+            onClick={() => setConfirmStop(true)}
+          >
+            <StopCircle className="h-4 w-4" aria-hidden /> Stop vote…
+          </Button>
+        )}
+      </div>
+      {error && (
+        <p className="mt-2 text-xs text-danger" role="alert">
+          {error}
+        </p>
+      )}
+      <p className="mt-3 text-xs leading-relaxed text-text-dim">
+        Pause halts ballots and the finalize sweep; resume shifts the close
+        forward by the paused time. Stop closes the vote now and applies the
+        normal outcome rules. Every action is audit-logged.
+      </p>
     </div>
   );
 }

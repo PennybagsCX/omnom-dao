@@ -123,7 +123,8 @@ describe("<ProposalBallotCards />", () => {
   it("window opens in the future: shows the opens-at notice, no Select buttons", () => {
     renderCards(
       baseVote({ isAuthenticated: true, detail: detailWith(ProposalStatus.ACTIVE) }),
-      { votingStartsAt: "2026-09-23T16:00:00.000Z" },
+      // Always-future relative to the test run.
+      { votingStartsAt: new Date(Date.now() + 3_600_000).toISOString() },
     );
     expect(screen.getByText(/voting has not started yet/i)).toBeInTheDocument();
     expect(screen.getByText(/voting opens/i)).toBeInTheDocument();

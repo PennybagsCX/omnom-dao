@@ -20,6 +20,7 @@ import { Markdown } from "@/components/shared/markdown";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import {
   ProposalBallotCards,
+  ProposalVoteAdminControls,
   ProposalVoteDiscussion,
   ProposalVoteReactions,
   ProposalVoteResults,
@@ -247,6 +248,8 @@ export default async function VotePage() {
               votesAgainst={current.votesAgainst}
               votesAbstain={current.votesAbstain}
             />
+            {/* Admin-only: pause / resume / stop the live vote. */}
+            <ProposalVoteAdminControls proposalId={current.id} className="mt-4" />
             {total > 1 && (
               <p className="mt-4 text-center text-sm text-muted-foreground">
                 {total - 1} more {total - 1 === 1 ? "proposal is" : "proposals are"} voting

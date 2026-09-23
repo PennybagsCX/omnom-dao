@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -10,6 +13,7 @@ import {
   ListChecks,
   PenLine,
   PlusCircle,
+  Trash2,
   Trophy,
   Vote,
   Wallet,
@@ -26,10 +30,10 @@ import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { CopyAddress } from "@/components/shared/copy-address";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import { ConnectCta } from "@/components/wallet/connect-cta";
-import { useDashboard, ApiRequestError } from "@/lib/api";
+import { useDashboard, fetchApi, queryKeys, ApiRequestError } from "@/lib/api";
 import { formatCompact, formatDate, timeAgo } from "@/lib/utils";
 import { HOLDER_CLASS_CONFIG, SNAPSHOT } from "@/lib/constants";
-import { ErrorCode, VoteChoice } from "@/types";
+import { ErrorCode, ProposalStatus, VoteChoice } from "@/types";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -216,16 +220,19 @@ export default function DashboardPage() {
               ) : (
                 <ul className="divide-y divide-border">
                   {authoredProposals.slice(0, 5).map((p) => (
-                    <li key={p.id}>
+                    <li key={p.id} className="flex items-center justify-between gap-3">
                       <Link
                         href={`/proposals/${p.id}`}
-                        className="flex min-h-11 items-center justify-between gap-3 py-3 transition-colors hover:text-gold focus-visible:outline-none"
+                        className="flex min-h-11 flex-1 items-center justify-between gap-3 py-3 transition-colors hover:text-gold focus-visible:outline-none"
                       >
                         <span className="line-clamp-1 text-sm font-medium">
                           {p.title}
                         </span>
                         <ProposalStatusBadge status={p.status} />
                       </Link>
+                      {p.status === ProposalStatus.DRAFT && (
+                        <DeleteDraftButton proposalId={p.id} />
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -330,3 +337,71 @@ const VOTE_META: Record<VoteChoice, { iconName: string; label: string; text: str
   [VoteChoice.AGAINST]: { iconName: "X", label: "Against", text: "text-danger" },
   [VoteChoice.ABSTAIN]: { iconName: "Minus", label: "Abstain", text: "text-muted-foreground" },
 };
+
+/* ── Delete-draft (author-owned) ─────────────────────────────────── */
+
+/**
+ * Delete button for the author's own DRAFT proposals (dashboard authored
+ * list). Two-step confirm inline; server-side the DELETE route only permits
+ * authors on DRAFT status and admins on FAILED.
+ */
+function DeleteDraftButton({ proposalId }: { proposalId: string }) {
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const qc = useQueryClient();
+
+  const del = async () => {
+    setDeleting(true);
+    try {
+      // The delete endpoint lives at /delete (the [id] route has no DELETE).
+      await fetchApi(`/api/v1/proposals/${proposalId}/delete`, { method: "DELETE" });
+      await qc.invalidateQueries({ queryKey: queryKeys.dashboard });
+    } catch (error) {
+      toast.error(
+        error instanceof ApiRequestError
+          ? error.message
+          : "Could not delete the draft.",
+      );
+      setDeleting(false);
+      setConfirming(false);
+      return;
+    }
+    toast.success("Draft deleted");
+  };
+
+  if (!confirming) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="min-h-11 text-xs text-muted-foreground hover:text-danger sm:min-h-9"
+        onClick={() => setConfirming(true)}
+        aria-label={`Delete draft ${proposalId}`}
+      >
+        <Trash2 className="h-3.5 w-3.5" aria-hidden /> Delete
+      </Button>
+    );
+  }
+  return (
+    <span className="flex items-center gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="min-h-11 text-xs text-danger sm:min-h-9"
+        onClick={del}
+        disabled={deleting}
+      >
+        {deleting ? "Deleting…" : "Confirm"}
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="min-h-11 text-xs sm:min-h-9"
+        onClick={() => setConfirming(false)}
+        disabled={deleting}
+      >
+        Cancel
+      </Button>
+    </span>
+  );
+}

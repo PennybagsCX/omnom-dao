@@ -60,6 +60,10 @@ export async function finalizeProposal(
   const proposal = await getProposalById(proposalId);
   if (!proposal) return null;
   if (proposal.status !== ProposalStatus.ACTIVE) return null;
+  // Admin pause: a paused proposal never finalizes — not from the cron sweep,
+  // not from lazy finalize — until an admin resumes it (which shifts the
+  // voting end forward by the pause duration).
+  if (proposal.pausedAt) return null;
 
   // Check if voting window has ended.
   if (!proposal.votingEndsAt) return null;

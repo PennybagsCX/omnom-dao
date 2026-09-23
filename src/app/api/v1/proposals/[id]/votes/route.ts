@@ -75,6 +75,12 @@ async function loadContext(id: string, sessionAddress: string) {
   if (proposal.status !== ProposalStatus.ACTIVE) {
     return { error: apiError(ErrorCode.VOTING_CLOSED, undefined, 409) } as const;
   }
+  // Admin pause: ballots are refused outright while the vote is paused.
+  if (proposal.pausedAt) {
+    return {
+      error: apiError(ErrorCode.VOTING_PAUSED, "Voting is paused.", 409),
+    } as const;
+  }
   const now = Date.now();
   const startMs = proposal.votingStartsAt ? Date.parse(proposal.votingStartsAt) : null;
   const endMs = proposal.votingEndsAt ? Date.parse(proposal.votingEndsAt) : null;

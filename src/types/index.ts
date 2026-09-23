@@ -268,6 +268,9 @@ export interface Proposal {
   votesAbstain: number;
   /** Flexible metadata bag for type-specific fields */
   metadata: ProposalMetadata;
+  /** Admin pause marker (ISO timestamp, stored in metadata JSON). While set,
+   *  the vote accepts no ballots and the finalize sweep skips it. */
+  pausedAt?: string | null;
   /** Rejecting admin's snapshot holder class (from metadata.rejectedBy, when set) */
   rejectedByHolderClass?: HolderClass | null;
   /** Per-emoji reaction counts (always fully populated, zeros for unused). */
@@ -506,6 +509,7 @@ export enum ErrorCode {
   // Forbidden (403)
   NOT_VERIFIED = "NOT_VERIFIED",
   VOTING_CLOSED = "VOTING_CLOSED",
+  VOTING_PAUSED = "VOTING_PAUSED",
   ALREADY_VOTED = "ALREADY_VOTED",
   // Bad Request (400)
   INVALID_ADDRESS = "INVALID_ADDRESS",

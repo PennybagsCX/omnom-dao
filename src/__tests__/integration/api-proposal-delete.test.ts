@@ -136,7 +136,12 @@ describe("DELETE /api/v1/proposals/[id]/delete — happy path", () => {
       "PROPOSAL_DELETED",
       "proposal",
       PROPOSAL_ID,
-      { title: "Delete me", status: "FAILED", rejectionReason: "Test data" },
+      {
+        title: "Delete me",
+        status: "FAILED",
+        rejectionReason: "Test data",
+        deletedBy: "admin",
+      },
     );
   });
 
@@ -176,15 +181,54 @@ describe("DELETE /api/v1/proposals/[id]/delete — happy path", () => {
 });
 
 describe("DELETE /api/v1/proposals/[id]/delete — guards", () => {
-  it("rejects non-admins without touching the database", async () => {
+  it("rejects non-admins who are not the author of a draft", async () => {
+    // The route reads the proposal to learn authorship (authors may delete
+    // their own drafts), so a mock is required — but the cleanup never runs.
     hoisted.requireAuth.mockResolvedValue({ sub: ADDR_WHALE });
     hoisted.isAdminAddress.mockReturnValue(false);
+    hoisted.getProposalById.mockResolvedValueOnce(makeFailedProposal());
     const { status, body } = await deleteProposal();
 
     expect(status).toBe(403);
     expect((body.error as { code: string }).code).toBe("NOT_VERIFIED");
     expect(hoisted.execute).not.toHaveBeenCalled();
     expect(hoisted.recordAuditEvent).not.toHaveBeenCalled();
+  });
+
+  it("lets the author delete their own draft", async () => {
+    hoisted.requireAuth.mockResolvedValue({ sub: ADDR_DOLPHIN });
+    hoisted.isAdminAddress.mockReturnValue(false);
+    const draft = {
+      ...makeFailedProposal(),
+      status: "DRAFT" as const,
+      authorAddress: ADDR_DOLPHIN,
+      metadata: { type: "base", links: [], tags: [] },
+    };
+    hoisted.getProposalById.mockResolvedValueOnce(draft);
+    // 1st execute: comment-id SELECT (none) · 2nd: the conditioned proposal DELETE.
+    hoisted.execute
+      .mockResolvedValueOnce({ rows: [], columns: [], rowsAffected: 0, lastInsertRowid: 0n })
+      .mockResolvedValueOnce({ rows: [], columns: [], rowsAffected: 1, lastInsertRowid: 0n });
+    const { status, body } = await deleteProposal();
+
+    expect(status).toBe(200);
+    expect((body.data as { deleted?: boolean }).deleted).toBe(true);
+    // The delete is authorship-conditioned, not just status-conditioned.
+    const calls = hoisted.execute.mock.calls as Array<[{ sql: string; args: string[] }]>;
+    const finalDelete = calls.find(([c]) => c.sql.startsWith("DELETE FROM proposals"));
+    expect(finalDelete?.[0].args).toEqual([PROPOSAL_ID, "DRAFT", ADDR_DOLPHIN]);
+    expect(hoisted.recordAuditEvent).toHaveBeenCalledWith(
+      ADDR_DOLPHIN,
+      "PROPOSAL_DELETED",
+      "proposal",
+      PROPOSAL_ID,
+      {
+        title: draft.title,
+        status: "DRAFT",
+        rejectionReason: null,
+        deletedBy: "author",
+      },
+    );
   });
 
   it("returns 401 when the session is missing or invalid", async () => {

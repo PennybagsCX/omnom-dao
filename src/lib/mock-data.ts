@@ -885,9 +885,22 @@ function buildSeed(): MockStore {
  * instance, even under Turbopack's separate module compilation.
  */
 export function getMockStore(): MockStore {
-  const g = globalThis as typeof globalThis & { __omnomMockStore?: MockStore };
-  if (!g.__omnomMockStore) {
+  const g = globalThis as typeof globalThis & {
+    __omnomMockStore?: MockStore;
+    __omnomMockStoreDay?: string;
+  };
+  // Re-seed automatically when the calendar day flips in Toronto: the demo
+  // window is anchored to "noon today", so a long-lived dev server would
+  // otherwise serve yesterday's anchor (owner: "make it happen automatically").
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Toronto",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  if (!g.__omnomMockStore || g.__omnomMockStoreDay !== today) {
     g.__omnomMockStore = buildSeed();
+    g.__omnomMockStoreDay = today;
   }
   return g.__omnomMockStore;
 }

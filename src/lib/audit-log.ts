@@ -17,7 +17,10 @@ export type AuditAction =
   | "PROPOSAL_REJECTED"
   | "PROPOSAL_OUTCOME_RECORDED"
   | "PROPOSAL_STATUS_OVERRIDE"
-  | "PROPOSAL_DELETED";
+  | "PROPOSAL_DELETED"
+  | "VOTE_PAUSED"
+  | "VOTE_RESUMED"
+  | "VOTE_STOPPED";
 
 export interface AuditLogEntry {
   id: string;
