@@ -26,24 +26,16 @@ test.describe("Vote change (authenticated)", () => {
     await dismissWalletDialog(page);
     await hideDevAuthPanel(page);
 
-    // Wait for proposal links to appear (exclude /create)
-    await page.waitForSelector('a[href*="/proposals/"]:not([href*="/create"])', { timeout: 10_000 });
-
-    // Find an active proposal to test with
-    // Try to find one of the known active proposals first
-    const activeCard = page.locator('a[href*="prop-active-tokenomics-burn"]').or(
-      page.locator('a[href*="prop-active-chain-selection"]')
-    ).first();
-
-    const count = await activeCard.count();
-    console.log(`Active proposal card count: ${count}`);
-    test.skip(count === 0, "no active proposals — skipping vote-change tests");
-
-    await activeCard.click();
-    await page.waitForURL(/\/proposals\/[^/]+$/, { timeout: 30_000 });
+    // Active proposal cards on /proposals now link to /vote (owner directive:
+    // live votes vote there), so navigate straight to the detail page.
+    await page.goto("/proposals/prop-active-tokenomics-burn");
+    await page.waitForLoadState("domcontentloaded");
 
     await dismissWalletDialog(page);
     await hideDevAuthPanel(page);
+
+    // Wait for the proposal content to prove the page loaded.
+    await page.waitForSelector("h1", { timeout: 30_000 });
   });
 
   test("authenticated user can cast an initial vote", async ({ page }) => {
@@ -242,20 +234,10 @@ test.describe("Vote change mobile (authenticated)", () => {
     await dismissWalletDialog(page);
     await hideDevAuthPanel(page);
 
-    // Wait for proposal links to appear (exclude /create)
-    await page.waitForSelector('a[href*="/proposals/"]:not([href*="/create"])', { timeout: 10_000 });
-
-    // Find an active proposal to test with
-    // Try to find one of the known active proposals first
-    const activeCard = page.locator('a[href*="prop-active-tokenomics-burn"]').or(
-      page.locator('a[href*="prop-active-chain-selection"]')
-    ).first();
-
-    const count = await activeCard.count();
-    test.skip(count === 0, "no active proposals — skipping mobile vote-change tests");
-
-    await activeCard.click();
-    await page.waitForURL(/\/proposals\/[^/]+$/, { timeout: 30_000 });
+    // Active proposal cards on /proposals now link to /vote (owner directive),
+    // so navigate straight to the detail page.
+    await page.goto("/proposals/prop-active-tokenomics-burn");
+    await page.waitForLoadState("domcontentloaded");
 
     await dismissWalletDialog(page);
     await hideDevAuthPanel(page);

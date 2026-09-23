@@ -43,10 +43,13 @@ const ADMIN_WALLET_ADDRESS = E2E_ADMIN_ADDRESS;
 
 export const test = base.extend<AuthFixtures>({
   authenticated: async ({ page }, use) => {
+    // 30s: under full-suite load the dev-server can take >10s to answer the
+    // first authed request (cold compile + queued work) — the 10s default
+    // turned real machine-load slowness into red tests.
     const res = await page.request.post("/api/v1/dev-login",
-      { data: { walletAddress: TEST_WALLET_ADDRESSES.DOLPHIN } });
+      { data: { walletAddress: TEST_WALLET_ADDRESSES.DOLPHIN }, timeout: 30_000 });
     if (!res.ok()) throw new Error(`dev-login failed: ${res.status}`);
-    const me = await page.request.get("/api/v1/me");
+    const me = await page.request.get("/api/v1/me", { timeout: 30_000 });
     if (!me.ok()) throw new Error("session verification failed");
     // eslint-disable-next-line react-hooks/rules-of-hooks -- Playwright fixture, not React
     await use();
@@ -58,9 +61,10 @@ export const test = base.extend<AuthFixtures>({
         holderClass: "KRAKEN",
         votingPower: 1095445,
       },
+      timeout: 30_000,
     });
     if (!res.ok()) throw new Error(`admin dev-login failed: ${res.status}`);
-    const me = await page.request.get("/api/v1/me");
+    const me = await page.request.get("/api/v1/me", { timeout: 30_000 });
     if (!me.ok()) throw new Error("admin session verification failed");
     // eslint-disable-next-line react-hooks/rules-of-hooks -- Playwright fixture, not React
     await use();

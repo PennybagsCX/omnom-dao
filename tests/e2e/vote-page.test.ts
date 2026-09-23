@@ -135,6 +135,19 @@ if (RUN_E2E) {
       await expect(page).toHaveURL(/\/vote$/);
     });
 
+    test("live proposal cards on /proposals link to /vote", async ({ page }) => {
+      await registerWalletDialogAutoDismiss(page);
+      await page.goto("/proposals");
+      await page.waitForLoadState("domcontentloaded");
+      await dismissWalletDialog(page);
+      await hideDevAuthPanel(page);
+      await hideReticleOverlay(page);
+      // Owner directive: clicking a live-vote proposal goes to /vote.
+      await expect(
+        page.getByRole("link", { name: /vote now: governance parameter/i }),
+      ).toHaveAttribute("href", "/vote");
+    });
+
     test("is responsive at mobile viewport with a bottom-tab Vote link", async ({
       page,
     }) => {

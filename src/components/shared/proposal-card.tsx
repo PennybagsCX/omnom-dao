@@ -32,6 +32,9 @@ export const ProposalCard = memo(function ProposalCard({
 }: ProposalCardProps) {
   const isActive = proposal.status === ProposalStatus.ACTIVE;
   const totalVotes = proposal.votesFor + proposal.votesAgainst + proposal.votesAbstain;
+  // Live votes vote at /vote: an ACTIVE proposal's card opens the voting hub
+  // (owner directive) — every other status opens the proposal detail page.
+  const href = isActive ? "/vote" : `/proposals/${proposal.id}`;
   // Hide the emoji bar entirely when there's no engagement and the user hasn't
   // reacted — keeps dense list cards visually quiet.
   const totalEmojis = proposal.emojiReactionCounts
@@ -43,9 +46,13 @@ export const ProposalCard = memo(function ProposalCard({
 
   return (
     <Link
-      href={`/proposals/${proposal.id}`}
+      href={href}
       className="group block focus-visible:outline-none"
-      aria-label={`Open proposal: ${proposal.title}`}
+      aria-label={
+        isActive
+          ? `Vote now: ${proposal.title}`
+          : `Open proposal: ${proposal.title}`
+      }
     >
       <Card
         className={
