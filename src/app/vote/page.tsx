@@ -188,6 +188,29 @@ export default async function VotePage() {
               </p>
             )}
 
+          {/* Full proposal body — complete, never truncated; reference copy
+              above the ballot. The proposal page remains one click away for
+              timeline + reactions. */}
+          <Card className="mt-8">
+            <CardHeader className="text-center">
+              <CardTitle className="inline-flex items-center justify-center gap-2 text-base">
+                <VoteIcon className="h-4 w-4" aria-hidden /> Proposal
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Markdown>{current.description}</Markdown>
+              <div className="mt-6 border-t border-border pt-3 text-center">
+                <Link
+                  href={`/proposals/${current.id}`}
+                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-gold"
+                >
+                  View the full proposal page{" "}
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Ballot — FGE choice cards, full template width */}
           <section aria-labelledby="cast-vote-heading" className="mt-8">
             <div className="mb-4 text-center">
@@ -282,29 +305,6 @@ export default async function VotePage() {
             </div>
             <ProposalVoteDiscussion proposalId={current.id} />
           </section>
-
-          {/* Full proposal body — complete, never truncated; reference copy
-              below the voting stack. The proposal page remains one click
-              away for timeline + reactions. */}
-          <Card className="mt-10">
-            <CardHeader className="text-center">
-              <CardTitle className="inline-flex items-center justify-center gap-2 text-base">
-                <VoteIcon className="h-4 w-4" aria-hidden /> Proposal
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Markdown>{current.description}</Markdown>
-              <div className="mt-6 border-t border-border pt-3 text-center">
-                <Link
-                  href={`/proposals/${current.id}`}
-                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-gold"
-                >
-                  View the full proposal page{" "}
-                  <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
         </>
       ) : (
         <>
