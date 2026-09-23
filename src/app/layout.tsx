@@ -1,3 +1,4 @@
+import { ReticleDev } from './reticle-dev';
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 
@@ -108,7 +109,7 @@ export default function RootLayout({
       <head>
         <JsonLd data={[organizationJsonLd(siteUrl), websiteJsonLd(siteUrl)]} />
       </head>
-      <body className="min-h-screen bg-bg-deep font-sans text-foreground antialiased">
+      <body className="min-h-screen bg-bg-deep font-sans text-foreground antialiased">{process.env.NODE_ENV === 'development' ? <ReticleDev /> : null}
         <Providers>
           <a href="#main-content" className="skip-link">
             Skip to content

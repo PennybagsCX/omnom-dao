@@ -91,3 +91,4 @@ memory/
 
 # Keep snapshot-metadata.json and csv-hash.txt tracked (small, needed for verification)
 archives/
+.reticle/

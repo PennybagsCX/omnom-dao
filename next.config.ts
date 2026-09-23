@@ -1,3 +1,4 @@
+import { withReticle } from '@reticlehq/next';
 import bundleAnalyzer from "@next/bundle-analyzer";
 import type { NextConfig } from "next";
 
@@ -72,7 +73,9 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://www.google.com https://va.vercel-scripts.com https://rpc.dogechain.dog https://ethereum-rpc.publicnode.com wss://relay.walletconnect.org https://relay.walletconnect.org https://rpc.walletconnect.org https://pulse.walletconnect.org https://api.web3modal.org",
+              //  - Reticle's dev bridge (ws://localhost:4400) is dev-only:
+              //    the in-app verification layer dials it from the browser.
+              `connect-src 'self' https://www.google.com https://va.vercel-scripts.com https://rpc.dogechain.dog https://ethereum-rpc.publicnode.com wss://relay.walletconnect.org https://relay.walletconnect.org https://rpc.walletconnect.org https://pulse.walletconnect.org https://api.web3modal.org${process.env.NODE_ENV === "development" ? " ws://localhost:4400 ws://127.0.0.1:4400" : ""}`,
               // verify.walletconnect.org is WalletConnect's attestation iframe,
               // loaded during pairing (observed live; blocks the QR flow if
               // absent). .com twin kept for SDK-region fallback.
@@ -104,4 +107,4 @@ const nextConfig: NextConfig = {
   }
 };
 
-export default withBundleAnalyzer(nextConfig);
+export default withReticle(withBundleAnalyzer(nextConfig));
