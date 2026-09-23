@@ -21,6 +21,7 @@ import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import {
   ProposalBallotCards,
   ProposalVoteDiscussion,
+  ProposalVoteReactions,
   ProposalVoteResults,
 } from "@/components/proposals/proposal-vote-actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -136,7 +137,13 @@ export default async function VotePage() {
               </div>
             </div>
             <h1 className="text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
-              {current.title}
+              <Link
+                href={`/proposals/${current.id}`}
+                className="transition-colors hover:text-gold"
+                title="View the full proposal page"
+              >
+                {current.title}
+              </Link>
             </h1>
           </div>
 
@@ -199,6 +206,15 @@ export default async function VotePage() {
             </CardHeader>
             <CardContent>
               <Markdown>{current.description}</Markdown>
+
+              {/* Emoji reactions — the same bar the detail page renders, on
+                  the shared detail query, so reactions made here or there
+                  count everywhere. */}
+              <ProposalVoteReactions
+                proposalId={current.id}
+                className="mt-6 border-t border-border pt-4"
+              />
+
               <div className="mt-6 border-t border-border pt-3 text-center">
                 <Link
                   href={`/proposals/${current.id}`}

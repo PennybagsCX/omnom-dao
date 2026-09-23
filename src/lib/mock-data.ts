@@ -863,6 +863,10 @@ function buildSeed(): MockStore {
       { id: "per-cc-3", proposal_id: "prop-passed-code-of-conduct", user_address: "0xccc3000000000000000000000000000000000000", emoji: "thumbs_up", created_at: "2026-06-10T09:02:00.000Z" },
       { id: "per-burn-1", proposal_id: "prop-active-tokenomics-burn", user_address: "0xddd1000000000000000000000000000000000000", emoji: "heart", created_at: "2026-09-01T10:00:00.000Z" },
       { id: "per-burn-2", proposal_id: "prop-active-tokenomics-burn", user_address: "0xddd2000000000000000000000000000000000000", emoji: "thinking", created_at: "2026-09-01T10:01:00.000Z" },
+      // The live quorum vote: one existing thumbs-up (from a wallet that is
+      // NOT the e2e fixture wallet) so the reactions chips render and the
+      // fixture user can toggle their own on top.
+      { id: "per-quorum-1", proposal_id: "prop-active-quorum-default", user_address: MOCK_HOLDERS.dolphin2.address, emoji: "thumbs_up", created_at: relativeNow(-2 * 60 * 60 * 1000) },
     ] as MockProposalEmojiReactionRow[],
     comment_emoji_reactions: [] as MockCommentEmojiReactionRow[],
     election_comment_emoji_reactions: [] as MockElectionCommentEmojiReactionRow[],

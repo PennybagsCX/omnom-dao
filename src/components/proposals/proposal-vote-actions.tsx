@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CommentsSection } from "@/components/shared/comments-section";
 import { DynamicIcon } from "@/components/shared/dynamic-icon";
+import { EmojiReactionsBar } from "@/components/shared/emoji-reactions/emoji-reactions-bar";
 import { QuorumProgress } from "@/components/shared/quorum-progress";
 import { ConnectCta } from "@/components/wallet/connect-cta";
 import {
@@ -16,6 +17,7 @@ import {
   useProposalDetail,
 } from "@/lib/api";
 import { VOTE_CHOICE_CONFIG } from "@/lib/constants";
+import { emptyEmojiCounts } from "@/lib/emoji-reactions";
 import { useProposalVote } from "@/lib/use-proposal-vote";
 import { cn, formatDateTime } from "@/lib/utils";
 import { ProposalStatus, VoteChoice, type ProposalComment } from "@/types";
@@ -380,6 +382,37 @@ export function ProposalVoteResults({
 interface ProposalVoteDiscussionProps {
   proposalId: string;
   className?: string;
+}
+
+interface ProposalVoteReactionsProps {
+  proposalId: string;
+  className?: string;
+}
+
+/**
+ * Proposal emoji-reactions bar for the /vote page's Proposal card — the same
+ * bar the detail page renders, fed by the shared detail query, so reactions
+ * made on either surface count everywhere.
+ */
+export function ProposalVoteReactions({
+  proposalId,
+  className,
+}: ProposalVoteReactionsProps) {
+  const { data: me } = useCurrentUser({ retry: false });
+  const { data: detail } = useProposalDetail(proposalId);
+  return (
+    <div className={className} data-testid="proposal-vote-reactions">
+      <EmojiReactionsBar
+        surface="proposal"
+        proposalId={proposalId}
+        emojiReactionCounts={
+          detail?.proposal.emojiReactionCounts ?? emptyEmojiCounts()
+        }
+        myEmojiReaction={detail?.proposal.myEmojiReaction ?? null}
+        isAuthenticated={Boolean(me)}
+      />
+    </div>
+  );
 }
 
 /**

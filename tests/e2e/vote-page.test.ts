@@ -35,6 +35,12 @@ if (RUN_E2E) {
           name: "Governance parameter: global default quorum",
         }),
       ).toBeVisible({ timeout: 15_000 });
+      // The title links to the full proposal page (owner fix).
+      await expect(
+        page.getByRole("link", {
+          name: "Governance parameter: global default quorum",
+        }),
+      ).toHaveAttribute("href", "/proposals/prop-active-quorum-default");
       await expect(page.getByText("Active").first()).toBeVisible();
       await expect(page.locator('[data-testid="countdown-timer"]')).toBeVisible();
       // FGE-style gold stats grid.
@@ -208,6 +214,37 @@ if (RUN_E2E) {
       await page.goto("/proposals/prop-active-quorum-default");
       await expect(
         page.getByText(/your vote has been recorded|you voted:/i).first(),
+      ).toBeVisible({ timeout: 30_000 });
+    });
+
+    test("comments and emoji reactions transfer between /vote and the detail page", async ({
+      page,
+    }) => {
+      // Comment from /vote — the discussion island posts through the same
+      // mutation the detail page uses, so the thread is shared.
+      const commentText = `Sync check ${Date.now()}`;
+      const composer = page.getByRole("textbox", { name: /add a comment/i });
+      await expect(composer).toBeVisible({ timeout: 15_000 });
+      await composer.fill(commentText);
+      await page.getByRole("button", { name: /post comment/i }).click();
+      await expect(page.getByText(commentText)).toBeVisible({ timeout: 15_000 });
+
+      // Reaction from /vote — the seeded thumbs-up chip renders in the
+      // Proposal card; toggling it counts the fixture wallet.
+      const reactions = page.getByTestId("proposal-vote-reactions");
+      const thumbChip = reactions.getByRole("button", { name: /thumbs up/i });
+      await expect(thumbChip).toBeVisible({ timeout: 15_000 });
+      await thumbChip.click();
+      await expect(thumbChip).toHaveAttribute("aria-pressed", "true", {
+        timeout: 15_000,
+      });
+
+      // The detail page shares the same query key: comment AND reaction
+      // must both be there.
+      await page.goto("/proposals/prop-active-quorum-default");
+      await expect(page.getByText(commentText)).toBeVisible({ timeout: 30_000 });
+      await expect(
+        page.getByRole("button", { name: /thumbs up.*you reacted/i }),
       ).toBeVisible({ timeout: 30_000 });
     });
   });
