@@ -80,7 +80,7 @@ export default async function ResultsPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="text-center">
-        <div className="mb-2 flex items-center justify-center gap-2">
+        <div className="mb-2 flex flex-col items-center justify-center gap-2">
           <BarChart3 className="h-6 w-6 text-gold" aria-hidden />
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             Governance results
@@ -94,20 +94,20 @@ export default async function ResultsPage() {
 
       {/* ── Section 1: Foundational Governance Election ─────────────── */}
       <section aria-labelledby="election-results-heading" className="mt-10">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-col items-center justify-center gap-2 text-center">
           <h2
             id="election-results-heading"
-            className="flex items-center gap-2 text-xl font-bold text-foreground"
+            className="flex flex-col items-center justify-center gap-2 text-center text-xl font-bold text-foreground"
           >
             <Vote className="h-5 w-5 text-gold" aria-hidden />
-            Foundational Governance Election
+            <span>Foundational Governance Election</span>
           </h2>
           <span className="text-xs text-text-dim">
             {formatDay(startsAt)} – {formatDay(endsAt)} (UTC)
           </span>
         </div>
 
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-center text-sm text-muted-foreground">
           {phase === "CLOSED"
             ? "Voting closed — results are final."
             : phase === "OPEN"
@@ -188,12 +188,12 @@ export default async function ResultsPage() {
       <section aria-labelledby="proposal-outcomes-heading" className="mt-12">
         <h2
           id="proposal-outcomes-heading"
-          className="flex items-center gap-2 text-xl font-bold text-foreground"
+          className="flex flex-col items-center justify-center gap-2 text-center text-xl font-bold text-foreground"
         >
           <ClipboardList className="h-5 w-5 text-gold" aria-hidden />
           Proposal outcomes
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-center text-sm text-muted-foreground">
           Every decided proposal — passed, failed, expired, or executed.
         </p>
 

@@ -378,11 +378,11 @@ export default async function VotePage() {
             data-testid="past-vote-fge"
             className="block rounded-lg border border-border bg-bg-elevated/30 p-4 transition-colors hover:border-gold/40"
           >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-sm font-semibold text-foreground">
+            <div className="flex items-center justify-between gap-2">
+              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
                 Foundational Governance Election
               </span>
-              <span className="inline-flex items-center gap-1 text-xs text-gold">
+              <span className="inline-flex shrink-0 items-center gap-1 text-xs text-gold">
                 View election <ArrowRight className="h-3.5 w-3.5" aria-hidden />
               </span>
             </div>
@@ -410,11 +410,11 @@ export default async function VotePage() {
               data-testid={`past-vote-${p.id}`}
               className="block rounded-lg border border-border bg-bg-elevated/30 p-4 transition-colors hover:border-gold/40"
             >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="line-clamp-2 min-w-0 break-words text-sm font-semibold text-foreground">
+              <div className="flex items-center justify-between gap-2">
+                <span className="line-clamp-1 min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
                   {p.title}
                 </span>
-                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
                   View outcome <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                 </span>
               </div>
@@ -516,15 +516,15 @@ function ProposalClassRow({ row }: { row: ProposalClassTally }) {
         row.count > 0 && "border-border/80",
       )}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <HolderBadge holderClass={row.holderClass} size="sm" plain />
-          <span className="text-xs text-text-dim">
+          <span className="truncate text-xs text-text-dim">
             {row.count.toLocaleString()} of {row.eligibleCount.toLocaleString()}{" "}
             wallets voted
           </span>
         </div>
-        <div className="text-right">
+        <div className="shrink-0 text-right">
           <div className="font-mono font-bold text-gold">
             {row.turnoutPercentage.toFixed(1)}%
           </div>

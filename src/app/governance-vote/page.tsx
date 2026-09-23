@@ -585,15 +585,15 @@ function HolderClassRow({ row }: { row: HolderClassRow }) {
         row.count > 0 && "border-border/80",
       )}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <HolderBadge holderClass={row.holderClass} size="sm" plain />
-          <span className="text-xs text-text-dim">
+          <span className="truncate text-xs text-text-dim">
             {row.count.toLocaleString()} of {row.eligibleCount.toLocaleString()}{" "}
             wallets voted
           </span>
         </div>
-        <div className="text-right">
+        <div className="shrink-0 text-right">
           <div className="font-mono font-bold text-gold">
             {row.turnoutPercentage.toFixed(1)}%
           </div>
