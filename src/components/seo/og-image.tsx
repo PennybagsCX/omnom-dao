@@ -84,3 +84,80 @@ export function buildOgCard(): ImageResponse {
     OG_SIZE,
   );
 }
+
+
+/**
+ * Governance Wave 1 card — used by the /vote route (opengraph-image +
+ * twitter-image). Same brand system as buildOgCard: near-black, gold,
+ * centered stack. Kept on the system sans stack for the same edge-font
+ * reliability reason as above.
+ */
+export function buildVoteOgCard(): ImageResponse {
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "space-between",
+          backgroundColor: "#000000",
+          backgroundImage:
+            "linear-gradient(135deg, #000000 0%, #0f0f0f 50%, #000000 100%)",
+          fontFamily:
+            '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
+          padding: "64px 80px",
+          position: "relative",
+        }}
+      >
+        {/* Gold glow */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: "42%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 760,
+            height: 220,
+            background:
+              "radial-gradient(ellipse at center, rgba(255, 215, 0, 0.12) 0%, rgba(255, 215, 0, 0) 70%)",
+            display: "flex",
+          }}
+        />
+
+        {/* Brand mark */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, zIndex: 1 }}>
+          <span style={{ fontSize: 40, fontWeight: 800, color: "#FFD700", letterSpacing: -0.8 }}>OMNOM</span>
+          <span style={{ fontSize: 40, fontWeight: 800, color: "#FAFAFA", letterSpacing: -0.8 }}>DAO</span>
+        </div>
+
+        {/* Wave headline */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, zIndex: 1 }}>
+          <span style={{ fontSize: 22, fontWeight: 500, color: "#A1A1AA", letterSpacing: 4, textTransform: "uppercase" }}>
+            Governance Wave 1 · Week 1 of 3
+          </span>
+          <span style={{ fontSize: 88, fontWeight: 800, color: "#FFD700", letterSpacing: -2, lineHeight: 1.05 }}>
+            🐕 Voting Is Live
+          </span>
+          <span style={{ fontSize: 30, color: "#FAFAFA", marginTop: 2, fontWeight: 400 }}>
+            How many wallets must vote for a result to count?
+          </span>
+        </div>
+
+        {/* Window + CTA */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, zIndex: 1 }}>
+          <span style={{ fontSize: 24, color: "#A1A1AA", fontWeight: 400 }}>
+            Sep 23 → Sep 30, 2026 · quadratic voting · gasless
+          </span>
+          <span style={{ fontSize: 22, color: "#FFD700", fontWeight: 600, letterSpacing: -0.3 }}>
+            dao.omnom.dog/vote
+          </span>
+        </div>
+      </div>
+    ),
+    OG_SIZE,
+  );
+}

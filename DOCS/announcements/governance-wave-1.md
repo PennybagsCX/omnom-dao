@@ -8,9 +8,9 @@
 >
 > | Week | Vote (plain question) | Window |
 > |---|---|---|
-> | 1 | How many people need to vote for a result to count? | Sep 22 – Sep 29 |
-> | 2 | How many "yes" votes does it take to win? | Sep 29 – Oct 6 |
-> | 3 | Should big decisions need more voters than small ones? | Oct 6 – Oct 13 |
+> | 1 | How many people need to vote for a result to count? | Sep 23 – Sep 30 |
+> | 2 | How many "yes" votes does it take to win? | Sep 30 – Oct 7 |
+> | 3 | Should big decisions need more voters than small ones? | Oct 7 – Oct 14 |
 >
 > Week 2/3 proposals stay in the admin queue until their week — approve ONLY
 > the current week's item. Post style: plain language, memecoin-audience
@@ -37,9 +37,9 @@ You chose quadratic voting. Now the DAO needs its official rulebook — and YOU 
 
 Coming next:
 
-• **Week 2 (Sep 29 – Oct 6):** how many "yes" votes does it take to win?
+• **Week 2 (Sep 30 – Oct 7):** how many "yes" votes does it take to win?
 
-• **Week 3 (Oct 6 – Oct 13):** should big decisions need more voters than small ones?
+• **Week 3 (Oct 7 – Oct 14):** should big decisions need more voters than small ones?
 
 Simple questions. Your answers become the DAO's constitution.
 
@@ -55,7 +55,7 @@ Simple questions. Your answers become the DAO's constitution.
 
 • 📊 **Real talk, in numbers:** total voting power = 581,973,790. Our record turnout (the leadership election) reached **2.73%** of it — 35 voters. The 5% bar ≈ 1,284 average wallets voting. That's the honest bar for ratifying a rulebook. The full breakdown is inside each proposal.
 
-• This week's vote closes **September 29**
+• This week's vote closes **September 30**
 
 👉 Read & vote: **dao.omnom.dog/vote** — the ballot is right on the page, and every past vote stays public below it.
 
@@ -73,13 +73,13 @@ Your voice. Your $OMNOM. Your DAO.
 
 Holdings = voting power. Ever held $OMNOM? You're eligible.
 
-Closes Sept 29 👉 dao.omnom.dog/vote
+Closes Sept 30 👉 dao.omnom.dog/vote
 
 🐕🧡
 
 ---
 
-## Week 2 short post (Sep 29)
+## Week 2 short post (Sep 30)
 
 🗳️ **Week 2 of the $OMNOM rulebook vote is LIVE.**
 
@@ -87,11 +87,11 @@ Last week the community set the turnout bar. This week: **how many "yes" votes d
 
 🟢 FOR = ratify today's split (big decisions need 60% yes) · 🔴 AGAINST = simple majority for everything.
 
-Closes Oct 6. Vote at **dao.omnom.dog/vote** 🐕🧡
+Closes Oct 7. Vote at **dao.omnom.dog/vote** 🐕🧡
 
 ---
 
-## Week 3 short post (Oct 6)
+## Week 3 short post (Oct 7)
 
 🗳️ **Final week of the $OMNOM rulebook vote.**
 
@@ -99,7 +99,7 @@ Turnout bar ✅ Win condition ✅ This week: **should big decisions need more vo
 
 🟢 FOR = graded bars (general proposals 5% · standard 10% · chain & tokenomics 25%) · 🔴 AGAINST = keep the flat rules.
 
-Closes Oct 13. Finish the rulebook — vote at **dao.omnom.dog/vote** 🐕🧡
+Closes Oct 14. Finish the rulebook — vote at **dao.omnom.dog/vote** 🐕🧡
 
 ---
 
