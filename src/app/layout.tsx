@@ -109,7 +109,7 @@ export default function RootLayout({
       <head>
         <JsonLd data={[organizationJsonLd(siteUrl), websiteJsonLd(siteUrl)]} />
       </head>
-      <body className="min-h-screen bg-bg-deep font-sans text-foreground antialiased">{process.env.NODE_ENV === 'development' ? <ReticleDev /> : null}
+      <body className="min-h-screen bg-bg-deep font-sans text-foreground antialiased">{process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_RETICLE_DEV !== 'none' ? <ReticleDev /> : null}
         <Providers>
           <a href="#main-content" className="skip-link">
             Skip to content

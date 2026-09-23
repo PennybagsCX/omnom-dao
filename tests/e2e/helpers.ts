@@ -94,6 +94,32 @@ export async function hideDevAuthPanel(page: Page): Promise<void> {
 }
 
 /**
+ * Remove the Reticle HUD/toolbar (dev-mode only).
+ *
+ * The overlay mounts AFTER the SDK connects to its bridge — seconds after
+ * hydration — and re-applies its own inline styles on re-render, so
+ * display:none loses that arms race. REMOVE the hosts instead and re-remove
+ * with a MutationObserver for 30s: a removed node intercepts nothing, and any
+ * re-mount fires the observer again.
+ */
+export async function hideReticleOverlay(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const remove = () => {
+      document
+        .querySelectorAll<HTMLElement>(
+          "[data-reticle-overlay], [data-reticle-state], .reticle-tb-btn",
+        )
+        .forEach((el) => el.remove());
+    };
+    remove();
+    const observer = new MutationObserver(remove);
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+    setTimeout(() => observer.disconnect(), 30_000);
+  });
+  await page.waitForTimeout(100);
+}
+
+/**
  * Auto-dismiss the ConnectWalletDialog whenever it appears.
  *
  * The dev-auth auto-connect chain can open the wallet dialog at any point

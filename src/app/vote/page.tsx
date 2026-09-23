@@ -3,11 +3,18 @@ import Link from "next/link";
 import {
   ArrowRight,
   CalendarClock,
+  HelpCircle,
   History,
   Users,
   Vote as VoteIcon,
 } from "lucide-react";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { HolderBadge } from "@/components/shared/holder-badge";
 import { Markdown } from "@/components/shared/markdown";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
@@ -133,28 +140,6 @@ export default async function VotePage() {
             </h1>
           </div>
 
-          {/* Full proposal body — complete, never truncated; the proposal
-              page remains one click away for timeline + reactions. */}
-          <Card className="mt-6">
-            <CardHeader className="text-center">
-              <CardTitle className="inline-flex items-center justify-center gap-2 text-base">
-                <VoteIcon className="h-4 w-4" aria-hidden /> Proposal
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Markdown>{current.description}</Markdown>
-              <div className="mt-6 border-t border-border pt-3 text-center">
-                <Link
-                  href={`/proposals/${current.id}`}
-                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-gold"
-                >
-                  View the full proposal page{" "}
-                  <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Countdown — same column and panel as the FGE page. Explicit
               closed-state text: the component default reads as stale copy. */}
           {current.votingEndsAt && (
@@ -246,16 +231,16 @@ export default async function VotePage() {
                 Live tally of voting power · results stay provisional until the window closes.
               </p>
             </div>
-            <div className="mx-auto max-w-2xl">
-              <ProposalVoteResults
-                proposalId={current.id}
-                votesFor={current.votesFor}
-                votesAgainst={current.votesAgainst}
-                votesAbstain={current.votesAbstain}
-                quorumRequired={current.quorumRequired}
-                totalPower={totalPower}
-              />
-            </div>
+            {/* Full content width (owner mark m1) — same as the FGE page's
+                results section. */}
+            <ProposalVoteResults
+              proposalId={current.id}
+              votesFor={current.votesFor}
+              votesAgainst={current.votesAgainst}
+              votesAbstain={current.votesAbstain}
+              quorumRequired={current.quorumRequired}
+              totalPower={totalPower}
+            />
           </section>
 
           {/* Who has voted — FGE's holder-class turnout breakdown, adapted
@@ -297,6 +282,29 @@ export default async function VotePage() {
             </div>
             <ProposalVoteDiscussion proposalId={current.id} />
           </section>
+
+          {/* Full proposal body — complete, never truncated; reference copy
+              below the voting stack. The proposal page remains one click
+              away for timeline + reactions. */}
+          <Card className="mt-10">
+            <CardHeader className="text-center">
+              <CardTitle className="inline-flex items-center justify-center gap-2 text-base">
+                <VoteIcon className="h-4 w-4" aria-hidden /> Proposal
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Markdown>{current.description}</Markdown>
+              <div className="mt-6 border-t border-border pt-3 text-center">
+                <Link
+                  href={`/proposals/${current.id}`}
+                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-gold"
+                >
+                  View the full proposal page{" "}
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </>
       ) : (
         <>
@@ -415,9 +423,67 @@ export default async function VotePage() {
           </Link>
         </div>
       </section>
+
+      {/* FAQ — same accordion pattern as the FGE page (owner mark m2). */}
+      <section aria-labelledby="faq-heading" className="mt-12">
+        <div className="mb-4 text-center">
+          <h2
+            id="faq-heading"
+            className="flex items-center justify-center gap-2 text-xl font-bold text-foreground"
+          >
+            <HelpCircle className="h-5 w-5 text-gold" aria-hidden />
+            Frequently asked questions
+          </h2>
+        </div>
+
+        <Accordion type="single" collapsible className="w-full">
+          {PROPOSAL_VOTE_FAQ.map((faq, idx) => (
+            <AccordionItem key={idx} value={`faq-${idx}`}>
+              <AccordionTrigger className="text-left">{faq.q}</AccordionTrigger>
+              <AccordionContent className="text-muted-foreground">
+                {faq.a}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </section>
     </div>
   );
 }
+
+/* ── Proposal-vote FAQ — mechanics questions for the live ballot, mirroring
+   the FGE page's FAQ scope (weighting, changes, gas, after-close). ── */
+
+const PROPOSAL_VOTE_FAQ: Array<{ q: string; a: string }> = [
+  {
+    q: "Can I change my vote?",
+    a: "Yes — click a different card any time before the window closes. Your latest choice is the one that counts, and changing it never costs anything.",
+  },
+  {
+    q: "How is my vote weighted?",
+    a: "Quadratically, per the Foundational Governance Election result: your voting power is the square root of your snapshot balance, read from the frozen snapshot at the moment you cast — never from your current wallet.",
+  },
+  {
+    q: "What does ABSTAIN actually do?",
+    a: "It counts toward turnout (quorum) but not toward the outcome — useful when you want the vote to validate without picking a side.",
+  },
+  {
+    q: "What quorum does this proposal need?",
+    a: "The requirement is in the stats grid above. Turnout is measured against total quadratic power across the entire snapshot, and every ballot — abstentions included — counts toward it.",
+  },
+  {
+    q: "What happens if quorum isn't met?",
+    a: "The proposal expires with no outcome and the current rules stay in force. Nothing passes on low turnout, whatever the split.",
+  },
+  {
+    q: "Is the outcome binding?",
+    a: "No — all outcomes are advisory. They are recorded publicly on the proposal (and in the audit log), and execution happens off-chain with the outcome noted.",
+  },
+  {
+    q: "Does voting cost gas?",
+    a: "No. Voting is off-chain: you sign a message with your wallet (gasless SIWE verification). There are no transactions and no fees.",
+  },
+];
 
 /* ── Holder-class breakdown row (clone of the FGE page's HolderClassRow,
    adapted to the three-choice proposal ballot) ─────────────────────── */

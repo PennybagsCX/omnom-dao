@@ -2,6 +2,7 @@ import { test, expect } from "./auth.fixture";
 import {
   dismissWalletDialog,
   hideDevAuthPanel,
+  hideReticleOverlay,
   registerWalletDialogAutoDismiss,
 } from "./helpers";
 
@@ -25,6 +26,7 @@ if (RUN_E2E) {
       await page.waitForLoadState("domcontentloaded");
       await dismissWalletDialog(page);
       await hideDevAuthPanel(page);
+      await hideReticleOverlay(page);
     });
 
     test("renders the current vote as the page hero", async ({ page }) => {
@@ -151,6 +153,7 @@ if (RUN_E2E) {
       await page.waitForLoadState("domcontentloaded");
       await dismissWalletDialog(page);
       await hideDevAuthPanel(page);
+      await hideReticleOverlay(page);
     });
 
     test("cast a vote from /vote and see it reflected on the detail page", async ({
