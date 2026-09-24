@@ -76,15 +76,9 @@ export default function HomePage() {
   } = useProposals({ sortBy: "createdAt", sortOrder: "desc", limit: 5 });
 
   const activeProposals = activeData?.proposals ?? [];
-  // Active/live proposals float to the top of Recent Proposals; the sort is
-  // stable, so newest-first order is preserved within each group.
-  const recentProposals = (recentData?.proposals ?? [])
-    .filter((p) => p.status !== ProposalStatus.DRAFT)
-    .sort(
-      (a, b) =>
-        (a.status === ProposalStatus.ACTIVE ? 0 : 1) -
-        (b.status === ProposalStatus.ACTIVE ? 0 : 1),
-    );
+  const recentProposals = (recentData?.proposals ?? []).filter(
+    (p) => p.status !== ProposalStatus.DRAFT,
+  );
 
   // If a query errored (e.g. DB unavailable), don't leave the skeleton spinning
   // — treat it as "no data" so the section degrades gracefully.
@@ -302,9 +296,7 @@ export default function HomePage() {
               <div className="space-y-3">
                 {/* Featured: newest proposal as a full card */}
                 <div>
-                  <p className="mb-2 text-xs uppercase tracking-wider text-text-dim">
-                    {newest.status === ProposalStatus.ACTIVE ? "Live now" : "Newest"}
-                  </p>
+                  <p className="mb-2 text-xs uppercase tracking-wider text-text-dim">Newest</p>
                   {/* Hide the VoteBar when no votes have been cast — an all-zero
                       bar is visual clutter on Pending Review / Failed items. */}
                   <ProposalCard proposal={newest} hideVoteBar={newestTotalVotes === 0} />
