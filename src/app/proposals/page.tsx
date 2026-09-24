@@ -226,15 +226,22 @@ function ProposalsList({ seed }: { seed: ProposalsUrlSeed | null }) {
   }, [refetch]);
 
   // Client-side title search (the API supports status/type/sort; search is a
-  // progressive enhancement layered on top of the returned set).
+  // progressive enhancement layered on top of the returned set). Active/live
+  // proposals always float to the top of the grid — the sort is stable, so
+  // the chosen sort order is preserved within each group.
   const visibleProposals = useMemo<Proposal[]>(() => {
     const all = data?.proposals ?? [];
-    if (!search.trim()) return all;
-    const q = search.trim().toLowerCase();
-    return all.filter(
-      (p) =>
-        p.title.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q),
+    const filtered = search.trim()
+      ? all.filter(
+          (p) =>
+            p.title.toLowerCase().includes(search.trim().toLowerCase()) ||
+            p.description.toLowerCase().includes(search.trim().toLowerCase()),
+        )
+      : all;
+    return [...filtered].sort(
+      (a, b) =>
+        (a.status === ProposalStatus.ACTIVE ? 0 : 1) -
+        (b.status === ProposalStatus.ACTIVE ? 0 : 1),
     );
   }, [data?.proposals, search]);
 
