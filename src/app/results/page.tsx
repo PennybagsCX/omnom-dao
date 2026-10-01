@@ -87,51 +87,14 @@ export default async function ResultsPage() {
           </h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Every finalized proposal — newest first — plus the Foundational
-          Governance Election archive.
+          The Foundational Governance Election — the DAO&apos;s first completed
+          vote — and every decided proposal since.
         </p>
       </header>
 
-      {/* ── Section 1: Finalized proposal outcomes (newest first) ───── */}
-      <section aria-labelledby="proposal-outcomes-heading" className="mt-10">
-        <h2
-          id="proposal-outcomes-heading"
-          className="flex flex-col items-center justify-center gap-2 text-center text-xl font-bold text-foreground"
-        >
-          <ClipboardList className="h-5 w-5 text-gold" aria-hidden />
-          Proposal outcomes
-        </h2>
-        <p className="mt-1 text-center text-sm text-muted-foreground">
-          Every decided proposal — passed, failed, expired, or executed.
-          Updated automatically the moment each vote finalizes.
-        </p>
-
-        {finalized.length === 0 ? (
-          <EmptyState
-            className="mt-4"
-            icon={<ClipboardList className="h-12 w-12" />}
-            title="No finalized proposals yet"
-            description="Once a proposal's voting window closes, its outcome and tallies are published here. Active proposals live in the Proposals list."
-            action={
-              <Link
-                href="/proposals"
-                className="rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold"
-              >
-                Browse active proposals
-              </Link>
-            }
-          />
-        ) : (
-          <div className="mt-4 space-y-3">
-            {finalized.map((p) => (
-              <FinalizedProposalRow key={p.id} proposal={p} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* ── Section 2: Foundational Governance Election archive ─────── */}
-      <section aria-labelledby="election-results-heading" className="mt-12">
+      {/* ── Section 1: Foundational Governance Election (the flagship
+          completed result) ─────────────────────────────────────────── */}
+      <section aria-labelledby="election-results-heading" className="mt-10">
         <div className="flex flex-col items-center justify-center gap-2 text-center">
           <h2
             id="election-results-heading"
@@ -220,6 +183,46 @@ export default async function ResultsPage() {
             View the full election <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
         </div>
+      </section>
+
+      {/* ── Section 2: Proposal outcomes (the running ledger — newest
+          first; every future vote lands here on finalize) ───────────── */}
+      <section aria-labelledby="proposal-outcomes-heading" className="mt-12">
+        <h2
+          id="proposal-outcomes-heading"
+          className="flex flex-col items-center justify-center gap-2 text-center text-xl font-bold text-foreground"
+        >
+          <ClipboardList className="h-5 w-5 text-gold" aria-hidden />
+          Proposal outcomes
+        </h2>
+        <p className="mt-1 text-center text-sm text-muted-foreground">
+          Every decided proposal — passed, failed, expired, or executed.
+          Updated automatically the moment each vote finalizes; the three live
+          Wave 1 Referendum questions land here on Nov 1.
+        </p>
+
+        {finalized.length === 0 ? (
+          <EmptyState
+            className="mt-4"
+            icon={<ClipboardList className="h-12 w-12" />}
+            title="No finalized proposals yet"
+            description="Once a proposal's voting window closes, its outcome and tallies are published here. Active proposals live in the Proposals list."
+            action={
+              <Link
+                href="/proposals"
+                className="rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold"
+              >
+                Browse active proposals
+              </Link>
+            }
+          />
+        ) : (
+          <div className="mt-4 space-y-3">
+            {finalized.map((p) => (
+              <FinalizedProposalRow key={p.id} proposal={p} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ── Durability note ─────────────────────────────────────────── */}
