@@ -115,9 +115,11 @@ export async function POST(
       votingEndsAt: newEndIso,
     });
   } else if (action === "extend") {
-    // Extension only: move the close later, never earlier, capped at a 60-day
-    // total window. Approve hardcodes per-type durations, so this is the
-    // sanctioned way to run a longer window (e.g. the Wave 1 Referendum).
+    // Repin the close to an explicit timestamp (or a day-count from now).
+    // Moving the close EARLIER is allowed: this is an admin-only, audited
+    // correction, and "stop" is already strictly more powerful — the
+    // extension-only rule guarded nothing and blocked launch-day fixes.
+    // The close must stay in the future and the total window <= 60 days.
     const currentEndMs = proposal.votingEndsAt ? Date.parse(proposal.votingEndsAt) : NaN;
     let targetEndMs: number;
     if (parsed.data.endsAt !== undefined) {
@@ -128,10 +130,10 @@ export async function POST(
     } else {
       targetEndMs = Date.now() + (parsed.data.days ?? 0) * 24 * 60 * 60 * 1000;
     }
-    if (!Number.isNaN(currentEndMs) && targetEndMs < currentEndMs) {
+    if (targetEndMs <= Date.now()) {
       return apiError(
         ErrorCode.MISSING_FIELDS,
-        "extend only moves the close later — the new end is before the current one.",
+        "The new closing time must be in the future.",
         409,
       );
     }

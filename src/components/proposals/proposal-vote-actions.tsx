@@ -672,9 +672,9 @@ export function ProposalVoteAdminControls({
       )}
       <p className="mt-3 text-xs leading-relaxed text-text-dim">
         Pause halts ballots and the finalize sweep; resume shifts the close
-        forward by the paused time. Extend moves the close later (up to a 60-day
-        total window). Stop closes the vote now and applies the normal outcome
-        rules. Every action is audit-logged.
+        forward by the paused time. Extend repins the close (future-dated, up to
+        a 60-day total window). Stop closes the vote now and applies the normal
+        outcome rules. Every action is audit-logged.
       </p>
     </div>
   );
