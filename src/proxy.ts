@@ -26,6 +26,10 @@ const PUBLIC_API_PREFIXES = [
   // CSP violation receiver — browsers POST reports without cookies,
   // and the endpoint must accept them from any origin (CSP is per-origin).
   "/api/v1/csp-report",
+  // Traffic beacon (page_view / share_click) — anonymous by design: the
+  // whole point is counting visitors who never sign in. The route itself
+  // validates + rate-limits (rl:events:{ip}) and stores no identity.
+  "/api/v1/events",
   // DEV ONLY: allow dev auth bypass outside the production bundle
   ...(process.env.NODE_ENV === "development" ? ["/api/v1/dev-login"] : []),
 ];
