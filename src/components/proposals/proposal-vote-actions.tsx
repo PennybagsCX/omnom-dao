@@ -491,8 +491,9 @@ interface ProposalVoteAdminControlsProps {
 /**
  * Admin-only live-vote management for the /vote page: pause (ballots refused,
  * finalize sweep skips), resume (close shifts forward by the paused duration),
- * and stop (close now + run the standard finalizer). Hidden from everyone
- * else; every action lands in the public audit log via the route.
+ * extend (push the close later — approve hardcodes per-type windows), and stop
+ * (close now + run the standard finalizer). Hidden from everyone else; every
+ * action lands in the public audit log via the route.
  */
 export function ProposalVoteAdminControls({
   proposalId,
@@ -500,8 +501,10 @@ export function ProposalVoteAdminControls({
 }: ProposalVoteAdminControlsProps) {
   const { data: me } = useCurrentUser({ retry: false });
   const qc = useQueryClient();
-  const [pending, setPending] = useState<"pause" | "resume" | "stop" | null>(null);
+  const [pending, setPending] = useState<"pause" | "resume" | "stop" | "extend" | null>(null);
   const [confirmStop, setConfirmStop] = useState(false);
+  const [extendOpen, setExtendOpen] = useState(false);
+  const [extendValue, setExtendValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const vote = useProposalVote(proposalId);
 
@@ -514,13 +517,24 @@ export function ProposalVoteAdminControls({
 
   if (!isAdmin || !isActive) return null;
 
-  const act = async (action: "pause" | "resume" | "stop") => {
+  // datetime-local wants a local "YYYY-MM-DDTHH:mm" value; prefill a week past
+  // the current close so the common case is one confirm click.
+  const extendPrefill = () => {
+    const base = vote.detail?.proposal.votingEndsAt
+      ? Date.parse(vote.detail.proposal.votingEndsAt)
+      : Date.now();
+    const d = new Date(base + 7 * 24 * 60 * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const act = async (action: "pause" | "resume" | "stop" | "extend", extra?: Record<string, unknown>) => {
     setPending(action);
     setError(null);
     try {
       await fetchApi(`/api/v1/proposals/${proposalId}/vote-control`, {
         method: "POST",
-        body: { action },
+        body: { action, ...extra },
       });
       await qc.invalidateQueries({
         queryKey: queryKeys.proposalDetail(proposalId),
@@ -565,6 +579,54 @@ export function ProposalVoteAdminControls({
             <PauseCircle className="h-4 w-4" aria-hidden /> Pause voting
           </Button>
         )}
+        {extendOpen ? (
+          <>
+            <input
+              type="datetime-local"
+              aria-label="New closing time"
+              value={extendValue}
+              onChange={(e) => setExtendValue(e.target.value)}
+              className="min-h-11 rounded-lg border border-amber-500/30 bg-black/30 px-3 py-1.5 text-sm text-text-primary sm:min-h-9"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="min-h-11 sm:min-h-9"
+              onClick={() => {
+                const ms = Date.parse(extendValue);
+                if (Number.isNaN(ms)) {
+                  setError("Pick a valid closing time first.");
+                  return;
+                }
+                void act("extend", { endsAt: new Date(ms).toISOString() });
+              }}
+              disabled={pending !== null || !extendValue}
+            >
+              <StopCircle className="h-4 w-4" aria-hidden /> Confirm extend
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="min-h-11 sm:min-h-9"
+              onClick={() => setExtendOpen(false)}
+              disabled={pending !== null}
+            >
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-h-11 sm:min-h-9"
+            onClick={() => {
+              setExtendValue(extendPrefill());
+              setExtendOpen(true);
+            }}
+          >
+            <StopCircle className="h-4 w-4" aria-hidden /> Extend window…
+          </Button>
+        )}
         {confirmStop ? (
           <>
             <Button
@@ -604,8 +666,9 @@ export function ProposalVoteAdminControls({
       )}
       <p className="mt-3 text-xs leading-relaxed text-text-dim">
         Pause halts ballots and the finalize sweep; resume shifts the close
-        forward by the paused time. Stop closes the vote now and applies the
-        normal outcome rules. Every action is audit-logged.
+        forward by the paused time. Extend moves the close later (up to a 60-day
+        total window). Stop closes the vote now and applies the normal outcome
+        rules. Every action is audit-logged.
       </p>
     </div>
   );

@@ -28,6 +28,7 @@ const NOTIFICATION_META: Record<
   [NotificationType.PROPOSAL_CREATED]: { iconName: "FilePlus", label: "New proposal" },
   [NotificationType.VOTING_STARTED]: { iconName: "Vote", label: "Voting started" },
   [NotificationType.VOTING_ENDING_SOON]: { iconName: "Timer", label: "Ending soon" },
+  [NotificationType.VOTING_ENDING_72H]: { iconName: "Hourglass", label: "Closing in 3 days" },
   [NotificationType.PROPOSAL_RESULT]: { iconName: "BarChart3", label: "Result" },
   [NotificationType.MENTION]: { iconName: "MessageCircle", label: "Mention" },
 };

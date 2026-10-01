@@ -516,10 +516,10 @@ The parameters below require community ratification before they are finalized (i
 | # | Decision | Options | v1 Baseline | Section |
 |---|---|---|---|---|
 | 1 | **Voting math model** | Linear (1 token = 1 vote) vs. Quadratic Token Voting | ✅ **SETTLED** — Quadratic, elected 65.7% (2026-09-12), shipped in [`src/lib/voting-power.ts`](../src/lib/voting-power.ts) | [§3](#3-voting-power-calculation) |
-| 2 | **Global default quorum** | 5% (TOKENOMICS) / 5–10% (DESIGN/DATA-MODEL) / 20% (PRD) | 5–10% per-type | [§8](#8-quorum--pass-thresholds) |
-| 3 | **Global pass threshold** | Simple majority vs. 60% supermajority for all types | Per-type (simple or 60% per §5) | [§8](#8-quorum--pass-thresholds) |
+| 2 | **Global default quorum** | 5% (TOKENOMICS) / 5–10% (DESIGN/DATA-MODEL) / 20% (PRD) | 5–10% per-type — **now in the Wave 1 Referendum (2026-10-02 → 2026-11-01)**; Week-1 vote expired at 1.73% (2026-09-30) | [§8](#8-quorum--pass-thresholds) |
+| 3 | **Global pass threshold** | Simple majority vs. 60% supermajority for all types | Per-type (simple or 60% per §5) — **now in the Wave 1 Referendum (2026-10-02 → 2026-11-01)** | [§8](#8-quorum--pass-thresholds) |
 | 4 | **Pending Review duration** | 24h auto-approve (DESIGN) vs. max 7 days (PRD) | Configurable — pick at deploy | [§6.2](#62-editing--transition-rules) |
-| 5 | **Per-type quorums** | PRD §9 (up to 25%) vs. seeded defaults (10–15%) | Seeded DATA-MODEL defaults | [§8.3](#83-v1-seeded-defaults-data-modelmd) |
+| 5 | **Per-type quorums** | PRD §9 (up to 25%) vs. seeded defaults (10–15%) | Seeded DATA-MODEL defaults — **now in the Wave 1 Referendum (2026-10-02 → 2026-11-01)** | [§8.3](#83-v1-seeded-defaults-data-modelmd) |
 | 6 | **Min holding to create proposals** | Shark+ for high-impact / any verified for low-impact (current proposal) vs. any-verified with priority review | Shark+ for Chain/Tokenomics/Tech; any for others | [§5](#5-proposal-types--thresholds) |
 | 7 | **30% unique-holder veto / cooling-off** | Adopt PRD recommendation or defer | Not enforced in v1 | [§10.1](#101-anti-whale-measures-prd-recommendations) |
 | 8 | **Snapshot dispute resolution** | Trust snapshot + Blockscout link / formal dispute process / community override | Trust snapshot (no dispute in v1) | [`PRD.md`](../PRD.md) Q4 |

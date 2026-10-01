@@ -20,7 +20,9 @@ export type AuditAction =
   | "PROPOSAL_DELETED"
   | "VOTE_PAUSED"
   | "VOTE_RESUMED"
-  | "VOTE_STOPPED";
+  | "VOTE_STOPPED"
+  | "VOTE_WINDOW_EXTENDED"
+  | "PROPOSAL_ADOPTED_AS_CONSENSUS";
 
 export interface AuditLogEntry {
   id: string;

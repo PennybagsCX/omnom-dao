@@ -196,6 +196,23 @@ export interface BaseMeta {
   executedBy?: string;
   /** ISO 8601 timestamp when the outcome was recorded */
   executedAt?: string;
+  /** Wave 1 Referendum grouping tag (scripts/seed-referendum.ts) — lets the
+   * /vote hub present the simultaneous rulebook ballots as one referendum. */
+  referendum?: string;
+  /** Which question of the referendum this proposal is (1-based). */
+  referendumQuestion?: number;
+  /** Consensus fallback (REFERENDUM-WAVE1.md §3): set to "consensus-fallback"
+   * when a quorum-missed proposal's most-voted outcome was adopted as the
+   * community's working consensus. */
+  adoptedAs?: string;
+  /** The side adopted under the fallback ("FOR" | "AGAINST"). */
+  adoptedOutcome?: string;
+  /** Address of the admin who applied the fallback adoption. */
+  adoptedBy?: string;
+  /** ISO 8601 timestamp of the fallback adoption. */
+  adoptedAt?: string;
+  /** Optional transparency note supplied by the adopting admin. */
+  adoptionNote?: string;
 }
 
 export interface ChainSelectionMeta extends Omit<BaseMeta, "type"> {
@@ -419,6 +436,8 @@ export enum NotificationType {
   PROPOSAL_CREATED = "PROPOSAL_CREATED",
   VOTING_STARTED = "VOTING_STARTED",
   VOTING_ENDING_SOON = "VOTING_ENDING_SOON",
+  /** T-72h reminder wave — reuses the `votingEndingSoon` user preference. */
+  VOTING_ENDING_72H = "VOTING_ENDING_72H",
   PROPOSAL_RESULT = "PROPOSAL_RESULT",
   MENTION = "MENTION",
 }

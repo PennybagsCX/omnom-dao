@@ -102,6 +102,7 @@ function prefEnabled(
     case NotificationType.VOTING_STARTED:
       return prefs.votingStarted;
     case NotificationType.VOTING_ENDING_SOON:
+    case NotificationType.VOTING_ENDING_72H:
       return prefs.votingEndingSoon;
     case NotificationType.PROPOSAL_RESULT:
       return prefs.proposalResult;
@@ -290,6 +291,41 @@ export async function notifyEndingSoon(proposalId: string): Promise<void> {
   const res = await db.execute({ sql: "SELECT id FROM users", args: [] });
   const userIds = res.rows.map((r) => r.id as string);
   await broadcast(userIds, NotificationType.VOTING_ENDING_SOON, title, body, proposalId);
+}
+
+/**
+ * Notify that a proposal's voting window ends within 72h (the T-72h reminder
+ * wave, REFERENDUM-WAVE1.md — turnout is the lever, so the referendum gets an
+ * earlier touch than the T-24h wave).
+ *
+ * Same cron-driven, idempotent pattern as notifyEndingSoon: skips if any
+ * VOTING_ENDING_72H notification already exists for the proposal, so
+ * repeated sweeps never duplicate the fan-out. Shares the
+ * `votingEndingSoon` user preference with the T-24h wave.
+ */
+export async function notifyReminder72h(proposalId: string): Promise<void> {
+  const proposal = await getProposalById(proposalId);
+  if (!proposal || proposal.status !== ProposalStatus.ACTIVE || !proposal.votingEndsAt) {
+    return;
+  }
+  const endsMs = Date.parse(proposal.votingEndsAt);
+  if (Number.isNaN(endsMs)) return;
+  const remainingH = (endsMs - Date.now()) / (60 * 60 * 1000);
+  if (remainingH <= 0 || remainingH > 72) return;
+
+  // Idempotency guard: one 72h reminder wave per proposal, ever.
+  const seen = await db.execute({
+    sql: "SELECT 1 FROM notifications WHERE type = 'VOTING_ENDING_72H' AND proposal_id = ? LIMIT 1",
+    args: [proposalId],
+  });
+  if (seen.rows.length > 0) return;
+
+  const title = `${NOTIFICATION_TYPE_CONFIG[NotificationType.VOTING_ENDING_72H].emoji} Closing in 3 days: ${proposal.title}`;
+  const body = `72 hours remain to vote — the proposal closes at ${proposal.votingEndsAt}. Quorum still needs you.`;
+
+  const res = await db.execute({ sql: "SELECT id FROM users", args: [] });
+  const userIds = res.rows.map((r) => r.id as string);
+  await broadcast(userIds, NotificationType.VOTING_ENDING_72H, title, body, proposalId);
 }
 
 /**

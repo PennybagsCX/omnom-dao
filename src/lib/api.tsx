@@ -251,7 +251,14 @@ export const queryKeys = {
   proposals: (filters?: Record<string, string | undefined>) =>
     ["proposals", filters ?? {}] as const,
   proposal: (id: string) => ["proposal", id] as const,
-  proposalDetail: (id: string) => ["proposal-detail", id] as const,
+  // Viewer-scoped: the detail payload carries `myVote`, so caching it under
+  // the proposal id ALONE leaked one wallet's ballot to the next identity
+  // (dev account switch, wallet switch, re-login) — the UI then showed
+  // "Current ballot" for a vote the new wallet never cast and fired
+  // change-vote PUTs that 409'd ("No existing vote to change"). The viewer
+  // segment namespaces the cache; invalidations below still prefix-match.
+  proposalDetail: (id: string, viewer?: string | null) =>
+    ["proposal-detail", id, viewer?.toLowerCase() ?? null] as const,
   comments: (proposalId: string, page = 1) =>
     ["comments", proposalId, page] as const,
   electionComments: (electionKey: string, page = 1) =>
@@ -326,8 +333,12 @@ export function useProposals(filters: ProposalFilters = {}, enabled = true) {
 
 /** GET /api/v1/proposals/[id] — proposal detail + tallies + comments. */
 export function useProposalDetail(id: string, enabled = true) {
+  // The viewer segment keeps `myVote` from crossing identities (see
+  // queryKeys.proposalDetail) — a wallet switch lands in a fresh cache
+  // namespace and the ballot re-fetches instead of trusting the last wallet.
+  const { data: me } = useCurrentUser({ retry: false });
   return useQuery<ProposalDetailData, ApiRequestError>({
-    queryKey: queryKeys.proposalDetail(id),
+    queryKey: queryKeys.proposalDetail(id, me?.address ?? null),
     queryFn: ({ signal }) =>
       apiGet<ProposalDetailData>(`/api/v1/proposals/${id}`, undefined, signal),
     enabled: enabled && id.length > 0,

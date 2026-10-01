@@ -9,7 +9,7 @@ smart contracts and no on-chain interactions — identity is proven via **SIWE
 (EIP-4361)** message signing, verified server-side, then cross-referenced
 against the immutable snapshot via O(log n) binary search.
 
-> This repository contains the **Phase 0 Foundation** scaffold.
+> **Status (2026-10): live governance operations.** The 16-week P0–P4 build is complete; the Foundational Governance Election elected Quadratic voting (2026-09-12) and the Wave 1 Referendum is running 2026-10-02 → 2026-11-01. See [`DOCS/STATUS.md`](DOCS/STATUS.md) and [`DOCS/REFERENDUM-WAVE1.md`](DOCS/REFERENDUM-WAVE1.md).
 
 ---
 

@@ -72,7 +72,7 @@ function diffParts(targetMs: number, nowMs: number): Parts {
   const total = Math.max(0, targetMs - nowMs);
   const days = Math.floor(total / DAY_MS);
   const hours = Math.floor((total % DAY_MS) / HOUR_MS);
-  const minutes = Math.floor((total % MINUTE_MS) / MINUTE_MS);
+  const minutes = Math.floor((total % HOUR_MS) / MINUTE_MS);
   const seconds = Math.floor((total % MINUTE_MS) / 1000);
   return { days, hours, minutes, seconds, total };
 }

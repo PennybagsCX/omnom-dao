@@ -407,6 +407,7 @@ export const NOTIFICATION_TYPE_CONFIG: Record<NotificationType, NotificationType
   [NotificationType.PROPOSAL_CREATED]: { label: "Proposal Created", emoji: "📝", iconName: "FilePlus" },
   [NotificationType.VOTING_STARTED]: { label: "Voting Started", emoji: "🗳️", iconName: "Vote" },
   [NotificationType.VOTING_ENDING_SOON]: { label: "Voting Ending Soon", emoji: "⏰", iconName: "Timer" },
+  [NotificationType.VOTING_ENDING_72H]: { label: "Voting Ending in 72h", emoji: "⏳", iconName: "Hourglass" },
   [NotificationType.PROPOSAL_RESULT]: { label: "Proposal Result", emoji: "📊", iconName: "BarChart3" },
   [NotificationType.MENTION]: { label: "Mention", emoji: "💬", iconName: "MessageCircle" },
 };

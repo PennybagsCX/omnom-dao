@@ -21,7 +21,9 @@
     "db:migrate:proposal-deleted": "tsx scripts/migrate-proposal-deleted.ts",
     "db:migrate:audit-vote-actions": "tsx scripts/migrate-audit-vote-actions.ts",
     "db:seed": "tsx scripts/seed-db.ts",
+    "seed:referendum": "tsx scripts/seed-referendum.ts",
     "verify:election": "tsx scripts/verify-election.ts",
+    "verify:referendum": "tsx scripts/verify-referendum.ts",
     "fetch:snapshot": "bash scripts/fetch-snapshot.sh"
   },
   "dependencies": {

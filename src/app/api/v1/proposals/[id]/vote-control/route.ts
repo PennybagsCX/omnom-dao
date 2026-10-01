@@ -21,13 +21,23 @@ import { ErrorCode, ProposalStatus, type Proposal } from "@/types";
  *   - stop   : closes the vote immediately (voting_ends_at = now) and runs the
  *              normal finalizer, so the standard quorum/threshold rules decide
  *              the outcome. Stopped votes show the regular outcome statuses.
+ *   - extend : pushes voting_ends_at forward to an explicit `endsAt` ISO stamp
+ *              (or by `days`). Approve hardcodes a per-type window, so extend
+ *              is how a longer sanctioned window (e.g. the Wave 1 Referendum's
+ *              30 days) is pinned without re-approving. Extension only — the
+ *              close can move later, never earlier, and the total window is
+ *              capped at 60 days.
  *
  * Pause state lives in metadata JSON (`pausedAt`) — no schema migration.
  * Every action lands in the public audit log.
  */
 
+const MAX_WINDOW_DAYS = 60;
+
 const ActionSchema = z.object({
-  action: z.enum(["pause", "resume", "stop"]),
+  action: z.enum(["pause", "resume", "stop", "extend"]),
+  endsAt: z.string().optional(),
+  days: z.number().int().min(1).max(MAX_WINDOW_DAYS).optional(),
 });
 
 export async function POST(
@@ -48,9 +58,16 @@ export async function POST(
 
   const parsed = ActionSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
-    return apiError(ErrorCode.MISSING_FIELDS, "action must be pause, resume, or stop.", 400);
+    return apiError(
+      ErrorCode.MISSING_FIELDS,
+      "action must be pause, resume, stop, or extend (with endsAt or days).",
+      400,
+    );
   }
   const action = parsed.data.action;
+  if (action === "extend" && parsed.data.endsAt === undefined && parsed.data.days === undefined) {
+    return apiError(ErrorCode.MISSING_FIELDS, "extend requires endsAt or days.", 400);
+  }
 
   const { id } = await params;
   let proposal = await getProposalById(id);
@@ -96,6 +113,47 @@ export async function POST(
     await recordAuditEvent(session.sub, "VOTE_RESUMED", "proposal", id, {
       resumedAt: nowIso,
       votingEndsAt: newEndIso,
+    });
+  } else if (action === "extend") {
+    // Extension only: move the close later, never earlier, capped at a 60-day
+    // total window. Approve hardcodes per-type durations, so this is the
+    // sanctioned way to run a longer window (e.g. the Wave 1 Referendum).
+    const currentEndMs = proposal.votingEndsAt ? Date.parse(proposal.votingEndsAt) : NaN;
+    let targetEndMs: number;
+    if (parsed.data.endsAt !== undefined) {
+      targetEndMs = Date.parse(parsed.data.endsAt);
+      if (Number.isNaN(targetEndMs)) {
+        return apiError(ErrorCode.MISSING_FIELDS, "endsAt must be a valid ISO timestamp.", 400);
+      }
+    } else {
+      targetEndMs = Date.now() + (parsed.data.days ?? 0) * 24 * 60 * 60 * 1000;
+    }
+    if (!Number.isNaN(currentEndMs) && targetEndMs < currentEndMs) {
+      return apiError(
+        ErrorCode.MISSING_FIELDS,
+        "extend only moves the close later — the new end is before the current one.",
+        409,
+      );
+    }
+    const startMs = proposal.votingStartsAt ? Date.parse(proposal.votingStartsAt) : NaN;
+    if (
+      !Number.isNaN(startMs) &&
+      targetEndMs - startMs > MAX_WINDOW_DAYS * 24 * 60 * 60 * 1000
+    ) {
+      return apiError(
+        ErrorCode.MISSING_FIELDS,
+        `Total voting window cannot exceed ${MAX_WINDOW_DAYS} days.`,
+        409,
+      );
+    }
+    const newEndIso = new Date(targetEndMs).toISOString();
+    await db.execute({
+      sql: "UPDATE proposals SET voting_ends_at = ?, updated_at = datetime('now') WHERE id = ?",
+      args: [newEndIso, id],
+    });
+    await recordAuditEvent(session.sub, "VOTE_WINDOW_EXTENDED", "proposal", id, {
+      previousEnd: proposal.votingEndsAt,
+      newEnd: newEndIso,
     });
   } else {
     // stop — close now and run the standard finalizer; quorum/threshold rules

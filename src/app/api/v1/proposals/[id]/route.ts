@@ -7,6 +7,7 @@ import { getSessionAddress, requireAuth, UnauthorizedError } from "@/lib/auth";
 import { sanitizeContent } from "@/lib/sanitize";
 import { lookupHolderClasses } from "@/lib/snapshot";
 import { finalizeProposal } from "@/lib/proposal-finalize";
+import { totalQuadraticPower } from "@/lib/voting-power";
 import { z } from "zod";
 import {
   emptyEmojiCounts,
@@ -90,6 +91,22 @@ export async function GET(
       args: [id],
     });
     voterCount = Number(countRes.rows[0]?.cnt ?? 0);
+
+    // Live quorum for ACTIVE proposals: the denormalized quorum_achieved stays
+    // NULL until the first ballot, which the detail page renders as "0.00% / N%".
+    // Compute from the tallies + snapshot denominator (mirrors the /vote page);
+    // on any failure keep the stored value. Closed proposals keep the stored value.
+    if (proposal.status === ProposalStatus.ACTIVE) {
+      try {
+        const totalPower = await totalQuadraticPower();
+        if (totalPower > 0) {
+          const votedPower = totalFor + totalAgainst + totalAbstain;
+          proposal.quorumAchieved = (votedPower / totalPower) * 100;
+        }
+      } catch (err) {
+        console.error("[api/proposals/[id]] live quorum compute failed:", err);
+      }
+    }
 
     const commentsRes = await db.execute({
       sql:

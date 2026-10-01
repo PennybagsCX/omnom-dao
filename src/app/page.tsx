@@ -80,6 +80,28 @@ export default function HomePage() {
     (p) => p.status !== ProposalStatus.DRAFT,
   );
 
+  // Live-vote banner state. When a tagged referendum is live it is the
+  // campaign CTA; any other ACTIVE proposal gets the generic live banner;
+  // with nothing live the FGE result banner (the historical default) shows.
+  const referendumLive = activeProposals.some(
+    (p) => p.metadata.type === "base" && p.metadata.referendum === "wave1-2026",
+  );
+  const referendumCount = activeProposals.filter(
+    (p) => p.metadata.type === "base" && p.metadata.referendum === "wave1-2026",
+  ).length;
+  const liveClosesDay = activeProposals
+    .map((p) => p.votingEndsAt)
+    .filter((v): v is string => Boolean(v))
+    .sort()
+    .at(-1);
+  const liveClosesLabel = liveClosesDay
+    ? new Date(liveClosesDay).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        timeZone: "UTC",
+      })
+    : null;
+
   // If a query errored (e.g. DB unavailable), don't leave the skeleton spinning
   // — treat it as "no data" so the section degrades gracefully.
   const showActiveSkeleton = activeLoading && !activeError;
@@ -169,15 +191,33 @@ export default function HomePage() {
         </motion.p>
       </section>
 
-      {/* ── FGE result banner (election closed 2026-09-12) ───── */}
+      {/* ── Live-vote / FGE result banner ──────────────────────── */}
       <section className="mx-auto w-full max-w-2xl px-4 pb-10 sm:px-6 lg:px-8">
-        <Link
-          href="/results"
-          className="flex items-center justify-center gap-2 rounded-xl border border-gold/30 bg-gold/5 px-4 py-3 text-sm font-medium text-gold transition-colors hover:bg-gold/10"
-        >
-          <CheckCircle2 className="h-4 w-4" aria-hidden />
-          Election closed · Quadratic voting elected — view results
-        </Link>
+        {activeProposals.length > 0 ? (
+          <Link
+            href="/vote"
+            data-testid="home-live-banner"
+            className="flex items-center justify-center gap-2 rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm font-semibold text-gold transition-colors hover:bg-gold/15"
+          >
+            <Vote className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="min-w-0">
+              {referendumLive
+                ? `Wave 1 Governance Referendum is live — ${referendumCount} rulebook questions, one window${liveClosesLabel ? `, closes ${liveClosesLabel}` : ""} — vote now`
+                : activeProposals.length === 1
+                  ? `Voting is live · ${activeProposals[0]!.title} — cast your ballot`
+                  : `${activeProposals.length} proposals are voting now — cast your ballot`}
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+          </Link>
+        ) : (
+          <Link
+            href="/results"
+            className="flex items-center justify-center gap-2 rounded-xl border border-gold/30 bg-gold/5 px-4 py-3 text-sm font-medium text-gold transition-colors hover:bg-gold/10"
+          >
+            <CheckCircle2 className="h-4 w-4" aria-hidden />
+            Election closed · Quadratic voting elected — view results
+          </Link>
+        )}
       </section>
 
       {/* ── Stats bar ───────────────────────────────────────── */}

@@ -15,6 +15,7 @@ import {
   Rocket,
   ShieldCheck,
   ShieldX,
+  TrendingUp,
   X,
   AlertCircle,
 } from "lucide-react";
@@ -55,6 +56,15 @@ interface ElectionAdminData {
   }>;
   auditReport: string;
   limitations: string[];
+}
+
+interface TrafficSummaryData {
+  windowDays: number;
+  totalPageViews: number;
+  totalShareClicks: number;
+  byChannel: Array<{ channel: string; count: number }>;
+  byUtmSource: Array<{ source: string; campaign: string | null; count: number }>;
+  votePerDay: Array<{ date: string; count: number }>;
 }
 
 export default function AdminPage() {
@@ -101,6 +111,18 @@ export default function AdminPage() {
   const { data: election, isLoading: electionLoading } = useQuery<ElectionAdminData>({
     queryKey: ["admin", "election"],
     queryFn: ({ signal }) => apiGet<ElectionAdminData>("/api/v1/admin/election", undefined, signal),
+    enabled: !!me,
+  });
+
+  const {
+    data: traffic,
+    isLoading: trafficLoading,
+    isError: trafficIsError,
+    refetch: refetchTraffic,
+  } = useQuery<TrafficSummaryData>({
+    queryKey: ["admin", "traffic"],
+    queryFn: ({ signal }) =>
+      apiGet<TrafficSummaryData>("/api/v1/admin/events/summary", undefined, signal),
     enabled: !!me,
   });
 
@@ -207,6 +229,8 @@ export default function AdminPage() {
   const passedProposals = passedData?.proposals ?? [];
   const failedProposals = failedData?.proposals ?? [];
   const maxCount = Math.max(...(election?.results.map((r) => r.count) ?? [0]), 1);
+  const maxChannelCount = Math.max(...(traffic?.byChannel.map((c) => c.count) ?? [0]), 1);
+  const topUtmSources = traffic?.byUtmSource.slice(0, 5) ?? [];
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
@@ -341,6 +365,87 @@ export default function AdminPage() {
                   ))}
                 </ul>
               </div>
+            </>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      {/* Campaign traffic — first-party beacon analytics (traffic_events) */}
+      <Card className="mb-8">
+        <CardContent className="p-5">
+          <div className="flex flex-col items-center gap-1 text-center">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+              <TrendingUp className="h-4 w-4 text-gold" aria-hidden />
+              Campaign traffic
+            </h2>
+            <p className="text-xs text-text-dim">last 30 days</p>
+          </div>
+
+          {trafficLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="h-6 w-6 animate-spin text-gold" aria-hidden />
+            </div>
+          ) : trafficIsError ? (
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <p className="text-sm text-muted-foreground">
+                Couldn&apos;t load traffic data.
+              </p>
+              <Button size="sm" variant="outline" onClick={() => refetchTraffic()} disabled={trafficLoading}>
+                Retry
+              </Button>
+            </div>
+          ) : traffic ? (
+            <>
+              <div className="mt-4 grid gap-3 text-center sm:grid-cols-2">
+                <div className="rounded-lg border border-border bg-bg-elevated/30 p-3">
+                  <div className="font-mono text-xl font-bold text-foreground">
+                    {traffic.totalPageViews.toLocaleString()}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wide text-text-dim">page views</div>
+                </div>
+                <div className="rounded-lg border border-border bg-bg-elevated/30 p-3">
+                  <div className="font-mono text-xl font-bold text-foreground">
+                    {traffic.totalShareClicks.toLocaleString()}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wide text-text-dim">share clicks</div>
+                </div>
+              </div>
+
+              {traffic.byChannel.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  <div className="text-xs uppercase tracking-wide text-text-dim">
+                    share clicks by channel
+                  </div>
+                  {traffic.byChannel.map((c) => (
+                    <div key={c.channel}>
+                      <div className="mb-1 flex items-center justify-between text-xs">
+                        <span className="font-medium text-foreground">{c.channel}</span>
+                        <span className="font-mono text-text-dim">{c.count.toLocaleString()}</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-bg-elevated">
+                        <div
+                          className="h-full rounded-full bg-gold"
+                          style={{ width: `${(c.count / maxChannelCount) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {topUtmSources.length > 0 && (
+                <div className="mt-4 rounded-lg border border-border bg-bg-deep/40 p-3 text-left text-xs">
+                  <div className="mb-1 font-semibold text-foreground">Top traffic sources</div>
+                  <ul className="space-y-0.5 font-mono text-muted-foreground">
+                    {topUtmSources.map((u) => (
+                      <li key={`${u.source}:${u.campaign ?? ""}`}>
+                        {u.source}
+                        {u.campaign ? ` · ${u.campaign}` : ""} — {u.count.toLocaleString()} views
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </>
           ) : null}
         </CardContent>

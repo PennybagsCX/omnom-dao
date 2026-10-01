@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { JsonLd, organizationJsonLd, websiteJsonLd } from "@/components/seo/json-ld";
+import { TrafficTracker } from "@/components/shared/traffic-tracker";
 import { SNAPSHOT } from "@/lib/constants";
 
 import "@/app/globals.css";
@@ -124,6 +125,7 @@ export default function RootLayout({
           </div>
         </Providers>
         <Analytics />
+        <TrafficTracker />
       </body>
     </html>
   );

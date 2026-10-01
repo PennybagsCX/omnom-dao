@@ -1,14 +1,23 @@
-import { buildOgCard, OG_SIZE, OG_CONTENT_TYPE } from "@/components/seo/og-image";
+import {
+  loadActiveVoteCard,
+  OG_SIZE,
+  OG_CONTENT_TYPE,
+} from "@/components/seo/og-image";
 
-export const runtime = "edge";
-export const alt = "OMNOM DAO Foundational Governance Election";
+/** Live voting data — rendered per request, never prerendered at build time. */
+export const dynamic = "force-dynamic";
+
+export const alt = "OMNOM DAO — community governance for $OMNOM holders";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 
 /**
  * Twitter card image — same content as the Open Graph image. Shares the
- * `buildOgCard` helper so a single change updates both surfaces.
+ * `loadActiveVoteCard` helper so a single change updates both surfaces.
  */
 export default async function TwitterImage() {
-  return buildOgCard();
+  return loadActiveVoteCard({
+    voteCtaUrl: "dao.omnom.dog/vote",
+    siteCtaUrl: "dao.omnom.dog",
+  });
 }

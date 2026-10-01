@@ -161,7 +161,7 @@ export const MIGRATION_STATEMENTS: Array<{ sql: string }> = [
       user_id         TEXT NOT NULL,
       type            TEXT NOT NULL CHECK (type IN (
         'PROPOSAL_CREATED', 'VOTING_STARTED', 'VOTING_ENDING_SOON',
-        'PROPOSAL_RESULT', 'MENTION'
+        'VOTING_ENDING_72H', 'PROPOSAL_RESULT', 'MENTION'
       )),
       title           TEXT NOT NULL CHECK (length(title) <= 100),
       body            TEXT NOT NULL CHECK (length(body) <= 500),
@@ -441,7 +441,8 @@ export const MIGRATION_STATEMENTS: Array<{ sql: string }> = [
                         'PROPOSAL_APPROVED', 'PROPOSAL_REJECTED',
                         'PROPOSAL_OUTCOME_RECORDED', 'PROPOSAL_STATUS_OVERRIDE',
                         'PROPOSAL_DELETED',
-                        'VOTE_PAUSED', 'VOTE_RESUMED', 'VOTE_STOPPED'
+                        'VOTE_PAUSED', 'VOTE_RESUMED', 'VOTE_STOPPED',
+                        'VOTE_WINDOW_EXTENDED', 'PROPOSAL_ADOPTED_AS_CONSENSUS'
                       )),
       target_type     TEXT NOT NULL CHECK (target_type IN ('proposal', 'user', 'platform')),
       target_id       TEXT NOT NULL,
@@ -451,4 +452,30 @@ export const MIGRATION_STATEMENTS: Array<{ sql: string }> = [
   },
   { sql: `CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log (created_at DESC)` },
   { sql: `CREATE INDEX IF NOT EXISTS idx_audit_log_target ON audit_log (target_type, target_id)` },
+
+  // ── 18. Traffic events (first-party analytics) ───────────
+  //    Append-only beacon stream for the Wave 1 Referendum campaign:
+  //    page views on /vote and /proposals/[id], outbound share clicks, and
+  //    UTM attribution. Written by POST /api/v1/events (fire-and-forget);
+  //    read via GET /api/v1/admin/events/summary. No wallet, no IP — the
+  //    client supplies id + session_id (localStorage UUID); `type` is
+  //    CHECK-constrained and every free-text field is length-capped at the
+  //    API layer.
+  {
+    sql: `CREATE TABLE IF NOT EXISTS traffic_events (
+      id              TEXT PRIMARY KEY,
+      type            TEXT NOT NULL CHECK (type IN ('page_view', 'share_click')),
+      path            TEXT,
+      utm_source      TEXT,
+      utm_campaign    TEXT,
+      utm_medium      TEXT,
+      channel         TEXT,
+      referrer        TEXT,
+      session_id      TEXT,
+      created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+    )`,
+  },
+  { sql: `CREATE INDEX IF NOT EXISTS idx_traffic_events_created ON traffic_events (created_at DESC)` },
+  { sql: `CREATE INDEX IF NOT EXISTS idx_traffic_events_type_path ON traffic_events (type, path)` },
+  { sql: `CREATE INDEX IF NOT EXISTS idx_traffic_events_channel ON traffic_events (channel) WHERE channel IS NOT NULL` },
 ];

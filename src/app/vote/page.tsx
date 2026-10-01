@@ -33,10 +33,11 @@ import { FGE_VOTING_ENDS_AT, FGE_VOTING_STARTS_AT } from "@/lib/election";
 import { buildResults, loadElection, tally } from "@/lib/election-tally";
 import {
   listFinalizedProposals,
-  listProposals,
   tallyProposalByHolderClass,
   type ProposalClassTally,
 } from "@/lib/proposal-service";
+import { loadReferendum, referendumQuestionLabel, type Referendum } from "@/lib/referendum";
+import { ShareButtons } from "@/components/shared/share-buttons";
 import { cn, formatDateTime } from "@/lib/utils";
 import { totalQuadraticPower } from "@/lib/voting-power";
 import { ProposalStatus, type Proposal } from "@/types";
@@ -75,17 +76,12 @@ function formatWindowLabel(p: Proposal): string | null {
 }
 
 export default async function VotePage() {
-  // The current vote: most recently OPENED ACTIVE proposal (voting starts at
-  // admin approval, so voting_starts_at — not draft createdAt — is "current").
-  // total drives the "more live votes" note.
-  const { proposals, total } = await listProposals({
-    status: ProposalStatus.ACTIVE,
-    sortBy: "votingStartsAt",
-    sortOrder: "desc",
-    limit: 1,
-    offset: 0,
-  });
-  const current = proposals[0] ?? null;
+  // Active votes come in two shapes: a tagged referendum (one campaign, N
+  // question ballots — see src/lib/referendum.ts) or the classic single
+  // live proposal. The referendum layout takes precedence; the legacy
+  // single-proposal layout is untouched fallback for non-referendum votes.
+  const { referendum, others, total } = await loadReferendum();
+  const current = others[0] ?? null;
 
   // Past votes = proposals that actually went to a vote; admin-rejected rows
   // (FAILED without a voting window) stay on /results and /proposals.
@@ -124,7 +120,9 @@ export default async function VotePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      {current ? (
+      {referendum ? (
+        <ReferendumHub referendum={referendum} others={others} totalPower={totalPower} />
+      ) : current ? (
         <>
           {/* Header — the live proposal, centered like the FGE page */}
           <div className="text-center">
@@ -195,6 +193,13 @@ export default async function VotePage() {
                 <span>voting closes</span> {formatDateTime(current.votingEndsAt)}
               </p>
             )}
+
+          {/* Share the live vote — organic reach is the only reach. */}
+          <ShareButtons
+            path="/vote"
+            title={`Voting is live on $OMNOM DAO: ${current.title}`}
+            className="mt-5"
+          />
 
           {/* Full proposal body — complete, never truncated; reference copy
               above the ballot. The proposal page remains one click away for
@@ -457,7 +462,8 @@ export default async function VotePage() {
         </div>
 
         <Accordion type="single" collapsible className="w-full">
-          {PROPOSAL_VOTE_FAQ.map((faq, idx) => (
+          {(referendum ? [REFERENDUM_FAQ, ...PROPOSAL_VOTE_FAQ] : PROPOSAL_VOTE_FAQ).map(
+            (faq, idx) => (
             <AccordionItem key={idx} value={`faq-${idx}`}>
               <AccordionTrigger className="text-left">{faq.q}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
@@ -468,6 +474,196 @@ export default async function VotePage() {
         </Accordion>
       </section>
     </div>
+  );
+}
+
+/* ── Referendum hub — one campaign, N question ballots. Shared header,
+   countdown, and turnout stats up top; one full section per question (body,
+   ballot, results); "also voting" strip for any non-referendum live votes.
+   Decision record: DOCS/REFERENDUM-WAVE1.md. ─────────────────────────── */
+
+async function ReferendumHub({
+  referendum,
+  others,
+  totalPower,
+}: {
+  referendum: Referendum;
+  others: Proposal[];
+  totalPower: number;
+}) {
+  const first = referendum.proposals[0];
+  if (!first) return null;
+
+  const votes = referendum.proposals.reduce(
+    (acc, p) => ({
+      for: acc.for + p.votesFor,
+      against: acc.against + p.votesAgainst,
+      abstain: acc.abstain + p.votesAbstain,
+    }),
+    { for: 0, against: 0, abstain: 0 },
+  );
+  const powerVoted = votes.for + votes.against + votes.abstain;
+  const windowLabel =
+    referendum.startsAt && referendum.endsAt
+      ? `${formatDay(referendum.startsAt)} – ${formatDay(referendum.endsAt)} (UTC)`
+      : null;
+
+  return (
+    <>
+      {/* Header — the referendum as one campaign, centered like the FGE page */}
+      <div className="text-center">
+        <div className="mb-2 flex flex-col items-center justify-center gap-2">
+          <VoteIcon className="h-6 w-6 text-gold" aria-hidden />
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <ProposalStatusBadge status={ProposalStatus.ACTIVE} pulse />
+            <span className="text-xs font-medium uppercase tracking-widest text-text-dim">
+              Wave 1 · {referendum.proposals.length} rulebook questions · one window
+            </span>
+          </div>
+        </div>
+        <h1 className="text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
+          Wave 1 Governance Referendum
+        </h1>
+        <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground">
+          Three decisions that set how every future $OMNOM vote works. Each
+          question is its own ballot below — vote on all three. Ballots are
+          changeable until close.
+        </p>
+      </div>
+
+      {/* Countdown — closes when the last question closes */}
+      {referendum.endsAt && (
+        <div className="mx-auto mt-6 max-w-xl">
+          <CountdownTimer
+            target={referendum.endsAt}
+            label="Referendum closes in"
+            closedText="Voting closed — outcome pending"
+            ariaLabel="Wave 1 Referendum voting closes in"
+          />
+        </div>
+      )}
+
+      {/* Stats — referendum-wide turnout against the shared 5% bar */}
+      <div className="mt-6 grid gap-3 rounded-xl border border-border bg-bg-elevated/40 p-4 text-center sm:grid-cols-3">
+        <div>
+          <div className="font-mono text-lg font-bold text-gold">
+            {powerVoted.toLocaleString()}
+          </div>
+          <div className="text-xs text-text-dim">Voting power voted</div>
+        </div>
+        <div>
+          <div className="font-mono text-lg font-bold text-gold">
+            {totalPower > 0 ? ((powerVoted / totalPower) * 100).toFixed(1) : "0.0"}%
+          </div>
+          <div className="text-xs text-text-dim">Turnout · {first.quorumRequired}% quorum</div>
+        </div>
+        <div>
+          <div className="font-mono text-lg font-bold text-gold">
+            {referendum.proposals.length}
+          </div>
+          <div className="text-xs text-text-dim">Questions on your ballot</div>
+        </div>
+      </div>
+
+      {windowLabel && (
+        <p className="mt-4 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+          <CalendarClock className="h-4 w-4" aria-hidden />
+          <span>voting window</span> {windowLabel}
+        </p>
+      )}
+
+      {/* Share the referendum — the campaign's reach is the point. */}
+      <ShareButtons
+        path="/vote"
+        title="🐕 Wave 1 Governance Referendum is LIVE — three rulebook decisions, one 30-day window. Vote with your $OMNOM snapshot wallet:"
+        className="mt-5"
+      />
+
+      {/* One section per question — same rhythm as the single-vote layout:
+          body, ballot, results. Discussion + reactions live one click away on
+          each question's full page. */}
+      {referendum.proposals.map((p, i) => (
+        <section key={p.id} aria-labelledby={`ref-q-${p.id}`} className="mt-12">
+          <div className="mb-4 text-center">
+            <div className="text-xs font-medium uppercase tracking-widest text-gold">
+              Question {i + 1} of {referendum.proposals.length}
+            </div>
+            <h2
+              id={`ref-q-${p.id}`}
+              className="mt-1 text-xl font-bold text-foreground"
+            >
+              <Link
+                href={`/proposals/${p.id}`}
+                className="transition-colors hover:text-gold"
+                title="View the full proposal page"
+              >
+                {referendumQuestionLabel(p.title)}
+              </Link>
+            </h2>
+          </div>
+
+          <Card>
+            <CardContent className="pt-6">
+              <Markdown>{p.description}</Markdown>
+              <ProposalVoteReactions
+                proposalId={p.id}
+                className="mt-6 border-t border-border pt-4"
+              />
+              <div className="mt-6 border-t border-border pt-3 text-center">
+                <Link
+                  href={`/proposals/${p.id}`}
+                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-gold"
+                >
+                  Full proposal, timeline &amp; discussion{" "}
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="mt-6">
+            <ProposalBallotCards
+              proposalId={p.id}
+              isActive
+              closedLabel="Voting closed — outcome pending"
+              votingStartsAt={p.votingStartsAt}
+              votesFor={p.votesFor}
+              votesAgainst={p.votesAgainst}
+              votesAbstain={p.votesAbstain}
+            />
+            <ProposalVoteAdminControls proposalId={p.id} className="mt-4" />
+          </div>
+
+          <div className="mt-8">
+            <h3 className="mb-4 text-center text-base font-bold text-foreground">
+              Current results — Question {i + 1}
+            </h3>
+            <ProposalVoteResults
+              proposalId={p.id}
+              votesFor={p.votesFor}
+              votesAgainst={p.votesAgainst}
+              votesAbstain={p.votesAbstain}
+              quorumRequired={p.quorumRequired}
+              totalPower={totalPower}
+            />
+          </div>
+        </section>
+      ))}
+
+      {/* Non-referendum live votes — rare, but never hidden. */}
+      {others.length > 0 && (
+        <p className="mt-10 text-center text-sm text-muted-foreground">
+          {others.length} more {others.length === 1 ? "proposal is" : "proposals are"} voting
+          now —{" "}
+          <Link
+            href="/proposals?status=ACTIVE"
+            className="text-gold transition-colors hover:text-gold/80"
+          >
+            browse all live proposals
+          </Link>
+        </p>
+      )}
+    </>
   );
 }
 
@@ -493,7 +689,7 @@ const PROPOSAL_VOTE_FAQ: Array<{ q: string; a: string }> = [
   },
   {
     q: "What happens if quorum isn't met?",
-    a: "The proposal expires with no outcome and the current rules stay in force. Nothing passes on low turnout, whatever the split.",
+    a: "For the Wave 1 Referendum, the rule published on day one applies: if the 5% bar isn't reached, the most-voted outcome is still adopted as the community's working consensus — recorded openly as a quorum-missed decision and re-confirmed in a later ratification vote as turnout grows. Outside the referendum, a proposal that misses quorum expires with no outcome and the current rules stay in force.",
   },
   {
     q: "Is the outcome binding?",
@@ -504,6 +700,12 @@ const PROPOSAL_VOTE_FAQ: Array<{ q: string; a: string }> = [
     a: "No. Voting is off-chain: you sign a message with your wallet (gasless SIWE verification). There are no transactions and no fees.",
   },
 ];
+
+/** Shown above the standard FAQ whenever a referendum is live. */
+const REFERENDUM_FAQ: { q: string; a: string } = {
+  q: "What is the Wave 1 Referendum?",
+  a: "One ballot window (Oct 2 → Nov 1, 2026), three rulebook decisions that vote simultaneously: Question 1 sets the global default quorum, Question 2 the pass threshold, Question 3 the per-type quorum schedule. Each question is its own FOR/AGAINST/ABSTAIN ballot and stands on its own — vote on all three below. If the 5% quorum isn't reached, the most-voted outcome on each question is still adopted as the community's working consensus, recorded as quorum-missed and re-confirmed in a later ratification vote.",
+};
 
 /* ── Holder-class breakdown row (clone of the FGE page's HolderClassRow,
    adapted to the three-choice proposal ballot) ─────────────────────── */

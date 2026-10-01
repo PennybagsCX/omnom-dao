@@ -33,8 +33,11 @@ import { Markdown } from "@/components/shared/markdown";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import { ProposalTypeBadge } from "@/components/shared/proposal-type-badge";
 import { QuorumProgress } from "@/components/shared/quorum-progress";
+import { ShareButtons } from "@/components/shared/share-buttons";
 import { VoteBar } from "@/components/shared/vote-bar";
 import { AdminRejectionBanner } from "@/components/proposals/admin-rejection-banner";
+import { AdoptConsensusControl } from "@/components/proposals/adopt-consensus-control";
+import { ConsensusFallbackBanner } from "@/components/proposals/consensus-fallback-banner";
 import { DeleteProposalDialog } from "@/components/proposals/delete-proposal-dialog";
 import { VoteButton } from "@/components/proposals/proposal-vote-actions";
 import {
@@ -189,6 +192,15 @@ export default function ProposalDetailPage() {
                   {comments.filter((c) => !c.deletedAt).length} comments
                 </span>
               </div>
+
+              {/* Share row — every read is a potential reach multiplier. */}
+              {isActive && (
+                <ShareButtons
+                  path={`/proposals/${proposalId}`}
+                  title={`${proposal.title} — $OMNOM DAO governance`}
+                  className="mt-4 justify-center"
+                />
+              )}
             </CardContent>
           </Card>
 
@@ -205,10 +217,19 @@ export default function ProposalDetailPage() {
             </div>
           )}
 
-          {/* Execution outcome banner */}
-          {proposal.status === ProposalStatus.EXECUTED && (
-            <ExecutedOutcomeBanner proposal={proposal} />
-          )}
+          {/* Consensus-fallback adoption (admin-only; renders nothing unless
+              the viewer is an admin and the vote finalized EXPIRED). */}
+          <AdoptConsensusControl proposal={proposal} />
+
+          {/* Execution outcome banner — the consensus-fallback disclosure takes
+              precedence: its "quorum missed" copy must not be buried under the
+              generic "carried out and recorded" banner. */}
+          {proposal.status === ProposalStatus.EXECUTED &&
+            (proposal.metadata?.adoptedAs === "consensus-fallback" ? (
+              <ConsensusFallbackBanner proposal={proposal} />
+            ) : (
+              <ExecutedOutcomeBanner proposal={proposal} />
+            ))}
 
           {/* Body */}
           <Card>
