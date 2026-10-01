@@ -15,7 +15,7 @@ import {
 import { buildResults, loadElection, tally } from "@/lib/election-tally";
 import { listFinalizedProposals } from "@/lib/proposal-service";
 import { cn } from "@/lib/utils";
-import type { Proposal } from "@/types";
+import { ProposalStatus, type Proposal } from "@/types";
 
 /** Live outcome data — rendered per request, never prerendered at build time. */
 export const dynamic = "force-dynamic";
@@ -87,13 +87,51 @@ export default async function ResultsPage() {
           </h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Live outcomes of the Foundational Governance Election and every
-          finalized proposal.
+          Every finalized proposal — newest first — plus the Foundational
+          Governance Election archive.
         </p>
       </header>
 
-      {/* ── Section 1: Foundational Governance Election ─────────────── */}
-      <section aria-labelledby="election-results-heading" className="mt-10">
+      {/* ── Section 1: Finalized proposal outcomes (newest first) ───── */}
+      <section aria-labelledby="proposal-outcomes-heading" className="mt-10">
+        <h2
+          id="proposal-outcomes-heading"
+          className="flex flex-col items-center justify-center gap-2 text-center text-xl font-bold text-foreground"
+        >
+          <ClipboardList className="h-5 w-5 text-gold" aria-hidden />
+          Proposal outcomes
+        </h2>
+        <p className="mt-1 text-center text-sm text-muted-foreground">
+          Every decided proposal — passed, failed, expired, or executed.
+          Updated automatically the moment each vote finalizes.
+        </p>
+
+        {finalized.length === 0 ? (
+          <EmptyState
+            className="mt-4"
+            icon={<ClipboardList className="h-12 w-12" />}
+            title="No finalized proposals yet"
+            description="Once a proposal's voting window closes, its outcome and tallies are published here. Active proposals live in the Proposals list."
+            action={
+              <Link
+                href="/proposals"
+                className="rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold"
+              >
+                Browse active proposals
+              </Link>
+            }
+          />
+        ) : (
+          <div className="mt-4 space-y-3">
+            {finalized.map((p) => (
+              <FinalizedProposalRow key={p.id} proposal={p} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ── Section 2: Foundational Governance Election archive ─────── */}
+      <section aria-labelledby="election-results-heading" className="mt-12">
         <div className="flex flex-col items-center justify-center gap-2 text-center">
           <h2
             id="election-results-heading"
@@ -184,43 +222,6 @@ export default async function ResultsPage() {
         </div>
       </section>
 
-      {/* ── Section 2: Finalized proposal outcomes ──────────────────── */}
-      <section aria-labelledby="proposal-outcomes-heading" className="mt-12">
-        <h2
-          id="proposal-outcomes-heading"
-          className="flex flex-col items-center justify-center gap-2 text-center text-xl font-bold text-foreground"
-        >
-          <ClipboardList className="h-5 w-5 text-gold" aria-hidden />
-          Proposal outcomes
-        </h2>
-        <p className="mt-1 text-center text-sm text-muted-foreground">
-          Every decided proposal — passed, failed, expired, or executed.
-        </p>
-
-        {finalized.length === 0 ? (
-          <EmptyState
-            className="mt-4"
-            icon={<ClipboardList className="h-12 w-12" />}
-            title="No finalized proposals yet"
-            description="Once a proposal's voting window closes, its outcome and tallies are published here. Active proposals live in the Proposals list."
-            action={
-              <Link
-                href="/proposals"
-                className="rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold"
-              >
-                Browse active proposals
-              </Link>
-            }
-          />
-        ) : (
-          <div className="mt-4 space-y-3">
-            {finalized.map((p) => (
-              <FinalizedProposalRow key={p.id} proposal={p} />
-            ))}
-          </div>
-        )}
-      </section>
-
       {/* ── Durability note ─────────────────────────────────────────── */}
       <section className="mt-12 rounded-xl border border-border bg-bg-elevated/40 p-6">
         <p className="text-sm leading-relaxed text-muted-foreground">
@@ -297,6 +298,59 @@ function FinalizedProposalRow({ proposal: p }: { proposal: Proposal }) {
           <div className="text-xs text-text-dim">Quorum</div>
         </div>
       </div>
+
+      {/* Plain-language outcome — what the vote MEANT, not just the numbers. */}
+      <div className="mt-3 border-t border-border pt-2 text-xs text-muted-foreground">
+        <OutcomeSentence proposal={p} />
+      </div>
     </div>
   );
+}
+
+const FALLBACK_META = "consensus-fallback";
+
+function OutcomeSentence({ proposal: p }: { proposal: Proposal }) {
+  if (p.status === ProposalStatus.PASSED) {
+    return (
+      <span>
+        <span className="font-medium text-emerald-300">Passed</span> — adopted
+        by the community. Execution is coordinated off-chain and noted on the
+        proposal.
+      </span>
+    );
+  }
+  if (p.status === ProposalStatus.FAILED) {
+    return (
+      <span>
+        <span className="font-medium text-rose-300">Failed</span> — rejected by
+        the community; the current rules stay in force.
+      </span>
+    );
+  }
+  if (p.status === ProposalStatus.EXPIRED) {
+    return (
+      <span>
+        <span className="font-medium text-slate-300">Quorum not met</span> —
+        {(p.quorumAchieved ?? 0).toFixed(2)}% of the {p.quorumRequired}% bar;
+        expired with no change adopted.
+      </span>
+    );
+  }
+  if (p.status === ProposalStatus.EXECUTED) {
+    return p.metadata?.adoptedAs === FALLBACK_META ? (
+      <span>
+        <span className="font-medium text-gold">Adopted as working consensus</span>{" "}
+        — quorum was not met ({(p.quorumAchieved ?? 0).toFixed(2)}% of{" "}
+        {p.quorumRequired}%); the most-voted outcome stands under the fallback
+        rule published before the vote, with re-confirmation planned as turnout
+        grows.
+      </span>
+    ) : (
+      <span>
+        <span className="font-medium text-emerald-300">Executed</span> — the
+        passed outcome was carried out and recorded.
+      </span>
+    );
+  }
+  return <span>Outcome recorded.</span>;
 }

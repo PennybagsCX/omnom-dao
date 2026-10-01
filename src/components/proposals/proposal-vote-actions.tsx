@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, PauseCircle, StopCircle } from "lucide-react";
 
@@ -501,6 +502,7 @@ export function ProposalVoteAdminControls({
 }: ProposalVoteAdminControlsProps) {
   const { data: me } = useCurrentUser({ retry: false });
   const qc = useQueryClient();
+  const router = useRouter();
   const [pending, setPending] = useState<"pause" | "resume" | "stop" | "extend" | null>(null);
   const [confirmStop, setConfirmStop] = useState(false);
   const [extendOpen, setExtendOpen] = useState(false);
@@ -539,6 +541,10 @@ export function ProposalVoteAdminControls({
       await qc.invalidateQueries({
         queryKey: queryKeys.proposalDetail(proposalId),
       });
+      // The hub's countdown and window line are SERVER-rendered from the
+      // proposal row — a successful extend looks like a no-op without this
+      // refresh (owner-reported during the Wave 1 launch).
+      router.refresh();
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : "Action failed.");
     } finally {

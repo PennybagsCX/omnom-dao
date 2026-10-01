@@ -12,6 +12,7 @@ import {
   Clock,
   FileText,
   HelpCircle,
+  Hourglass,
   Loader2,
   MessageSquare,
   PenLine,
@@ -403,6 +404,57 @@ function VoteStat({ label, value, color }: { label: string; value: number; color
   );
 }
 
+/**
+ * Status-driven outcome label for a closed vote. NEVER derives the result
+ * from the raw tally: a proposal whose FOR led can still be EXPIRED
+ * (quorum not met) — Week 1 (2026-09-30) displayed "Passed" that way. The
+ * recorded status is the outcome of record.
+ */
+function FinalResultLabel({
+  status,
+  adoptedAs,
+}: {
+  status: ProposalStatus;
+  adoptedAs?: string;
+}) {
+  if (status === ProposalStatus.PASSED) {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <CheckCircle2 className="h-4 w-4 text-emerald-400" aria-hidden /> Passed
+      </span>
+    );
+  }
+  if (status === ProposalStatus.FAILED) {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <XCircle className="h-4 w-4 text-rose-400" aria-hidden /> Rejected
+      </span>
+    );
+  }
+  if (status === ProposalStatus.EXPIRED) {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <Hourglass className="h-4 w-4 text-slate-400" aria-hidden /> Quorum not met — expired,
+        no change adopted
+      </span>
+    );
+  }
+  if (status === ProposalStatus.EXECUTED) {
+    return adoptedAs === "consensus-fallback" ? (
+      <span className="inline-flex items-center gap-1">
+        <Scale className="h-4 w-4 text-gold" aria-hidden /> Adopted as working consensus (quorum
+        fallback)
+      </span>
+    ) : (
+      <span className="inline-flex items-center gap-1">
+        <CheckCircle2 className="h-4 w-4 text-emerald-400" aria-hidden /> Executed — outcome
+        recorded
+      </span>
+    );
+  }
+  return <span className="text-muted-foreground">Outcome pending</span>;
+}
+
 interface VotePanelProps {
   proposal: Proposal;
   votes: ProposalDetailData["votes"];
@@ -549,19 +601,7 @@ function VotePanel({
               <div className="rounded-lg border border-border bg-bg-elevated/50 p-3 text-center">
                 <p className="text-xs text-text-dim">Final result</p>
                 <p className="mt-1 text-sm font-semibold text-foreground">
-                  {votes.totalFor > votes.totalAgainst ? (
-                    <span className="inline-flex items-center gap-1">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400" aria-hidden /> Passed
-                    </span>
-                  ) : votes.totalAgainst > votes.totalFor ? (
-                    <span className="inline-flex items-center gap-1">
-                      <XCircle className="h-4 w-4 text-rose-400" aria-hidden /> Rejected
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1">
-                      <Scale className="h-4 w-4 text-muted-foreground" aria-hidden /> Tied
-                    </span>
-                  )}
+                  <FinalResultLabel status={proposal.status} adoptedAs={proposal.metadata?.adoptedAs} />
                 </p>
               </div>
             )}
