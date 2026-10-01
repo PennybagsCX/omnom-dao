@@ -442,7 +442,8 @@ export const MIGRATION_STATEMENTS: Array<{ sql: string }> = [
                         'PROPOSAL_OUTCOME_RECORDED', 'PROPOSAL_STATUS_OVERRIDE',
                         'PROPOSAL_DELETED',
                         'VOTE_PAUSED', 'VOTE_RESUMED', 'VOTE_STOPPED',
-                        'VOTE_WINDOW_EXTENDED', 'PROPOSAL_ADOPTED_AS_CONSENSUS'
+                        'VOTE_WINDOW_EXTENDED', 'FALLBACK_INTENT_DECLARED',
+                        'PROPOSAL_ADOPTED_AS_CONSENSUS'
                       )),
       target_type     TEXT NOT NULL CHECK (target_type IN ('proposal', 'user', 'platform')),
       target_id       TEXT NOT NULL,

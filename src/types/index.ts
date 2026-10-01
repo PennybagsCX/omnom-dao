@@ -213,6 +213,18 @@ export interface BaseMeta {
   adoptedAt?: string;
   /** Optional transparency note supplied by the adopting admin. */
   adoptionNote?: string;
+  /** Consensus-fallback guardrails: the 24h cooling-off declaration and the
+   * strength numbers at adoption time (adopt-consensus, 2026-10-01). */
+  fallbackIntentDeclaredAt?: string;
+  fallbackIntentDeclaredBy?: string;
+  fallbackGuardrails?: {
+    winShare: number;
+    requiredWinShare: number;
+    uniqueVoters: number;
+    requiredUniqueVoters: number;
+    intentDeclaredAt: string | null;
+    forced: boolean;
+  };
 }
 
 export interface ChainSelectionMeta extends Omit<BaseMeta, "type"> {

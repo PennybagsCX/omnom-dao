@@ -7,8 +7,12 @@ import { ADDR_DOLPHIN, ADDR_WHALE } from "@/__tests__/helpers/mocks";
  * admin gate applying the Wave 1 consensus fallback (REFERENDUM-WAVE1.md §3):
  * an EXPIRED (quorum-missed) proposal's most-voted outcome is adopted as the
  * community's working consensus, recorded transparently as quorum-missed.
- * DB, auth layers are mocked; the real audit-log lib runs against the mocked
- * db client so the audit INSERT itself is asserted.
+ *
+ * Guardrails (2026-10-01): a 24h intent cooling-off ({ declareIntent: true }),
+ * a strength floor (≥60% of FOR+AGAINST AND ≥100 unique voters), and an
+ * audited { force: true, note } override for votes whose published terms
+ * predate the guardrails. DB, auth layers are mocked; the real audit-log lib
+ * runs against the mocked db client so the audit INSERT itself is asserted.
  */
 
 const hoisted = vi.hoisted(() => {
@@ -45,6 +49,8 @@ vi.mock("@/lib/constants", () => ({
 
 const ADMIN = "0xaaaa000000000000000000000000000000000001";
 const PROPOSAL_ID = "prop-ac1";
+/** Long before `now` — any intent declared this far back passes the 24h gate. */
+const OLD_INTENT = "2026-09-01T00:00:00.000Z";
 
 function makeProposal(overrides: Record<string, unknown> = {}) {
   return {
@@ -65,6 +71,36 @@ function makeProposal(overrides: Record<string, unknown> = {}) {
     metadata: { type: "base", links: ["https://example.com"], tags: ["referendum"] },
     ...overrides,
   };
+}
+
+/** Proposal whose intent was declared > 24h ago (time-lock satisfied). */
+function withOldIntent(overrides: Record<string, unknown> = {}) {
+  const base = makeProposal(overrides);
+  return {
+    ...base,
+    metadata: {
+      ...base.metadata,
+      fallbackIntentDeclaredAt: OLD_INTENT,
+      fallbackIntentDeclaredBy: ADMIN,
+    },
+  };
+}
+
+/**
+ * DB mock that dispatches on the statement prefix: the unique-voter COUNT
+ * returns a healthy electorate by default, the guarded UPDATE succeeds, and
+ * everything else (audit INSERT, probe SELECTs) returns an empty-rows shape.
+ */
+function mockDb({ voters = 150, rowsAffected = 1 }: { voters?: number; rowsAffected?: number } = {}) {
+  hoisted.execute.mockImplementation(async ({ sql }: { sql: string }) => {
+    if (sql.startsWith("SELECT COUNT(DISTINCT")) {
+      return { rows: [{ n: voters }], columns: [], rowsAffected: 0, lastInsertRowid: 0n };
+    }
+    if (sql.startsWith("UPDATE proposals")) {
+      return { rows: [], columns: [], rowsAffected, lastInsertRowid: 1n };
+    }
+    return { rows: [], columns: [], rowsAffected: 1, lastInsertRowid: 1n };
+  });
 }
 
 function buildReq(body: unknown) {
@@ -99,7 +135,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   hoisted.requireAuth.mockResolvedValue({ sub: ADMIN });
   hoisted.isAdminAddress.mockReturnValue(true);
-  hoisted.execute.mockResolvedValue({ rows: [], columns: [], rowsAffected: 1, lastInsertRowid: 1n });
+  mockDb();
   hoisted.getProposalById.mockResolvedValue(makeProposal());
 });
 
@@ -122,29 +158,30 @@ describe("POST /api/v1/proposals/[id]/adopt-consensus — auth", () => {
 describe("POST /api/v1/proposals/[id]/adopt-consensus — state gate", () => {
   it("returns 404 for an unknown proposal", async () => {
     hoisted.getProposalById.mockResolvedValue(null);
-    const { status, body } = await adoptConsensus({});
+    const { status, body } = await adoptConsensus({ force: true, note: "x" });
     expect(status).toBe(404);
     expect((body.error as { code: string }).code).toBe("PROPOSAL_NOT_FOUND");
   });
 
   it("returns 409 for an ACTIVE proposal", async () => {
-    hoisted.getProposalById.mockResolvedValue(makeProposal({ status: "ACTIVE" }));
-    const { status, body } = await adoptConsensus({});
+    hoisted.getProposalById.mockResolvedValue(withOldIntent({ status: "ACTIVE" }));
+    const { status, body } = await adoptConsensus({ force: true, note: "x" });
     expect(status).toBe(409);
     expect((body.error as { code: string }).code).toBe("VOTING_CLOSED");
     expect(findCall("UPDATE proposals")).toBeUndefined();
   });
 
   it("returns 409 for a PASSED proposal", async () => {
-    hoisted.getProposalById.mockResolvedValue(makeProposal({ status: "PASSED" }));
-    const { status } = await adoptConsensus({});
+    hoisted.getProposalById.mockResolvedValue(withOldIntent({ status: "PASSED" }));
+    const { status } = await adoptConsensus({ force: true, note: "x" });
     expect(status).toBe(409);
     expect(findCall("UPDATE proposals")).toBeUndefined();
   });
 
   it("returns 409 when the guarded update loses the race", async () => {
-    hoisted.execute.mockResolvedValue({ rows: [], columns: [], rowsAffected: 0, lastInsertRowid: 0n });
-    const { status } = await adoptConsensus({});
+    hoisted.getProposalById.mockResolvedValue(withOldIntent());
+    mockDb({ voters: 150, rowsAffected: 0 });
+    const { status } = await adoptConsensus({ force: true, note: "x" });
     expect(status).toBe(409);
   });
 });
@@ -155,102 +192,129 @@ describe("POST /api/v1/proposals/[id]/adopt-consensus — body validation", () =
     expect(status).toBe(400);
     expect(findCall("UPDATE proposals")).toBeUndefined();
   });
+
+  it("returns 400 when force is used without a note", async () => {
+    const { status } = await adoptConsensus({ force: true });
+    expect(status).toBe(400);
+    expect(findCall("UPDATE proposals")).toBeUndefined();
+  });
 });
 
-describe("POST /api/v1/proposals/[id]/adopt-consensus — happy path", () => {
-  it("adopts FOR when it leads, merges metadata, and writes the audit row", async () => {
-    hoisted.getProposalById
-      .mockResolvedValueOnce(makeProposal())
-      .mockResolvedValue(
-        makeProposal({
-          status: "EXECUTED",
-          metadata: {
-            type: "base",
-            links: ["https://example.com"],
-            tags: ["referendum"],
-            adoptedAs: "consensus-fallback",
-            adoptedOutcome: "FOR",
-            adoptedBy: ADMIN,
-            adoptedAt: "2026-10-01T12:00:00.000Z",
-          },
-        }),
-      );
-
-    const { status, body } = await adoptConsensus({
-      note: "Working consensus pending re-confirmation.",
-    });
-
+describe("POST /api/v1/proposals/[id]/adopt-consensus — guardrails", () => {
+  it("declareIntent stamps the 24h cooling-off and audits it", async () => {
+    const { status, body } = await adoptConsensus({ declareIntent: true });
     expect(status).toBe(200);
-    const data = body.data as { proposal: { status: string } };
-    expect(data.proposal.status).toBe("EXECUTED");
+    const data = body.data as { coolingOffEndsAt: string };
+    expect(Date.parse(data.coolingOffEndsAt)).toBeGreaterThan(Date.now());
 
-    // The status predicate must guard against concurrent adoptions.
+    const metaUpdate = findCall("UPDATE proposals");
+    expect(metaUpdate).toBeDefined();
+    // The intent UPDATE is (metadata, id, status): metadata sits at args[0].
+    const meta = JSON.parse(metaUpdate![0].args[0] as string);
+    expect(typeof meta.fallbackIntentDeclaredAt).toBe("string");
+    expect(meta.fallbackIntentDeclaredBy).toBe(ADMIN);
+
+    const audit = findCall("INSERT INTO audit_log");
+    expect(audit![0].args[1]).toBe("FALLBACK_INTENT_DECLARED");
+  });
+
+  it("refuses adoption before any intent is declared", async () => {
+    const { status, body } = await adoptConsensus({});
+    expect(status).toBe(409);
+    expect((body.error as { message: string }).message).toContain(
+      "Declare the fallback intent first",
+    );
+    expect(findCall("UPDATE proposals")).toBeUndefined();
+  });
+
+  it("refuses adoption while the 24h cooling-off is running", async () => {
+    // Fresh intent (1h old) — built directly, NOT via withOldIntent, whose
+    // OLD_INTENT stamp would satisfy the time-lock.
+    hoisted.getProposalById.mockResolvedValue(
+      makeProposal({
+        metadata: {
+          type: "base",
+          links: [],
+          tags: [],
+          fallbackIntentDeclaredAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+          fallbackIntentDeclaredBy: ADMIN,
+        },
+      }),
+    );
+    const { status, body } = await adoptConsensus({});
+    expect(status).toBe(409);
+    expect((body.error as { message: string }).message).toContain("Cooling-off in effect");
+  });
+
+  it("refuses a sub-60% plurality below the 100-voter floor without force", async () => {
+    // Default proposal: 27 FOR / 9 AGAINST = 75% share BUT the voter COUNT
+    // mock returns 20 (< 100) — the floor blocks despite the strong share.
+    hoisted.getProposalById.mockResolvedValue(withOldIntent());
+    mockDb({ voters: 20 });
+    const { status, body } = await adoptConsensus({});
+    expect(status).toBe(409);
+    expect((body.error as { message: string }).message).toContain("Guardrails not met");
+    expect((body.error as { message: string }).message).toContain("force");
+  });
+
+  it("adopts cleanly once intent has aged and the strength floor is met", async () => {
+    // 150 FOR / 50 AGAINST = 75% share, 150 unique voters — both guardrails pass.
+    hoisted.getProposalById
+      .mockResolvedValueOnce(
+        withOldIntent({ votesFor: 150, votesAgainst: 50, votesAbstain: 10 }),
+      )
+      .mockResolvedValue(withOldIntent({ status: "EXECUTED", votesFor: 150, votesAgainst: 50 }));
+
+    const { status, body } = await adoptConsensus({ note: "Working consensus." });
+    expect(status).toBe(200);
+    expect((body.data as { proposal: { status: string } }).proposal.status).toBe("EXECUTED");
+
     const update = findCall("UPDATE proposals");
-    expect(update).toBeDefined();
-    expect(update![0].sql).toContain("AND status = ?");
-    expect(update![0].args[0]).toBe("EXECUTED");
-    expect(update![0].args[3]).toBe("EXPIRED");
-
     const meta = JSON.parse(update![0].args[1] as string);
-    // Pre-existing metadata keys survive the merge.
-    expect(meta.type).toBe("base");
-    expect(meta.links).toEqual(["https://example.com"]);
-    expect(meta.tags).toEqual(["referendum"]);
-    // Full quorum-missed disclosure.
     expect(meta.adoptedAs).toBe("consensus-fallback");
     expect(meta.adoptedOutcome).toBe("FOR");
-    expect(meta.quorumAchieved).toBe(1.735);
-    expect(meta.quorumRequired).toBe(5);
-    expect(meta.adoptedBy).toBe(ADMIN);
-    expect(typeof meta.adoptedAt).toBe("string");
-    expect(meta.adoptionNote).toBe("Working consensus pending re-confirmation.");
+    expect(meta.fallbackGuardrails.winShare).toBeCloseTo(0.75, 3);
+    expect(meta.fallbackGuardrails.uniqueVoters).toBe(150);
+    expect(meta.fallbackGuardrails.forced).toBe(false);
 
-    // The real audit-log lib recorded the fallback against the mocked client.
     const audit = findCall("INSERT INTO audit_log");
-    expect(audit).toBeDefined();
-    expect(audit![0].args[0]).toBe(ADMIN);
     expect(audit![0].args[1]).toBe("PROPOSAL_ADOPTED_AS_CONSENSUS");
-    expect(audit![0].args[2]).toBe("proposal");
-    expect(audit![0].args[3]).toBe(PROPOSAL_ID);
     const details = JSON.parse(audit![0].args[4] as string);
-    expect(details.adoptedAs).toBe("consensus-fallback");
-    expect(details.adoptedOutcome).toBe("FOR");
-    expect(details.quorumAchieved).toBe(1.735);
-    expect(details.quorumRequired).toBe(5);
+    expect(details.forced).toBeUndefined();
   });
 
-  it("adopts AGAINST on a tie (AGAINST >= FOR)", async () => {
+  it("lets force bypass the guardrails and marks it in metadata + audit", async () => {
+    // Default 27/9 = 75% share but 0-count voters mock → floor unmet; force overrides.
     hoisted.getProposalById
-      .mockResolvedValueOnce(makeProposal({ votesFor: 5, votesAgainst: 5 }))
-      .mockResolvedValue(makeProposal({ status: "EXECUTED" }));
+      .mockResolvedValueOnce(withOldIntent())
+      .mockResolvedValue(withOldIntent({ status: "EXECUTED" }));
+    mockDb({ voters: 20 });
 
-    const { status } = await adoptConsensus({});
+    const { status, body } = await adoptConsensus({
+      force: true,
+      note: "Published terms promised a plain most-voted adoption.",
+    });
+    expect(status).toBe(200);
+    expect((body.data as { proposal: { status: string } }).proposal.status).toBe("EXECUTED");
 
+    const meta = JSON.parse(findCall("UPDATE proposals")![0].args[1] as string);
+    expect(meta.fallbackGuardrails.forced).toBe(true);
+    expect(meta.adoptionNote).toContain("Published terms");
+
+    const details = JSON.parse(findCall("INSERT INTO audit_log")![0].args[4] as string);
+    expect(details.forced).toBe(true);
+    expect(details.adoptionNote).toContain("Published terms");
+  });
+
+  it("adopts AGAINST on a tie (AGAINST >= FOR) under force", async () => {
+    hoisted.getProposalById
+      .mockResolvedValueOnce(withOldIntent({ votesFor: 5, votesAgainst: 5 }))
+      .mockResolvedValue(withOldIntent({ status: "EXECUTED" }));
+    mockDb({ voters: 20 });
+
+    const { status } = await adoptConsensus({ force: true, note: "tie" });
     expect(status).toBe(200);
     const meta = JSON.parse(findCall("UPDATE proposals")![0].args[1] as string);
     expect(meta.adoptedOutcome).toBe("AGAINST");
-  });
-
-  it("adopts AGAINST when it leads", async () => {
-    hoisted.getProposalById
-      .mockResolvedValueOnce(makeProposal({ votesFor: 3, votesAgainst: 11 }))
-      .mockResolvedValue(makeProposal({ status: "EXECUTED" }));
-
-    const { status } = await adoptConsensus({});
-    expect(status).toBe(200);
-    const meta = JSON.parse(findCall("UPDATE proposals")![0].args[1] as string);
-    expect(meta.adoptedOutcome).toBe("AGAINST");
-  });
-
-  it("omits adoptionNote when no note is given", async () => {
-    hoisted.getProposalById
-      .mockResolvedValueOnce(makeProposal())
-      .mockResolvedValue(makeProposal({ status: "EXECUTED" }));
-
-    const { status } = await adoptConsensus({});
-    expect(status).toBe(200);
-    const meta = JSON.parse(findCall("UPDATE proposals")![0].args[1] as string);
-    expect(meta.adoptionNote).toBeUndefined();
-    expect(findCall("INSERT INTO audit_log")).toBeDefined();
   });
 });

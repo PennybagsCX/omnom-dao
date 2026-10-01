@@ -22,6 +22,7 @@ export type AuditAction =
   | "VOTE_RESUMED"
   | "VOTE_STOPPED"
   | "VOTE_WINDOW_EXTENDED"
+  | "FALLBACK_INTENT_DECLARED"
   | "PROPOSAL_ADOPTED_AS_CONSENSUS";
 
 export interface AuditLogEntry {

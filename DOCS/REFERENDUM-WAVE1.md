@@ -39,6 +39,16 @@ The FGE machinery (`src/lib/election.ts`) is hardcoded to `foundational-2026` wi
 
 Exact bodies live in `scripts/seed-referendum.ts`.
 
+## Fallback guardrails (added 2026-10-01, after launch)
+
+This referendum's published terms promised a plain **most-voted outcome** adoption, and those terms are honored. For THIS and all future fallback adoptions, `adopt-consensus` now carries guardrails (DOCS/STATUS.md, 2026-10-01 evening entry):
+
+1. **Announce-then-adopt**: an intent must be declared (audited `FALLBACK_INTENT_DECLARED`) and adoption unlocks **24 hours** later — the real-world announcement (Telegram/X) is expected to accompany the declaration.
+2. **Strength floor**: by default the winning side must hold **≥60% of FOR+AGAINST** power **and ≥100 unique wallets** must have voted.
+3. **Audited override**: `{force: true, note}` bypasses both when a specific vote's published terms require it (as Wave 1's does) — forced adoptions are marked `forced: true` in the proposal metadata and the public audit log.
+
+Follow-up governance should ratify these thresholds as the standing rule and consider the ratchet-quorum ladder (quorum tracking trailing turnout).
+
 ## Announcement plan
 
 Copy pack: [`announcements/referendum-wave1.md`](announcements/referendum-wave1.md). Cadence: launch (T-0) → T+7 → T+14 → T+21 → last-48h → results (two variants: quorum reached / consensus fallback). All links carry `utm_campaign=wave1-referendum`.
