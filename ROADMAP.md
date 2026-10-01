@@ -19,10 +19,10 @@
 
 **Deliberately pending (owner decisions, strategy discussions planned):**
 
-- ⏸ **Governance waves** — the 11 open parameters ([GOVERNANCE_MECHANICS §14](DOCS/GOVERNANCE_MECHANICS.md)) are prepared as 3 themed waves via `scripts/seed-governance-decisions.ts --wave 1|2|3` (creates DRAFTs only — nothing runs until the owner seeds, announces, and approves). Wave 1 = voting rules.
-- ⏸ **FGE result announcements** — drafts ready in [DOCS/announcements/](DOCS/announcements/), unposted.
-- ⏸ **Admin review queue** — 4 proposals in PENDING_REVIEW at `/admin`.
-- Long arc after Wave 1: Chain Selection vote → 6-round tokenomics framework ([TOKENOMICS-OPTIONS.md](TOKENOMICS-OPTIONS.md) §9).
+- ✅ **Wave 1 Referendum LIVE** — the three voting-rule questions run 2026-10-02 → 2026-11-01 ([DOCS/REFERENDUM-WAVE1.md](DOCS/REFERENDUM-WAVE1.md)); results + fallback rules apply at close.
+- ⏸ **Governance-next agenda** — the post-referendum rulebook (standing fallback rule, ratchet quorum + voter floor, electorate reset at migration, Octopus-class activation, **DogeOS as preferred Chain Selection candidate**) lives in [DOCS/GOVERNANCE-NEXT.md](DOCS/GOVERNANCE-NEXT.md).
+- ⏸ **FGE result announcements** — posted 2026-09-21; referendum posts ready in [DOCS/announcements/](DOCS/announcements/referendum-wave1.md), gated on `verify:referendum`.
+- Long arc after Wave 1: Chain Selection vote → 6-round tokenomics framework ([TOKENOMICS-OPTIONS.md](TOKENOMICS-OPTIONS.md) §9). **DogeOS** (ZK-EVM Dogecoin rollup, public testnet 2026-09-30, DOGE gas, EVM-compatible — matches this stack) is the owner's preferred candidate with an early/first-mover posture; see [DOCS/GOVERNANCE-NEXT.md §5](DOCS/GOVERNANCE-NEXT.md).
 
 Ongoing status details: [DOCS/STATUS.md](DOCS/STATUS.md).
 

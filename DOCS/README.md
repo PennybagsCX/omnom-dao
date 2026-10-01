@@ -28,6 +28,7 @@
 |:---|:---|:---|:---:|
 | [📄 Project Overview](./PROJECT_OVERVIEW.md) | What OMNOM DAO is, mission/vision, personas, holder classes, token summary, roadmap snapshot, success metrics. | All stakeholders | ~10 min |
 | [🗳️ Governance Mechanics](./GOVERNANCE_MECHANICS.md) | Snapshot as source of truth, voting power (v1 linear / v2 quadratic), proposal types & thresholds, lifecycle, delegation, anti-whale safeguards, moderation, tokenomics voting framework. | Governance participants, developers | ~25 min |
+| [🧭 Governance Next](./GOVERNANCE-NEXT.md) | The post-referendum agenda: standing fallback rule, ratchet quorum + voter floor, electorate reset at chain migration, holder activation, DogeOS candidacy. | Owner, governance participants | ~10 min |
 | [🏗️ Technical Architecture](./TECHNICAL_ARCHITECTURE.md) | Next.js architecture, system components, SIWE auth flow, database schema, API reference, snapshot system, security architecture, smart contract strategy, deployment. | Developers | ~30 min |
 | [🛠️ Contributor Onboarding](./CONTRIBUTOR_ONBOARDING.md) | Prerequisites, environment setup, project structure, development workflow, coding standards, testing, deployment. | New developers / contributors | ~15 min |
 

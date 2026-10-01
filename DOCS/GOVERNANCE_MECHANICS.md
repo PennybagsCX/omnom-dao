@@ -527,6 +527,9 @@ The parameters below require community ratification before they are finalized (i
 | 10 | **Emergency proposals** | Add an "emergency" type (24h voting, 35% quorum, multi-whale/moderator trigger) | None in v1 | [`PRD.md`](../PRD.md) Q10 |
 | 11 | **Whale vote transparency** | Force whale votes public / opt-out with notification / full privacy toggle | Public-by-default with privacy toggle | [`PRD.md`](../PRD.md) Q8 |
 | 12 | **Governance vs. snapshot token** | If migration introduces a new token, does governance switch? | Snapshot-based only (v1) | [`PRD.md`](../PRD.md) Q9 |
+| 13 | **Standing fallback rule** | Most-voted (current disclosed convention) vs. supermajority-for-changes + simple-majority-for-status-quo with 24h intent cooling-off | Most-voted + guardrails shipped 2026-10-01 (`adopt-consensus`: 24h intent, ≥60% share + ≥100 voters, audited `force`) — permanent rule to be ratified | [`GOVERNANCE-NEXT.md` §1](GOVERNANCE-NEXT.md) |
+| 14 | **Ratchet quorum + voter floor** | Static per-type bars (10–25%) vs. quorum tracking trailing turnout with a rising unique-wallet floor | Static seeded bars; ratchet proposed — ~110–180× record turnout at current bars is unreachable | [`GOVERNANCE-NEXT.md` §2](GOVERNANCE-NEXT.md) |
+| 15 | **Electorate reset at migration** | Keep ever-held (dead dust forever) vs. fresh-snapshot active-electorate definition at chain migration (activity window / threshold / opt-in registration) | Ever-held snapshot (v1) — migration is the one clean reset; framework needed before the Chain Selection vote | [`GOVERNANCE-NEXT.md` §3](GOVERNANCE-NEXT.md) |
 
 > ⚠️ **These are binding governance decisions, not engineering choices.** Each must be put to a community vote (likely via General Discussion proposals to start) before being hardcoded into the platform defaults.
 
