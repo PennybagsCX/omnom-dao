@@ -99,8 +99,11 @@ if (RUN_E2E) {
     test("who-has-voted breakdown renders the holder-class rows", async ({
       page,
     }) => {
+      // The live vote's card is the FIRST "Who has voted" header; archive
+      // rows below carry their own accordion ("Who has voted — class
+      // breakdown"), so a bare getByText would trip strict mode.
       await expect(
-        page.getByText("Who has voted"),
+        page.getByText("Who has voted").first(),
       ).toBeVisible({ timeout: 15_000 });
       // Zero-ballot reset: the empty state renders until ballots land; with
       // ballots, the per-class rows do (spec survives both states).
@@ -119,8 +122,10 @@ if (RUN_E2E) {
         "href",
         "/governance-vote",
       );
+      // Decided proposals render through the shared FinalizedProposalRow
+      // (same rows as /results), whose title link carries the per-proposal id.
       await expect(
-        page.getByTestId("past-vote-prop-passed-treasury-grant"),
+        page.getByTestId("finalized-proposal-prop-passed-treasury-grant"),
       ).toHaveAttribute("href", "/proposals/prop-passed-treasury-grant");
       await expect(
         page.getByRole("link", { name: /browse the full outcomes archive/i }),
