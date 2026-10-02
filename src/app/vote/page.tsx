@@ -37,7 +37,7 @@ import {
   tallyProposalByHolderClass,
 } from "@/lib/proposal-service";
 import { loadReferendum, referendumQuestionLabel, type Referendum } from "@/lib/referendum";
-import { ShareButtons } from "@/components/shared/share-buttons";
+import { ShareButtons, versionFromDate } from "@/components/shared/share-buttons";
 import { cn, formatDateTime } from "@/lib/utils";
 import { totalQuadraticPower } from "@/lib/voting-power";
 import { ProposalStatus, type Proposal } from "@/types";
@@ -197,6 +197,7 @@ export default async function VotePage() {
           {/* Share the live vote — organic reach is the only reach. */}
           <ShareButtons
             path="/vote"
+            version={versionFromDate(current.votingEndsAt)}
             title={`Voting is live on $OMNOM DAO: ${current.title}`}
             className="mt-5"
           />
@@ -549,6 +550,7 @@ async function ReferendumHub({
       {/* Share the referendum — the campaign's reach is the point. */}
       <ShareButtons
         path="/vote"
+        version={referendum.shareVersion}
         title="🐕 Wave 1 Governance Referendum is LIVE — three rulebook decisions, one 30-day window. Vote with your $OMNOM snapshot wallet:"
         className="mt-5"
       />

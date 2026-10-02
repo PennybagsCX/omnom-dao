@@ -35,6 +35,14 @@ export interface Referendum {
   startsAt: string | null;
   /** Latest voting end across the ballots (null when unset). */
   endsAt: string | null;
+  /**
+   * Cache-buster for shared links (`?v=<shareVersion>`). Link previews are
+   * cached per exact URL, so every campaign must share a URL the platforms
+   * have never crawled: wave N's /vote card is revision N + 1 (the Week 1
+   * vote was the unversioned v1) — wave1 → ?v=2, wave2 → ?v=3, forever
+   * automatic. Keep in sync with the links in the announcement copy pack.
+   */
+  shareVersion: string;
 }
 
 export interface ReferendumHub {
@@ -81,6 +89,7 @@ export async function loadReferendum(): Promise<ReferendumHub> {
       proposals: inReferendum,
       startsAt: starts[0] ?? null,
       endsAt: ends[ends.length - 1] ?? null,
+      shareVersion: shareVersionForKey(REFERENDUM_KEY),
     },
     others: proposals.filter((p) => referendumTag(p) !== REFERENDUM_KEY),
     total,
@@ -95,4 +104,15 @@ export async function loadReferendum(): Promise<ReferendumHub> {
 export function referendumQuestionLabel(title: string): string {
   const match = /^Wave 1 Referendum · Question \d+:\s*(.+)$/.exec(title);
   return match?.[1]?.trim() ?? title;
+}
+
+/**
+ * "wave1-2026" → "2" (wave number + 1 — see Referendum.shareVersion). A key
+ * without a wave number falls back to the campaign end date, still unique
+ * per campaign.
+ */
+export function shareVersionForKey(key: string): string {
+  const wave = /wave(\d+)/.exec(key)?.[1];
+  if (wave) return String(Number(wave) + 1);
+  return key.replace(/\D/g, "") || "1";
 }

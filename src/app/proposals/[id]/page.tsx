@@ -35,7 +35,7 @@ import { Markdown } from "@/components/shared/markdown";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import { ProposalTypeBadge } from "@/components/shared/proposal-type-badge";
 import { QuorumProgress } from "@/components/shared/quorum-progress";
-import { ShareButtons } from "@/components/shared/share-buttons";
+import { ShareButtons, versionFromDate } from "@/components/shared/share-buttons";
 import { VoteBar } from "@/components/shared/vote-bar";
 import { AdminRejectionBanner } from "@/components/proposals/admin-rejection-banner";
 import { AdoptConsensusControl } from "@/components/proposals/adopt-consensus-control";
@@ -205,6 +205,7 @@ export default function ProposalDetailPage() {
               {isActive && (
                 <ShareButtons
                   path={`/proposals/${proposalId}`}
+                  version={versionFromDate(proposal.votingEndsAt)}
                   title={`${proposal.title} — $OMNOM DAO governance`}
                   className="mt-4 justify-center"
                 />

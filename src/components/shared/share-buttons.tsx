@@ -10,10 +10,26 @@ interface ShareButtonsProps {
   path: string;
   /** Share text for X / Telegram prefills. */
   title: string;
+  /**
+   * Cache-buster appended as `?v=<version>`. Platforms cache link previews
+   * per exact URL — pass something that changes per vote (e.g. the vote's
+   * votingEndsAt) so every new vote shares a fresh-crawl URL and platforms
+   * can never serve a previous vote's preview card.
+   */
+  version?: string | null;
   className?: string;
 }
 
 type ShareChannel = "x" | "telegram" | "copy";
+
+/**
+ * "2026-11-01T00:00:00.000Z" → "20261101" — a compact per-vote version for
+ * `version`: stable for the life of a vote, different for the next one, so
+ * every vote's share links get a URL the platforms have never cached.
+ */
+export function versionFromDate(iso: string | null | undefined): string | undefined {
+  return iso ? iso.slice(0, 10).replace(/-/g, "") : undefined;
+}
 
 /**
  * Outbound share row for live votes: X intent, Telegram share, and copy-link.
@@ -21,7 +37,7 @@ type ShareChannel = "x" | "telegram" | "copy";
  * traffic endpoint (best-effort — sharing must work even if the endpoint
  * doesn't respond; nothing here surfaces an error UI).
  */
-export function ShareButtons({ path, title, className }: ShareButtonsProps) {
+export function ShareButtons({ path, title, version: versionProp, className }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
 
   const track = useCallback((channel: ShareChannel) => {
@@ -42,9 +58,10 @@ export function ShareButtons({ path, title, className }: ShareButtonsProps) {
   }, [path]);
 
   const shareUrl = useCallback(() => {
-    if (typeof window === "undefined") return path;
-    return `${window.location.origin}${path}`;
-  }, [path]);
+    const version = versionProp ? `?v=${encodeURIComponent(versionProp)}` : "";
+    if (typeof window === "undefined") return `${path}${version}`;
+    return `${window.location.origin}${path}${version}`;
+  }, [path, versionProp]);
 
   const onX = useCallback(() => {
     track("x");
