@@ -52,6 +52,8 @@ export default defineConfig({
     // the real .env.local credentials would silently point these tests at
     // production data. Failing loudly on a busy port is the safe failure.
     reuseExistingServer: false,
-    timeout: 120_000,
+    // Cold dev compile of the first hit route can exceed 2 minutes on a
+    // loaded machine (locally /vote once took 113s); give the boot room.
+    timeout: 300_000,
   },
 });
