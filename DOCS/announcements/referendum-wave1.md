@@ -230,7 +230,7 @@ $OMNOM #DAO #Governance 🐕🧡
 
 ## (f) Last-48h post (from Oct 30, 00:00 UTC)
 
-🗳️ **FINAL 48 HOURS — $OMNOM rulebook vote closes **Nov 1, 00:00 UTC**** (8 PM local Oct 31).
+🗳️ **FINAL 48 HOURS — $OMNOM rulebook vote closes Nov 1, 00:00 UTC** (8 PM local Oct 31).
 
 **[N] ballots = [X]% of the 5% bar** (for scale: record turnout 2.73%, last vote 1.73%). Leading positions:
 1️⃣ Quorum: **[FOR/AGAINST]** [X]% · 2️⃣ Threshold: **[FOR/AGAINST]** [X]% · 3️⃣ Schedule: **[FOR/AGAINST]** [X]%
