@@ -57,25 +57,25 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "OMNOM DAO — Foundational Governance Election",
+    default: "OMNOM DAO — Community Governance for $OMNOM",
     template: "%s · OMNOM DAO",
   },
   description:
-    "Off-chain governance for $OMNOM. 25,686 eligible wallets vote on the voting math (Aug 29–Sep 12, 2026). Gasless, verifiable.",
+    "Off-chain governance for $OMNOM: live votes, every past outcome, and verifiable quadratic voting by 25,000+ eligible wallets. Gasless, transparent, auditable.",
   applicationName: "OMNOM DAO",
   keywords: [
     "OMNOM", "DAO", "governance", "Dogechain", "snapshot",
-    "SIWE", "election", "FGE", "foundational", "voting",
-    "wallet", "proposal",
+    "SIWE", "election", "FGE", "referendum", "quadratic voting",
+    "voting", "wallet", "proposal", "treasury",
   ],
   authors: [{ name: "OMNOM DAO Core Team" }],
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "OMNOM DAO — Foundational Governance Election",
+    title: "OMNOM DAO — Community Governance for $OMNOM",
     description:
-      "Off-chain governance for $OMNOM. 25,686 eligible wallets vote on the voting math. Gasless, verifiable.",
+      "Off-chain governance for $OMNOM: live votes, every past outcome, and verifiable quadratic voting. Gasless, transparent, auditable.",
     type: "website",
     url: siteUrl,
     siteName: "OMNOM DAO",
@@ -83,9 +83,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "OMNOM DAO — Foundational Governance Election",
+    title: "OMNOM DAO — Community Governance for $OMNOM",
     description:
-      "Off-chain governance for $OMNOM. 25,686 eligible wallets vote on the voting math. Gasless, verifiable.",
+      "Off-chain governance for $OMNOM: live votes, every past outcome, and verifiable quadratic voting. Gasless, transparent, auditable.",
   },
   robots: {
     index: true,
