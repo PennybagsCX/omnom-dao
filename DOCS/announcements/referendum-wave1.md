@@ -288,9 +288,10 @@ In-app T-72h / T-24h reminder waves (shown to signed-in holders by the site bell
 
 Brand palette (from [BRAND_STANDARDS.md](../BRAND_STANDARDS.md)): gold `#FFD700`, purple `#8B5CF6`, black layers `#000000`/`#0A0A0A`/`#141414`, text `#FAFAFA`. Voice: playful dog mascot, serious mechanics.
 
-> ⚠️ **Two rules before generating:**
-> 1. **Never let the AI render text or numbers** — generators mangle spelling and will invent tallies (violating the "numbers must match" guardrail). Generate **art with empty space**, then add the exact overlay strings below in Canva/Figma/Photopea.
-> 2. **Anything with real numbers gets screenshotted or built, not generated** — the OG card and the turnout chart come from the app / a chart tool.
+> ⚠️ **Before generating:**
+> 1. **Short text is fine** — modern generators (Ideogram, Flux, GPT-image) render short headlines like "WAVE 1 REFERENDUM" or "FINAL 48 HOURS" well. Keep it ≤4 words per line and proof the spelling in the output; regenerate on any typo.
+> 2. **Exact statistics stay manual** — precise figures (`29,098,690` · `1.73%` · `25,686`) are where generators slip a digit, and a wrong number in public is worse than plain art. Overlay real stats in Canva/Figma, or screenshot the app.
+> 3. **Anything with live data gets screenshotted or built** — the OG card and the turnout chart come from the app / a chart tool, not a generator.
 
 ### 1. Launch hero banner — AI background + text overlay (posts a & c)
 
