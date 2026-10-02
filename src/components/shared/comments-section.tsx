@@ -17,13 +17,14 @@
  * UI primitive that can be dropped into any page with its own data layer.
  */
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Loader2, MessagesSquare, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { ConnectCta } from "@/components/wallet/connect-cta";
+import { EmojiPicker, spliceAtCursor } from "@/components/shared/emoji-picker";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
   CommentItem,
@@ -96,6 +97,21 @@ export function CommentsSection<T extends ThreadedComment>({
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyDraft, setReplyDraft] = useState("");
+  const draftRef = useRef<HTMLTextAreaElement>(null);
+
+  // Emoji insertion at the caret (falls back to appending when the textarea
+  // isn't focused), with the caret parked right after the inserted emoji.
+  const insertEmoji = useCallback(
+    (emoji: string) => {
+      const { value, caret } = spliceAtCursor(draftRef.current, draft, emoji);
+      setDraft(value.slice(0, MAX_LENGTH));
+      requestAnimationFrame(() => {
+        draftRef.current?.focus();
+        draftRef.current?.setSelectionRange(caret, caret);
+      });
+    },
+    [draft],
+  );
 
   const activeCount = useMemo(
     () => comments.filter((c) => !c.deletedAt).length,
@@ -163,6 +179,7 @@ export function CommentsSection<T extends ThreadedComment>({
         ) : !composerActive ? null : (
           <div className="space-y-2">
             <Textarea
+              ref={draftRef}
               value={draft}
               onChange={(e) => setDraft(e.target.value.slice(0, MAX_LENGTH))}
               placeholder="Share your thoughts… (Markdown supported)"
@@ -170,9 +187,12 @@ export function CommentsSection<T extends ThreadedComment>({
               rows={3}
             />
             <div className="flex items-center justify-between">
-              <span className="text-xs text-text-dim">
-                {draft.length}/{MAX_LENGTH}
-              </span>
+              <div className="flex items-center gap-1">
+                <EmojiPicker onSelect={insertEmoji} />
+                <span className="text-xs text-text-dim">
+                  {draft.length}/{MAX_LENGTH}
+                </span>
+              </div>
               <Button
                 size="sm"
                 onClick={handleSubmit}

@@ -12,7 +12,7 @@
  */
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   ArrowBigDown,
   ArrowBigUp,
@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { HolderBadge } from "@/components/shared/holder-badge";
 import { Markdown } from "@/components/shared/markdown";
 import { EmojiBar } from "@/components/shared/emoji-reactions/emoji-bar";
+import { EmojiPicker, spliceAtCursor } from "@/components/shared/emoji-picker";
 import { cn, shortenAddress, timeAgo } from "@/lib/utils";
 import type { BaseComment, CommentNode } from "@/lib/comment-tree";
 import type { EmojiKey, EmojiReactionCounts } from "@/types";
@@ -126,10 +127,22 @@ export function CommentItem<T extends ThreadedComment>({
     node.authorAddress.toLowerCase() === myAddress.toLowerCase();
   const isDeleted = node.deletedAt !== null;
   const [showReplies, setShowReplies] = useState(true);
+  const replyRef = useRef<HTMLTextAreaElement>(null);
 
   const handleReact = (type: ReactionType) => {
     if (!isAuthenticated || !onReact) return;
     onReact(node.id, type);
+  };
+
+  // Emoji into the reply draft at the caret (each open reply box owns its
+  // ref, so the insert always lands in THIS box).
+  const insertReplyEmoji = (emoji: string) => {
+    const { value, caret } = spliceAtCursor(replyRef.current, replyDraft, emoji);
+    onReplyDraftChange(value.slice(0, 2000));
+    requestAnimationFrame(() => {
+      replyRef.current?.focus();
+      replyRef.current?.setSelectionRange(caret, caret);
+    });
   };
 
   const isReplying = replyTo === node.id;
@@ -302,6 +315,7 @@ export function CommentItem<T extends ThreadedComment>({
         {isReplying && (
           <div className="mt-3 space-y-2">
             <Textarea
+              ref={replyRef}
               value={replyDraft}
               onChange={(e) => onReplyDraftChange(e.target.value.slice(0, 2000))}
               placeholder={`Reply to ${shortenAddress(node.authorAddress)}…`}
@@ -310,6 +324,7 @@ export function CommentItem<T extends ThreadedComment>({
               className="text-sm"
             />
             <div className="flex items-center gap-2">
+              <EmojiPicker onSelect={insertReplyEmoji} />
               <Button
                 size="sm"
                 onClick={() => onReplySubmit(node.id)}

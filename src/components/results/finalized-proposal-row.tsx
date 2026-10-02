@@ -37,6 +37,7 @@ export function FinalizedProposalRow({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Link
           href={`/proposals/${p.id}`}
+          data-testid={`finalized-proposal-${p.id}`}
           className="text-sm font-semibold text-foreground transition-colors hover:text-gold"
         >
           {p.title}

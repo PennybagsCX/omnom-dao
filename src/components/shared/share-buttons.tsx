@@ -23,15 +23,6 @@ interface ShareButtonsProps {
 type ShareChannel = "x" | "telegram" | "copy";
 
 /**
- * "2026-11-01T00:00:00.000Z" → "20261101" — a compact per-vote version for
- * `version`: stable for the life of a vote, different for the next one, so
- * every vote's share links get a URL the platforms have never cached.
- */
-export function versionFromDate(iso: string | null | undefined): string | undefined {
-  return iso ? iso.slice(0, 10).replace(/-/g, "") : undefined;
-}
-
-/**
  * Outbound share row for live votes: X intent, Telegram share, and copy-link.
  * Every click fires a fire-and-forget `share_click` event to the first-party
  * traffic endpoint (best-effort — sharing must work even if the endpoint

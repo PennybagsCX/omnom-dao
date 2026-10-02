@@ -188,3 +188,15 @@ export function formatCompact(value: number | string): string {
     maximumFractionDigits: 2,
   }).format(num);
 }
+
+/**
+ * "2026-11-01T00:00:00.000Z" → "20261101" — a compact per-vote share-link
+ * version (see ShareButtons' `version` prop): stable for the life of a
+ * vote, different for the next one, so every vote's share links get a URL
+ * the platforms have never cached. Lives in lib/ (NOT share-buttons) because
+ * server components call it — client-module functions can't be invoked
+ * server-side.
+ */
+export function versionFromDate(iso: string | null | undefined): string | undefined {
+  return iso ? iso.slice(0, 10).replace(/-/g, "") : undefined;
+}
