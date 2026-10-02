@@ -51,7 +51,7 @@ export function DeleteProposalDialog({ proposal }: { proposal: Proposal }) {
       // Prefix keys cover every list filter, the dashboard, and all admin
       // sections (pending / passed / failed).
       qc.invalidateQueries({ queryKey: ["proposals"] });
-      qc.invalidateQueries({ queryKey: queryKeys.proposalDetail(proposal.id) });
+      qc.invalidateQueries({ queryKey: queryKeys.proposalDetailPrefix(proposal.id) });
       qc.invalidateQueries({ queryKey: queryKeys.dashboard });
       qc.invalidateQueries({ queryKey: ["admin"] });
       if (!pathname.startsWith("/admin")) {

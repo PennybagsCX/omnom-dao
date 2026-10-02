@@ -24,6 +24,16 @@ import {
 import { ErrorCode, type ProposalComment } from "@/types";
 
 /**
+ * Parse a DB timestamp as UTC: datetime('now') stores naive
+ * 'YYYY-MM-DD HH:MM:SS', which Date.parse would read as LOCAL time — on a
+ * non-UTC dev machine recent rows look hours in the future and the 30s
+ * comment cooldown never lifts. Already-ISO strings (tests) parse directly.
+ */
+function parseDbTimestamp(raw: string): number {
+  return raw.includes("T") ? Date.parse(raw) : Date.parse(raw.replace(" ", "T") + "Z");
+}
+
+/**
  * Comments for a proposal.
  *
  * GET  /api/v1/proposals/[id]/comments         — list (public, paginated).
@@ -216,7 +226,11 @@ export async function POST(
     args: [authorAddress],
   });
   if (lastCommentRes.rows.length > 0) {
-    const lastMs = Date.parse(lastCommentRes.rows[0]!.created_at as string);
+    // DB timestamps are UTC (datetime('now')) but bare 'YYYY-MM-DD HH:MM:SS'
+    // parses as LOCAL time — on a non-UTC dev machine the last comment looks
+    // hours in the future and the cooldown never lifts. Force UTC for the
+    // naive storage format; already-ISO strings (tests) parse directly.
+    const lastMs = parseDbTimestamp(lastCommentRes.rows[0]!.created_at as string);
     if (!Number.isNaN(lastMs) && Date.now() - lastMs < RATE_LIMITS.commentMinIntervalMs) {
       return apiError(
         ErrorCode.RATE_LIMITED,

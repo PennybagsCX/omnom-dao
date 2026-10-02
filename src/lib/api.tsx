@@ -261,9 +261,13 @@ export const queryKeys = {
   // (dev account switch, wallet switch, re-login) — the UI then showed
   // "Current ballot" for a vote the new wallet never cast and fired
   // change-vote PUTs that 409'd ("No existing vote to change"). The viewer
-  // segment namespaces the cache; invalidations below still prefix-match.
+  // segment namespaces the cache; mutations invalidate through
+  // `proposalDetailPrefix`, a viewer-less 2-segment key that prefix-matches
+  // EVERY viewer's detail query (a `null` third segment would match only the
+  // logged-out one).
   proposalDetail: (id: string, viewer?: string | null) =>
     ["proposal-detail", id, viewer?.toLowerCase() ?? null] as const,
+  proposalDetailPrefix: (id: string) => ["proposal-detail", id] as const,
   comments: (proposalId: string, page = 1) =>
     ["comments", proposalId, page] as const,
   electionComments: (electionKey: string, page = 1) =>
@@ -431,7 +435,7 @@ export function useCastVote(proposalId: string) {
         description: "Your voting power has been recorded.",
       });
       dispatchBallotCastEvent(proposalId);
-      qc.invalidateQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+      qc.invalidateQueries({ queryKey: queryKeys.proposalDetailPrefix(proposalId) });
       qc.invalidateQueries({ queryKey: queryKeys.dashboard });
     },
     onError: (error) => {
@@ -454,7 +458,7 @@ export function useChangeVote(proposalId: string) {
         description: "Your voting power has been recorded.",
       });
       dispatchBallotCastEvent(proposalId);
-      qc.invalidateQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+      qc.invalidateQueries({ queryKey: queryKeys.proposalDetailPrefix(proposalId) });
       qc.invalidateQueries({ queryKey: queryKeys.dashboard });
     },
     onError: (error) => {
@@ -495,7 +499,7 @@ export function useCreateComment(proposalId: string) {
     onSuccess: () => {
       toast.success("Comment posted");
       qc.invalidateQueries({ queryKey: ["comments", proposalId] });
-      qc.invalidateQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+      qc.invalidateQueries({ queryKey: queryKeys.proposalDetailPrefix(proposalId) });
     },
     onError: (error) => {
       toast.error("Could not post comment", { description: error.message });
@@ -524,10 +528,10 @@ export function useToggleReaction(proposalId: string) {
       // 2. ["comments", proposalId, *] — any page using `useComments()` directly.
       const snapshots: Array<[readonly unknown[], unknown]> = [];
 
-      await qc.cancelQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+      await qc.cancelQueries({ queryKey: queryKeys.proposalDetailPrefix(proposalId) });
       const detailSnapshots = qc.getQueriesData<
         ProposalDetailData | { comments: ProposalComment[] }
-      >({ queryKey: queryKeys.proposalDetail(proposalId) });
+      >({ queryKey: queryKeys.proposalDetailPrefix(proposalId) });
       for (const [key, data] of detailSnapshots) {
         if (!data || typeof data !== "object" || !("comments" in data)) {
           snapshots.push([key, data]);
@@ -569,7 +573,7 @@ export function useToggleReaction(proposalId: string) {
     onSettled: () => {
       // Reconcile with server truth regardless of success / failure.
       qc.invalidateQueries({ queryKey: ["comments", proposalId] });
-      qc.invalidateQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+      qc.invalidateQueries({ queryKey: queryKeys.proposalDetailPrefix(proposalId) });
     },
   });
 }
@@ -716,9 +720,9 @@ export function useToggleProposalReaction(proposalId: string) {
       const snapshots: Array<[readonly unknown[], unknown]> = [];
 
       // Optimistically update the proposal detail cache.
-      await qc.cancelQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+      await qc.cancelQueries({ queryKey: queryKeys.proposalDetailPrefix(proposalId) });
       const detailSnapshots = qc.getQueriesData<ProposalDetailData>({
-        queryKey: queryKeys.proposalDetail(proposalId),
+        queryKey: queryKeys.proposalDetailPrefix(proposalId),
       });
       for (const [key, data] of detailSnapshots) {
         if (!data || typeof data !== "object" || !data.proposal) {
@@ -759,7 +763,7 @@ export function useToggleProposalReaction(proposalId: string) {
       });
     },
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+      qc.invalidateQueries({ queryKey: queryKeys.proposalDetailPrefix(proposalId) });
       qc.invalidateQueries({ queryKey: ["proposals"] });
     },
   });
@@ -783,10 +787,10 @@ export function useToggleCommentEmojiReaction(proposalId: string) {
       const snapshots: Array<[readonly unknown[], unknown]> = [];
 
       // 1. proposal-detail cache embeds comments inline.
-      await qc.cancelQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+      await qc.cancelQueries({ queryKey: queryKeys.proposalDetailPrefix(proposalId) });
       const detailSnapshots = qc.getQueriesData<
         ProposalDetailData | { comments: ProposalComment[] }
-      >({ queryKey: queryKeys.proposalDetail(proposalId) });
+      >({ queryKey: queryKeys.proposalDetailPrefix(proposalId) });
       for (const [key, data] of detailSnapshots) {
         if (!data || typeof data !== "object" || !("comments" in data)) {
           snapshots.push([key, data]);
@@ -830,7 +834,7 @@ export function useToggleCommentEmojiReaction(proposalId: string) {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ["comments", proposalId] });
-      qc.invalidateQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
+      qc.invalidateQueries({ queryKey: queryKeys.proposalDetailPrefix(proposalId) });
     },
   });
 }
