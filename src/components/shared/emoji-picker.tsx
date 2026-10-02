@@ -1,16 +1,20 @@
 "use client";
 
 /**
- * Lightweight emoji picker for comment composers — a trigger button plus a
- * small curated grid. Built in-house on purpose: the app needs ~80 sensible
- * emojis (dog + voting themed), not a 300KB Unicode catalog with search
- * indexes, and there is no popover primitive in components/ui to hang one
- * off.
+ * Lightweight emoji picker for comment composers — a trigger button plus one
+ * scrollable panel with the standard/basic emoji set (no flags, no countries,
+ * no skin-tone families). Built in-house on purpose: the app needs a few
+ * hundred sensible emojis, not a 300KB Unicode catalog with search indexes,
+ * and there is no popover primitive in components/ui to hang one off.
  *
- * Behavior: click the smile to open; pick an emoji (stored in a small
- * "recent" set in localStorage and surfaced first next time); close via
- * outside click, Escape, or picking. Purely presentational — the parent
- * owns the text state and receives selections through `onSelect`.
+ * Everything is visible in a single scroll — no category tabs to discover —
+ * with small section labels (Recent, Smileys, …) between groups. Recently
+ * used emojis (localStorage) surface at the top when present.
+ *
+ * The panel flips up or down depending on the space under the trigger, and
+ * its width clamps to the viewport, so it stays usable from phones to
+ * desktops. Purely presentational — the parent owns the text state and
+ * receives selections through `onSelect`.
  *
  * For inserting at the textarea's caret, pair with `spliceAtCursor` below.
  */
@@ -21,62 +25,114 @@ import { Smile } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface EmojiGroup {
-  /** Tab glyph + accessible name. */
   name: string;
-  icon: string;
   emojis: string[];
 }
 
-/** Curated sets — on-brand for a dog-token DAO: reactions, votes, rockets. */
-const SMILEYS: EmojiGroup = {
-  name: "Smileys",
-  icon: "😀",
-  emojis: [
-    "😀", "😄", "😅", "😂", "🤣", "😊", "😍", "🤔",
-    "😎", "🤯", "😴", "🫠", "😏", "😭", "🤬", "🤡",
-  ],
-};
-
+/** The standard set, ordered the way people scan it; on-brand group first. */
 const GROUPS: EmojiGroup[] = [
-  SMILEYS,
   {
-    name: "Gestures",
-    icon: "👍",
+    name: "Smileys",
     emojis: [
-      "👍", "👎", "👏", "🙌", "🤝", "💪", "✌️", "🤙",
-      "👋", "🫡", "🙏", "🫶",
+      "😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂",
+      "🙂", "🙃", "😉", "😊", "😇", "🥰", "😍", "🤩",
+      "😘", "😗", "😚", "😙", "😋", "😛", "😜", "🤪",
+      "😝", "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨",
+      "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "🤥",
+      "😌", "😔", "😪", "🤤", "😴", "😷", "🤒", "🤕",
     ],
   },
   {
-    name: "Dogs",
-    icon: "🐕",
+    name: "People & gestures",
     emojis: [
-      "🐕", "🐶", "🐩", "🦴", "🐾", "🐕‍🦺", "🚀", "🌕",
-      "🍖", "🏆", "💎", "👀",
+      "👋", "🤚", "🖐️", "✋", "🖖", "👌", "🤌", "🤏",
+      "✌️", "🤞", "🤟", "🤘", "🤙", "👈", "👉", "👆",
+      "👇", "☝️", "👍", "👎", "✊", "👊", "🤛", "🤜",
+      "👏", "🙌", "👐", "🤲", "🤝", "🙏", "💪", "🫡",
     ],
   },
   {
-    name: "Hearts",
-    icon: "❤️",
+    name: "Dogs & space",
     emojis: [
-      "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍",
-      "💖", "💯", "✨", "🔥",
+      "🐕", "🐶", "🐩", "🦴", "🐾", "🐺", "🌕", "🚀",
+      "👑", "🍖", "👀", "🌙",
     ],
   },
   {
     name: "Voting",
-    icon: "🗳️",
     emojis: [
-      "🗳️", "✅", "❌", "⚖️", "📊", "📈", "📉", "🏛️",
-      "📜", "🔒", "🧾", "🗓️",
+      "🗳️", "📊", "📈", "📉", "🏛️", "📜", "🧾", "🗓️",
     ],
   },
   {
-    name: "Fun",
-    icon: "🎉",
+    name: "Animals & nature",
     emojis: [
-      "🎉", "🎊", "🥳", "😈", "🧠", "🍿", "☕", "🌙",
-      "⚡", "🌊", "🐣", "👽",
+      "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨",
+      "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🐔", "🐧",
+      "🐦", "🐤", "🦆", "🦅", "🦉", "🐴", "🦄", "🐝",
+      "🐛", "🦋", "🐌", "🐞", "🐢", "🐍", "🦎", "🐙",
+      "🦑", "🦐", "🦞", "🦀", "🐠", "🐟", "🐬", "🦈",
+    ],
+  },
+  {
+    name: "Food & drink",
+    emojis: [
+      "🍏", "🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇",
+      "🍓", "🫐", "🍒", "🍑", "🥭", "🍍", "🥥", "🥝",
+      "🍅", "🥑", "🥦", "🥕", "🌽", "🌶️", "🥒", "🥬",
+      "🧄", "🧅", "🥔", "🍠", "🥐", "🍞", "🥖", "🧀",
+    ],
+  },
+  {
+    name: "Snacks & meals",
+    emojis: [
+      "🥚", "🍳", "🥓", "🌭", "🍔", "🍟", "🍕", "🥪",
+      "🌮", "🌯", "🥗", "🍜", "🍣", "🍩", "🍪", "🎂",
+      "🍰", "🧁", "🍫", "🍬", "🍭", "☕", "🍵", "🧃",
+      "🥤", "🍿",
+    ],
+  },
+  {
+    name: "Activities",
+    emojis: [
+      "⚽", "🏀", "🏈", "⚾", "🎾", "🏐", "🎱", "🏓",
+      "🏸", "🥊", "🥋", "⛳", "🏆", "🥇", "🥈", "🥉",
+      "🎮", "🎯", "🎲", "🧩", "🎪", "🎭", "🎨", "🎤",
+    ],
+  },
+  {
+    name: "Travel & places",
+    emojis: [
+      "🚗", "🚕", "🚙", "🚌", "🏎️", "🚓", "🚑", "🚒",
+      "🚚", "🚜", "🛵", "🚲", "⛽", "🚦", "🏠", "🏢",
+      "🏦", "🏫", "🏥", "🏪", "🏰", "🗼", "🗽", "🏝️",
+    ],
+  },
+  {
+    name: "Objects",
+    emojis: [
+      "⌚", "📱", "💻", "⌨️", "🖥️", "🖨️", "🖱️", "💾",
+      "📷", "📸", "📹", "🎥", "📞", "📺", "📻", "🎙️",
+      "⏰", "⌛", "💡", "🔋", "🔌", "💰", "💳", "💎",
+      "⚖️", "🔧", "🔨", "⚙️", "🧲", "🔬", "🔭", "🎁",
+    ],
+  },
+  {
+    name: "Office & tools",
+    emojis: [
+      "✉️", "📧", "📨", "📦", "📫", "✏️", "📝", "📚",
+      "📖", "🔖", "🏷️", "📌", "📎", "📏", "📐", "🔒",
+      "🔓", "🔑", "🗝️", "🎈", "🎀", "🕯️", "🧸", "🧿",
+    ],
+  },
+  {
+    name: "Symbols & hearts",
+    emojis: [
+      "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍",
+      "💔", "❣️", "💕", "💞", "💓", "💗", "💖", "💘",
+      "💝", "💟", "☮️", "☯️", "🔥", "✨", "🌟", "⭐",
+      "💫", "⚡", "💥", "🎉", "🎊", "✅", "❌", "⭕",
+      "❓", "❗", "💯", "🆒", "🆗", "🔔", "🔕", "♻️",
     ],
   },
 ];
@@ -124,6 +180,38 @@ export function spliceAtCursor(
   };
 }
 
+/** One labelled block of emojis inside the scroll panel. */
+function EmojiSection({
+  name,
+  emojis,
+  onPick,
+}: {
+  name: string;
+  emojis: string[];
+  onPick: (emoji: string) => void;
+}) {
+  return (
+    <div className="mb-1.5">
+      <div className="px-1 pb-0.5 text-[10px] font-medium uppercase tracking-wider text-text-dim">
+        {name}
+      </div>
+      <div className="grid grid-cols-8">
+        {emojis.map((emoji, i) => (
+          <button
+            key={`${emoji}-${i}`}
+            type="button"
+            aria-label={`Insert ${emoji}`}
+            onClick={() => onPick(emoji)}
+            className="flex aspect-square items-center justify-center rounded-md text-lg leading-none transition-colors hover:bg-gold/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {emoji}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface EmojiPickerProps {
   /** Receives the picked emoji character. */
   onSelect: (emoji: string) => void;
@@ -140,17 +228,41 @@ export function EmojiPicker({
   className,
 }: EmojiPickerProps) {
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<string>("recent");
   const [recents, setRecents] = useState<string[]>([]);
+  // Where the panel opens and how tall it may get, decided from the space
+  // around the trigger at open time — the comfortable cap is ~336px (never
+  // more than half the viewport), shrinking on short screens (landscape
+  // phones) so the panel always fits whichever side has more room.
+  const [drop, setDrop] = useState<"up" | "down">("up");
+  const [panelCap, setPanelCap] = useState(336);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  // Opening resolves the recents and the starting tab in the same pass —
-  // before the first paint of the panel, so the grid is never briefly empty.
+  // Opening resolves recents + drop direction in the same pass, before the
+  // panel's first paint — no flicker, no empty grid.
   const toggle = useCallback(() => {
     if (!open) {
-      const stored = loadRecents();
-      setRecents(stored);
-      setTab(stored.length > 0 ? "recent" : SMILEYS.icon);
+      setRecents(loadRecents());
+      const rect = rootRef.current?.getBoundingClientRect();
+      if (rect) {
+        const PANEL_HEADER = 30;
+        const MARGIN = 16;
+        const cap = Math.min(336, Math.floor(window.innerHeight * 0.5));
+        const below = window.innerHeight - rect.bottom;
+        const above = rect.top;
+        if (below >= cap + MARGIN && below >= above) {
+          setDrop("down");
+          setPanelCap(cap);
+        } else if (above >= cap + MARGIN) {
+          setDrop("up");
+          setPanelCap(cap);
+        } else if (above >= below) {
+          setDrop("up");
+          setPanelCap(Math.max(120, above - PANEL_HEADER - MARGIN));
+        } else {
+          setDrop("down");
+          setPanelCap(Math.max(120, below - PANEL_HEADER - MARGIN));
+        }
+      }
     }
     setOpen((v) => !v);
   }, [open]);
@@ -181,9 +293,6 @@ export function EmojiPicker({
     [onSelect],
   );
 
-  const activeGroup = GROUPS.find((g) => g.icon === tab) ?? null;
-  const gridEmojis = tab === "recent" ? recents : (activeGroup?.emojis ?? SMILEYS.emojis);
-
   return (
     <div ref={rootRef} className={cn("relative", className)}>
       <button
@@ -193,7 +302,7 @@ export function EmojiPicker({
         aria-haspopup="dialog"
         disabled={disabled}
         onClick={toggle}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-text-dim transition-colors hover:bg-bg-elevated hover:text-gold disabled:opacity-50"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-text-dim transition-colors hover:bg-bg-elevated hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
       >
         <Smile className="h-4 w-4" aria-hidden />
       </button>
@@ -202,52 +311,25 @@ export function EmojiPicker({
         <div
           role="dialog"
           aria-label="Emoji picker"
-          className="absolute bottom-full left-0 z-50 mb-2 w-72 max-w-[calc(100vw-2.5rem)] rounded-xl border border-border bg-bg-elevated p-2 shadow-xl"
+          className={cn(
+            "absolute left-0 z-50 w-[min(19rem,calc(100vw-2rem))] rounded-xl border border-border bg-bg-elevated shadow-xl",
+            drop === "up" ? "bottom-full mb-2" : "top-full mt-2",
+          )}
         >
-          <div className="mb-1 flex items-center gap-0.5" role="tablist" aria-label="Emoji categories">
-            {recents.length > 0 && (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={tab === "recent"}
-                aria-label="Recently used"
-                onClick={() => setTab("recent")}
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-md text-base transition-colors hover:bg-bg-elevated/70",
-                  tab === "recent" && "bg-bg-elevated text-gold",
-                )}
-              >
-                🕘
-              </button>
-            )}
-            {GROUPS.map((g) => (
-              <button
-                key={g.name}
-                type="button"
-                role="tab"
-                aria-selected={tab === g.icon}
-                aria-label={g.name}
-                onClick={() => setTab(g.icon)}
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-md text-base transition-colors hover:bg-bg-elevated/70",
-                  tab === g.icon && "bg-bg-elevated text-gold",
-                )}
-              >
-                {g.icon}
-              </button>
-            ))}
+          <div className="rounded-t-xl border-b border-border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-text-dim">
+            Emoji
           </div>
-          <div className="grid max-h-44 grid-cols-8 gap-0.5 overflow-y-auto">
-            {gridEmojis.map((emoji, i) => (
-              <button
-                key={`${emoji}-${i}`}
-                type="button"
-                aria-label={`Insert ${emoji}`}
-                onClick={() => pick(emoji)}
-                className="flex h-8 w-8 items-center justify-center rounded-md text-lg transition-colors hover:bg-gold/15"
-              >
-                {emoji}
-              </button>
+          <div className="overflow-y-auto p-2" style={{ maxHeight: panelCap }}>
+            {recents.length > 0 && (
+              <EmojiSection name="Recent" emojis={recents} onPick={pick} />
+            )}
+            {GROUPS.map((group) => (
+              <EmojiSection
+                key={group.name}
+                name={group.name}
+                emojis={group.emojis}
+                onPick={pick}
+              />
             ))}
           </div>
         </div>
