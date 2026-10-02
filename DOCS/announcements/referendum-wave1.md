@@ -1,15 +1,15 @@
 # OMNOM DAO — Wave 1 Referendum Launch Pack
 
-**Status**: Ready to publish on T-0 (2026-10-02 00:00 UTC = tonight 8 PM EST, Oct 1)
+**Status**: READY TO PUBLISH — the referendum is already live (opened Oct 1, 2026; owner approval came in ahead of schedule). Publish the launch posts as soon as you've reviewed them.
 **Author**: OMNOM DAO core team
 **Domain**: https://dao.omnom.dog
-**Companions**: [REFERENDUM-WAVE1.md](../REFERENDUM-WAVE1.md) (decision record) · `scripts/seed-referendum.ts` (the exact ballot bodies) · `npm run verify:referendum` must be green before any of this goes out.
+**Companions**: [REFERENDUM-WAVE1.md](../REFERENDUM-WAVE1.md) (decision record) · `scripts/seed-referendum.ts` (the exact ballot bodies) · `npm run verify:referendum` is green (verified 2026-10-01).
 
 ---
 
 ## What is live
 
-One 30-day window (**Oct 2, 00:00 UTC → Nov 1, 00:00 UTC**), three separate FOR/AGAINST/ABSTAIN ballots at **dao.omnom.dog/vote**, one per rulebook question:
+One ~30-day window (**live now — Oct 1, 2026 → Nov 1, 00:00 UTC**), three separate FOR/AGAINST/ABSTAIN ballots at **dao.omnom.dog/vote**, one per rulebook question:
 
 | Q | Ballot | The plain question | FOR means |
 |---|---|---|---|
@@ -34,7 +34,7 @@ We do not hide these numbers — we lead with them. The pitch is: keep the bar, 
 
 > 🗳️ **THE $OMNOM RULEBOOK VOTE IS LIVE. Three questions. One window. 30 days.**
 >
-> Tonight 8 PM EST (Oct 2, 00:00 UTC) the Wave 1 Referendum opens at dao.omnom.dog/vote — and it closes **Nov 1, 00:00 UTC**. Every wallet that ever held ≥1 $OMNOM — **25,686 wallets** — is eligible. Gasless ballots, SIWE sign-in, changeable until close.
+> The Wave 1 Referendum is open **right now** at dao.omnom.dog/vote — and it closes **Nov 1, 00:00 UTC**. Every wallet that ever held ≥1 $OMNOM — **25,686 wallets** — is eligible. Gasless ballots, SIWE sign-in, changeable until close.
 >
 > **The three questions (one FOR/AGAINST ballot each):**
 > 1️⃣ Global default quorum — how many people need to vote for a result to count?
@@ -83,7 +83,7 @@ Roomier variant with the eligibility line (310 raw chars — fits X's counter, w
 
 🗳️ **$OMNOM DAO — THE RULEBOOK VOTE IS LIVE. Three questions. One window. 30 days.**
 
-Tonight 8 PM EST the Wave 1 Referendum opens and runs to **Nov 1, 00:00 UTC**. Every wallet that ever held $OMNOM is eligible — **25,686 wallets**. Connect, sign, vote. No gas. Change your ballot any time before close.
+The Wave 1 Referendum is open **right now** and runs to **Nov 1, 00:00 UTC**. Every wallet that ever held $OMNOM is eligible — **25,686 wallets**. Connect, sign, vote. No gas. Change your ballot any time before close.
 
 **The three questions — one FOR/AGAINST ballot each:**
 
@@ -241,7 +241,7 @@ $OMNOM #DAO #Governance 🐕🧡
 
 Final turnout: **[N] ballots = [X]%** of total voting power (5% bar = 29,098,690). For scale: our record was 2.73% (35 voters); last vote was 1.73% (27).
 
-**The disclosed consensus fallback, applied openly:** the most-voted outcome on each question **is adopted as the community's working consensus** — recorded in each proposal as a quorum-missed decision (`adoptedAs: consensus-fallback`, final turnout attached) and **re-confirmed in a later ratification vote** as turnout grows.
+**The disclosed consensus fallback, applied openly:** the most-voted outcome on each question **is adopted as the community's working consensus** — recorded in each proposal as a quorum-missed decision (`adoptedAs: consensus-fallback`, final turnout attached) and **re-confirmed in a later ratification vote** as turnout grows. Process, in the open: we announce the adoption intent (this post is that announcement), let **24 hours** of public cooling-off run, then record the adoptions — every step lands in the public audit log.
 
 Outcomes adopted as working consensus:
 1️⃣ Global default quorum: **[FOR/AGAINST/ABSTAIN]** — [X]% of for+against power
@@ -258,19 +258,29 @@ $OMNOM #DAO #Governance 🐕🧡
 
 ---
 
+## Optional teaser line (owner's call — use sparingly)
+
+If you want to seed what comes after the rulebook, append ONE line to the Telegram long post or an X reply (never the main post — don't dilute the CTA):
+
+> 👀 And after the rulebook: the community decides where $OMNOM lives next. DogeOS just opened its public testnet — a Dogecoin L2 with DOGE gas. Early eyes are watching.
+
+Rules for this line: frame DogeOS as a *candidate the community will vote on*, never a promise or an announcement; no dates, no commitments; link stays dao.omnom.dog/vote.
+
+---
+
 ## Posting cadence
 
 | When (UTC) | Post | Notes |
 |---|---|---|
-| **T-0 — Oct 2, 00:00** (tonight 8 PM EST Oct 1) | (a) X long + (b) X short, (c) Telegram long + (d) caption | Only after `npm run verify:referendum` is green and all three proposals are ACTIVE |
-| T+7 — Oct 9 | (e) T+7 update | Fill brackets from live tallies |
-| T+14 — Oct 16 | (e) T+14 update (halfway) | Same |
-| T+21 — Oct 23 | (e) T+21 update | Same |
+| **NOW — the vote is live** (opened Oct 1) | (a) X long + (b) X short, (c) Telegram long + (d) caption | `verify:referendum` is green and all three proposals are ACTIVE ✓ — publish tonight |
+| T+7 — Oct 8/9 | (e) T+7 update | Fill brackets from live tallies |
+| T+14 — Oct 15/16 | (e) T+14 update (halfway) | Same |
+| T+21 — Oct 22/23 | (e) T+21 update | Same |
 | T-2 — Oct 30, 00:00 | (f) last-48h | Pin on X + Telegram |
 | **Close — Nov 1, 00:00** | — | Finalize runs via the 30-min cron |
 | Within 24h of close | (g1) or (g2) results | Only after final numbers are verified on /results |
 
-In-app T-72h / T-24h reminder waves and the ending-soon cron emails complement these — social posts should not duplicate their copy.
+In-app T-72h / T-24h reminder waves (shown to signed-in holders by the site bell) complement these — there are **no emails**; social posts should not duplicate their copy.
 
 ---
 
