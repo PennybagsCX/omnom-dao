@@ -32,47 +32,47 @@ We do not hide these numbers — we lead with them. The pitch is: keep the bar, 
 
 ## (a) X — long-form Premium post (Premium allows ~25,000 chars; this draft ≈ 4,400)
 
-> 🗳️ THE $OMNOM RULEBOOK VOTE IS LIVE — and this time, the full story.
+> 🗳️ **THE $OMNOM RULEBOOK VOTE IS LIVE** — and this time, the full story.
 >
-> First: what happened to the last vote.
+> **First: what happened to the last vote.**
 >
 > From Sep 23–30 we asked holders to set our global quorum — the % of voting power needed before any result counts. Twenty-seven wallets voted. That's 1.73% of the 5% bar. The vote expired, and per the rules as they stood, nothing changed. The defaults that stayed in force (10–15% per proposal type) were never ratified by anyone.
 >
 > We could have buried that. We're not going to.
 >
-> Second: why we're doing this again — and what's different.
+> **Second: why we're doing this again — and what's different.**
 >
 > We kept the 5% bar. A rulebook ratified at a toy bar carries an asterisk forever, and we'd rather earn a real mandate than lower a bar until it means nothing. What we changed is every condition around it:
 >
 > ▪ ONE campaign — all three rulebook questions vote at once, not three separate weeks
 > ▪ A 30-day window instead of 7
-> ▪ A fallback rule disclosed before a single ballot: if 5% isn't reached, the most-voted outcome still becomes our working consensus — recorded openly as quorum-missed, re-confirmed in a later ratification vote
+> ▪ A fallback rule disclosed before a single ballot: if 5% isn't reached, the **most-voted outcome still becomes our working consensus** — recorded openly as quorum-missed, re-confirmed in a later ratification vote
 > ▪ A promotion push we're accountable for — this post is part of it
 >
-> THE THREE QUESTIONS (one FOR/AGAINST/ABSTAIN ballot each — your voting power is √ of your snapshot balance):
+> **THE THREE QUESTIONS** (one FOR/AGAINST/ABSTAIN ballot each — your voting power is √ of your snapshot balance):
 >
-> 1️⃣ Global default quorum — how many people need to vote for a result to count?
+> 1️⃣ **Global default quorum** — how many people need to vote for a result to count?
 > FOR: one ratified 5% bar for everything. AGAINST: keep the old 10–15% defaults nobody voted on.
 >
-> 2️⃣ Pass threshold — how many "yes" votes does it take to win?
+> 2️⃣ **Pass threshold** — how many "yes" votes does it take to win?
 > FOR: ratify today's split (simple majority for everyday proposals; 60% supermajority for chain/tokenomics/technical). AGAINST: simple majority for everything.
 >
-> 3️⃣ Per-type quorum schedule — should big decisions need more voters than small ones?
+> 3️⃣ **Per-type quorum schedule** — should big decisions need more voters than small ones?
 > FOR: graded bars (General 5% · standard 10% · chain & tokenomics 25%). AGAINST: keep the flat 10–15%.
 >
-> THE HONEST MATH (from the pinned snapshot — verifiable by anyone):
+> **THE HONEST MATH** (from the pinned snapshot — verifiable by anyone):
 > Total voting power: 581,973,790
-> 5% bar: 29,098,690 power ≈ 1,284 average-power wallets
-> Record turnout: 35 voters = 2.73% (Foundational Governance Election)
-> Last vote: 27 voters = 1.73%
+> 5% bar: **29,098,690 power ≈ 1,284 average-power wallets**
+> Record turnout: **35 voters = 2.73%** (Foundational Governance Election)
+> Last vote: **27 voters = 1.73%**
 > In practice, voting power skews toward larger holders — if the Octopus-and-up classes show up, this is genuinely within reach. That's who needs to read this.
 >
-> IF WE MISS 5% — the fallback, exactly as published before a single ballot:
-> The most-voted outcome per question is adopted as our working consensus. Recorded openly as quorum-missed (final turnout attached), re-confirmed in a later ratification vote as turnout grows. And the adoption happens in public: intent announced, 24 hours of cooling-off, then recorded — every step in the audit log anyone can read.
+> **IF WE MISS 5%** — the fallback, exactly as published before a single ballot:
+> The **most-voted outcome per question is adopted as our working consensus**. Recorded openly as quorum-missed (final turnout attached), re-confirmed in a later ratification vote as turnout grows. And the adoption happens in public: intent announced, 24 hours of cooling-off, then recorded — every step in the audit log anyone can read.
 >
-> IF WE HIT 5% — binding, quorum-backed, no asterisk. The first fully ratified rulebook in this DAO's history.
+> **IF WE HIT 5%** — binding, quorum-backed, no asterisk. The first fully ratified rulebook in this DAO's history.
 >
-> WHO THIS IS FOR: every wallet that ever held ≥1 $OMNOM — 25,686 of you. Gasless. One signature. Changeable any time until Nov 1, 00:00 UTC.
+> **WHO THIS IS FOR**: every wallet that ever held ≥1 $OMNOM — 25,686 of you. Gasless. One signature. Changeable any time until **Nov 1, 00:00 UTC**.
 >
 > Why it matters: chain migration, tokenomics, treasury — everything this DAO does next is decided by the rulebook you ratify in this window. The community that shows up now decides how every future decision gets made.
 >
@@ -86,7 +86,7 @@ We do not hide these numbers — we lead with them. The pitch is: keep the bar, 
 
 > 🗳️ $OMNOM rulebook vote LIVE — 3 questions, 30 days.
 >
-> Last month's vote: 27 wallets = 1.73% → expired. Record: 35 = 2.73%. This time all 3 rulebook questions vote at once, and the fallback is disclosed up front.
+> Last month's vote: **27 wallets = 1.73%** → expired. Record: 35 = 2.73%. This time all 3 rulebook questions vote at once, and the fallback is disclosed up front.
 >
 > dao.omnom.dog/vote?utm_campaign=wave1-referendum&utm_source=x
 
@@ -94,7 +94,7 @@ Roomier variant with the eligibility line:
 
 > 🗳️ $OMNOM rulebook vote LIVE — 3 questions, 30 days.
 >
-> Last month's vote: 27 wallets = 1.73% → expired. Record: 35 = 2.73%. This time all 3 rulebook questions vote at once, and the fallback is disclosed up front.
+> Last month's vote: **27 wallets = 1.73%** → expired. Record: 35 = 2.73%. This time all 3 rulebook questions vote at once, and the fallback is disclosed up front.
 >
 > Ever held $OMNOM? You're eligible.
 >
@@ -113,25 +113,25 @@ WHY WE'RE BACK
 Two options: bury it, or fix the conditions honestly. We kept the 5% bar — a rulebook ratified at a toy bar carries an asterisk forever — and changed everything else:
 • ONE campaign: all three rulebook questions vote at once
 • A 30-day window instead of 7
-• A fallback disclosed before a single ballot: if 5% isn't reached, the most-voted outcome still becomes our working consensus
+• A fallback disclosed before a single ballot: if 5% isn't reached, the **most-voted outcome still becomes our working consensus**
 • A promotion push we're accountable for — this post is part of it
 
 THE THREE QUESTIONS (one FOR/AGAINST ballot each)
 
-1️⃣ Global default quorum — how many people need to vote for a result to count?
+1️⃣ **Global default quorum** — how many people need to vote for a result to count?
 🟢 FOR = one ratified 5% bar for everything · 🔴 AGAINST = keep the old 10–15% defaults nobody voted on
 
-2️⃣ Pass threshold — how many "yes" votes does it take to win?
+2️⃣ **Pass threshold** — how many "yes" votes does it take to win?
 🟢 FOR = ratify today's split (everyday: simple majority · chain/tokenomics/technical: 60%) · 🔴 AGAINST = simple majority for everything
 
-3️⃣ Per-type quorum schedule — should big decisions need more voters than small ones?
+3️⃣ **Per-type quorum schedule** — should big decisions need more voters than small ones?
 🟢 FOR = graded bars (General 5% · standard 10% · chain & tokenomics 25%) · 🔴 AGAINST = keep the flat 10–15%
 
 THE HONEST MATH (from the pinned snapshot)
 • Total voting power = 581,973,790
-• 5% bar = 29,098,690 power ≈ 1,284 average-power wallets
-• Record: 35 voters = 2.73% (Foundational Governance Election)
-• Last vote: 27 voters = 1.73%
+• 5% bar = **29,098,690 power ≈ 1,284 average-power wallets**
+• Record: **35 voters = 2.73%** (Foundational Governance Election)
+• Last vote: **27 voters = 1.73%**
 • Voting power skews toward larger holders — if the Octopus-and-up classes show up, quorum is genuinely within reach. This post is for them.
 
 IF WE MISS 5% — the fallback, exactly as published before a single ballot: the most-voted outcome per question is adopted as our working consensus, recorded openly as quorum-missed and re-confirmed in a later ratification vote. And adoption happens in public: intent announced, 24 hours of cooling-off, then recorded — every step in the audit log.
@@ -175,8 +175,8 @@ Fill every bracket, re-verify numbers against the live site before posting, and 
 Turnout so far: **[N] ballots = [X]% of the 5% bar** (bar = 29,098,690 power).
 
 Leading positions right now:
-1️⃣ Global default quorum: **[FOR/AGAINST]** at [X]%
-2️⃣ Pass threshold: **[FOR/AGAINST]** at [X]%
+1️⃣ **Global default quorum**: **[FOR/AGAINST]** at [X]%
+2️⃣ **Pass threshold**: **[FOR/AGAINST]** at [X]%
 3️⃣ Per-type schedule: **[FOR/AGAINST]** at [X]%
 
 Reminder of the honest math: record turnout is 2.73% (35 voters); last vote was 1.73% (27). And the rule we disclosed on day one still stands: **if 5% isn't reached, the most-voted outcome still becomes our working consensus** — recorded openly, re-confirmed later. Your vote counts either way.
@@ -194,8 +194,8 @@ $OMNOM #DAO #Governance 🐕🧡
 **[N] ballots = [X]% of the 5% bar** (for scale: record turnout 2.73%, last vote 1.73%). Fifteen days left.
 
 Leading positions:
-1️⃣ Global default quorum: **[FOR/AGAINST]** at [X]%
-2️⃣ Pass threshold: **[FOR/AGAINST]** at [X]%
+1️⃣ **Global default quorum**: **[FOR/AGAINST]** at [X]%
+2️⃣ **Pass threshold**: **[FOR/AGAINST]** at [X]%
 3️⃣ Per-type schedule: **[FOR/AGAINST]** at [X]%
 
 Biggest movement this week: [one line on swing / new voters / discussion].
@@ -215,8 +215,8 @@ $OMNOM #DAO #Governance 🐕🧡
 **[N] ballots = [X]% of the 5% bar** (for scale: record turnout 2.73%, last vote 1.73%). Closes **Nov 1, 00:00 UTC** (8 PM local Oct 31).
 
 Leading positions:
-1️⃣ Global default quorum: **[FOR/AGAINST]** at [X]%
-2️⃣ Pass threshold: **[FOR/AGAINST]** at [X]%
+1️⃣ **Global default quorum**: **[FOR/AGAINST]** at [X]%
+2️⃣ **Pass threshold**: **[FOR/AGAINST]** at [X]%
 3️⃣ Per-type schedule: **[FOR/AGAINST]** at [X]%
 
 If you've been meaning to vote: this is the week. Gasless, ~90 seconds, changeable until close. And as disclosed from day one: **if 5% isn't reached, the most-voted outcome still becomes our working consensus** — recorded openly, re-confirmed later. But a real quorum makes it binding. Help us get there.
@@ -229,7 +229,7 @@ $OMNOM #DAO #Governance 🐕🧡
 
 ## (f) Last-48h post (from Oct 30, 00:00 UTC)
 
-🗳️ **FINAL 48 HOURS — $OMNOM rulebook vote closes Nov 1, 00:00 UTC** (8 PM local Oct 31).
+🗳️ **FINAL 48 HOURS — $OMNOM rulebook vote closes **Nov 1, 00:00 UTC**** (8 PM local Oct 31).
 
 **[N] ballots = [X]% of the 5% bar** (for scale: record turnout 2.73%, last vote 1.73%). Leading positions:
 1️⃣ Quorum: **[FOR/AGAINST]** [X]% · 2️⃣ Threshold: **[FOR/AGAINST]** [X]% · 3️⃣ Schedule: **[FOR/AGAINST]** [X]%
@@ -255,8 +255,8 @@ $OMNOM #DAO #Governance 🐕🧡
 You didn't just vote — you cleared the bar. **[N] ballots = [X]% of total voting power** (5% needed = 29,098,690).
 
 Final results:
-1️⃣ Global default quorum: **[FOR/AGAINST/ABSTAIN]** — [X]% of for+against power
-2️⃣ Pass threshold: **[FOR/AGAINST/ABSTAIN]** — [X]%
+1️⃣ **Global default quorum**: **[FOR/AGAINST/ABSTAIN]** — [X]% of for+against power
+2️⃣ **Pass threshold**: **[FOR/AGAINST/ABSTAIN]** — [X]%
 3️⃣ Per-type schedule: **[FOR/AGAINST/ABSTAIN]** — [X]%
 
 These are **binding, quorum-backed decisions**: the winning outcomes are being recorded on each proposal and applied to the platform. For the first time, the rules this DAO runs on were ratified by the people who hold it. (The rule we disclosed on day one — if 5% isn't reached, the most-voted outcome still becomes the working consensus — never came into play: you cleared the bar, so these results are binding outright, no asterisk.)
@@ -276,8 +276,8 @@ Final turnout: **[N] ballots = [X]%** of total voting power (5% bar = 29,098,690
 **The disclosed consensus fallback, applied openly:** the most-voted outcome on each question **is adopted as the community's working consensus** — recorded in each proposal as a quorum-missed decision (`adoptedAs: consensus-fallback`, final turnout attached) and **re-confirmed in a later ratification vote** as turnout grows. Process, in the open: we announce the adoption intent (this post is that announcement), let **24 hours** of public cooling-off run, then record the adoptions — every step lands in the public audit log.
 
 Outcomes adopted as working consensus:
-1️⃣ Global default quorum: **[FOR/AGAINST/ABSTAIN]** — [X]% of for+against power
-2️⃣ Pass threshold: **[FOR/AGAINST/ABSTAIN]** — [X]%
+1️⃣ **Global default quorum**: **[FOR/AGAINST/ABSTAIN]** — [X]% of for+against power
+2️⃣ **Pass threshold**: **[FOR/AGAINST/ABSTAIN]** — [X]%
 3️⃣ Per-type schedule: **[FOR/AGAINST/ABSTAIN]** — [X]%
 
 No backroom, no asterisk discovered later — the rule was in the first post, in every update, and inside every ballot. Your votes set the working consensus either way, and every holder can read the record.
