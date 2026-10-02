@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/accordion";
 import { ClassBreakdownCard } from "@/components/shared/class-breakdown";
 import { FinalizedProposalRow } from "@/components/results/finalized-proposal-row";
+import { ReferendumProgressToast } from "@/components/vote/referendum-progress-toast";
 import { Markdown } from "@/components/shared/markdown";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import {
@@ -454,6 +455,10 @@ async function ReferendumHub({
   const first = referendum.proposals[0];
   if (!first) return null;
 
+  // Cross-ballot progress toasts — with 3 ballots on one page, voters can
+  // finish one and never scroll to the rest.
+  const progressToast = <ReferendumProgressToast proposalIds={referendum.proposals.map((p) => p.id)} />;
+
   // Per-question holder-class turnout — same breakdown the single-vote
   // layout and the detail pages show, one per referendum question.
   const talliesByQuestion = new Map(
@@ -478,6 +483,7 @@ async function ReferendumHub({
 
   return (
     <>
+      {progressToast}
       {/* Header — the referendum as one campaign, centered like the FGE page */}
       <div className="text-center">
         <div className="mb-2 flex flex-col items-center justify-center gap-2">
@@ -619,34 +625,18 @@ async function ReferendumHub({
               tallies={talliesByQuestion.get(p.id) ?? []}
               className="mt-4"
             />
+
+            {/* Discussion — this question's own thread, right under its
+                breakdown (same shared surface as the detail page). */}
+            <div className="mt-8">
+              <h3 className="mb-4 text-center text-base font-bold text-foreground">
+                Discussion — Question {i + 1}
+              </h3>
+              <ProposalVoteDiscussion proposalId={p.id} />
+            </div>
           </div>
         </section>
       ))}
-
-      {/* Discussion — per-question threads at the bottom, same shared
-          surfaces as the proposal detail pages (one thread per question,
-          like the /governance-vote page's single election thread). */}
-      <section aria-labelledby="discussion-heading" className="mt-12">
-        <div className="mb-4 text-center">
-          <h2 id="discussion-heading" className="text-xl font-bold text-foreground">
-            Discussion
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            The same threads as each question&apos;s proposal page — question
-            the body before you commit a ballot.
-          </p>
-        </div>
-        <div className="space-y-10">
-          {referendum.proposals.map((p, i) => (
-            <div key={p.id}>
-              <p className="mb-3 text-center text-xs font-medium uppercase tracking-widest text-gold">
-                Question {i + 1} — {referendumQuestionLabel(p.title)}
-              </p>
-              <ProposalVoteDiscussion proposalId={p.id} />
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* Non-referendum live votes — rare, but never hidden. */}
       {others.length > 0 && (
