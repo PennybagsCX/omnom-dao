@@ -284,14 +284,58 @@ In-app T-72h / T-24h reminder waves (shown to signed-in holders by the site bell
 
 ---
 
-## Image / visual suggestions
+## Image prompts & visual assets (optimized)
 
-1. **Hero banner (1200×675)** — "Wave 1 Referendum", "3 questions · 30 days", "25,686 eligible wallets", gold/purple on black. Primary for (a) and (c).
-2. **Live referendum OG card** — the dynamic `/vote` OG card (ships with the launch workstream) showing the three questions + countdown; screenshot fresh on posting day.
-3. **Turnout real-talk chart** — three bars: last vote 1.73% · record 2.73% · the 5% bar. Honest math as the visual.
-4. **Results card** — per-question winner + turnout-vs-bar; regenerate for whichever results variant (g1/g2) fires.
+Brand palette (from [BRAND_STANDARDS.md](../BRAND_STANDARDS.md)): gold `#FFD700`, purple `#8B5CF6`, black layers `#000000`/`#0A0A0A`/`#141414`, text `#FAFAFA`. Voice: playful dog mascot, serious mechanics.
 
-Recommended: #1 for launch, #3 for T+7/T+14 (it ages well), #4 for results.
+> ⚠️ **Two rules before generating:**
+> 1. **Never let the AI render text or numbers** — generators mangle spelling and will invent tallies (violating the "numbers must match" guardrail). Generate **art with empty space**, then add the exact overlay strings below in Canva/Figma/Photopea.
+> 2. **Anything with real numbers gets screenshotted or built, not generated** — the OG card and the turnout chart come from the app / a chart tool.
+
+### 1. Launch hero banner — AI background + text overlay (posts a & c)
+
+**Prompt (image generator — Midjourney/Flux/Ideogram style):**
+
+> flat vector illustration, a cute confident pomeranian dog wearing a golden laurel wreath, holding a glowing golden ballot, deep black background #000000 with subtle gold particle glow and a soft purple #8B5CF6 nebula gradient in the lower right, minimalist governance theme, thin gold border frame, large empty space on the left half for text, high contrast, clean edges, no text, no letters, no watermark --ar 3:2
+
+**Overlay text (add manually):**
+- Headline: `WAVE 1 REFERENDUM` (gold→purple gradient, bold)
+- Sub: `3 questions · 30 days · closes Nov 1`
+- CTA: `dao.omnom.dog/vote`
+
+### 2. Turnout "real talk" graphic — BUILD, don't generate
+
+Three horizontal bars on the dark surface `#0A0A0A`, left-aligned labels, gold bars, values at bar ends:
+
+- `Last vote (Sep 30)` — **1.73%** (bar at ~35% width)
+- `Record (Foundational Election)` — **2.73%** (bar at ~55% width)
+- `The 5% bar` — outlined/hollow bar at 100% width, label `what we're asking for`
+
+Caption strip under the bars: `5% ≈ 1,284 average wallets · 25,686 eligible`. Build in Canva/Figma (10 minutes) — the numbers are the message, so they must be exact. Ages well: reuse for T+7/T+14 with a "we're here →" marker added.
+
+### 3. Results card — screenshot first, decorate second
+
+Once finalize completes: screenshot the `/results` section per question (real numbers, real badge), or the `/vote` page's results block. Optional AI frame around the screenshot:
+
+> minimal ornamental frame, flat vector gold laurel corners on black #000000, subtle purple #8B5CF6 glow, empty center, no text, no watermark --ar 4:3
+
+### 4. Last-48h urgency variant — AI art + overlay
+
+**Prompt:**
+
+> flat vector illustration, close-up of a pomeranian dog checking a golden pocket watch, warm gold #FFD700 rim light on black #000000, falling golden confetti particles, urgent but friendly mood, deep space for a text block on the right half, minimalist, clean edges, no text, no letters, no watermark --ar 3:2
+
+**Overlay text:** `FINAL 48 HOURS` (large) · `closes Nov 1, 00:00 UTC` · `dao.omnom.dog/vote`
+
+### 5. Live OG card — screenshot, never generate
+
+The site generates its own dynamic referendum card: open `dao.omnom.dog/vote` fresh on posting day and screenshot the preview, or fetch `dao.omnom.dog/vote/opengraph-image` directly. Real countdown, real questions — zero effort, always accurate.
+
+**Recommended pairing:** #1 (or #4 near the close) for launch posts · #2 for T+7/T+14 · #3 + #5 for results.
+
+---
+
+## Posting cadence
 
 ---
 
