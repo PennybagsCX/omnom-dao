@@ -623,6 +623,31 @@ async function ReferendumHub({
         </section>
       ))}
 
+      {/* Discussion — per-question threads at the bottom, same shared
+          surfaces as the proposal detail pages (one thread per question,
+          like the /governance-vote page's single election thread). */}
+      <section aria-labelledby="discussion-heading" className="mt-12">
+        <div className="mb-4 text-center">
+          <h2 id="discussion-heading" className="text-xl font-bold text-foreground">
+            Discussion
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            The same threads as each question&apos;s proposal page — question
+            the body before you commit a ballot.
+          </p>
+        </div>
+        <div className="space-y-10">
+          {referendum.proposals.map((p, i) => (
+            <div key={p.id}>
+              <p className="mb-3 text-center text-xs font-medium uppercase tracking-widest text-gold">
+                Question {i + 1} — {referendumQuestionLabel(p.title)}
+              </p>
+              <ProposalVoteDiscussion proposalId={p.id} />
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Non-referendum live votes — rare, but never hidden. */}
       {others.length > 0 && (
         <p className="mt-10 text-center text-sm text-muted-foreground">
