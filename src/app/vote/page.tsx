@@ -628,10 +628,14 @@ async function ReferendumHub({
             />
 
             {/* Discussion — this question's own thread, right under its
-                breakdown (same shared surface as the detail page). */}
+                breakdown. Same shared surface + data as the proposal's own
+                page: the thread is keyed by proposal id, so "Discussion —
+                Question N" here and the comments on /proposals/<id> are
+                literally one thread. The heading names the question so the
+                pairing is obvious. */}
             <div className="mt-8">
               <h3 className="mb-4 text-center text-base font-bold text-foreground">
-                Discussion — Question {i + 1}
+                Discussion — Question {i + 1}: {referendumQuestionLabel(p.title)}
               </h3>
               <ProposalVoteDiscussion proposalId={p.id} />
             </div>
