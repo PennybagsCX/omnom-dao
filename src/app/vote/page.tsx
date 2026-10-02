@@ -15,6 +15,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ClassBreakdownCard } from "@/components/shared/class-breakdown";
+import { FinalizedProposalRow } from "@/components/results/finalized-proposal-row";
 import { Markdown } from "@/components/shared/markdown";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import {
@@ -33,7 +34,6 @@ import { buildResults, loadElection, tally } from "@/lib/election-tally";
 import {
   listFinalizedProposals,
   tallyProposalByHolderClass,
-  type ProposalClassTally,
 } from "@/lib/proposal-service";
 import { loadReferendum, referendumQuestionLabel, type Referendum } from "@/lib/referendum";
 import { ShareButtons } from "@/components/shared/share-buttons";
@@ -65,13 +65,6 @@ function formatDay(iso: string): string {
     year: "numeric",
     timeZone: "UTC",
   });
-}
-
-function formatWindowLabel(p: Proposal): string | null {
-  if (p.votingStartsAt && p.votingEndsAt) {
-    return `Voted ${formatDay(p.votingStartsAt)} – ${formatDay(p.votingEndsAt)}`;
-  }
-  return p.votingEndsAt ? `Closed ${formatDay(p.votingEndsAt)}` : null;
 }
 
 export default async function VotePage() {
@@ -394,41 +387,15 @@ export default async function VotePage() {
             </div>
           </Link>
 
-          {/* Finalized proposals — dedicated pages: /proposals/[id] */}
+          {/* Finalized proposals — same expandable row as /results: outcome,
+              tallies, quorum, and the Who-has-voted breakdown collapsed by
+              default (dedicated pages: /proposals/[id]). */}
           {finalized.map((p) => (
-            <Link
+            <FinalizedProposalRow
               key={p.id}
-              href={`/proposals/${p.id}`}
-              data-testid={`past-vote-${p.id}`}
-              className="block rounded-lg border border-border bg-bg-elevated/30 p-4 transition-colors hover:border-gold/40"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="line-clamp-1 min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
-                  {p.title}
-                </span>
-                <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-                  View outcome <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                </span>
-              </div>
-              <div className="mt-1 text-xs text-text-dim">
-                {PROPOSAL_TYPE_CONFIG[p.type]?.label ?? p.type}
-                {formatWindowLabel(p) ? ` · ${formatWindowLabel(p)}` : ""}
-              </div>
-              <div className="mt-2 text-sm text-muted-foreground">
-                Outcome: <ProposalStatusBadge status={p.status} />
-                {p.quorumAchieved !== null && (
-                  <span className="ml-2 font-mono text-xs text-text-dim">
-                    quorum {p.quorumAchieved.toFixed(1)}% / {p.quorumRequired}%
-                  </span>
-                )}
-              </div>
-              {/* Same "Who has voted" breakdown as the detail page — one card
-                  per past vote, everywhere consistent. */}
-              <ClassBreakdownCard
-                tallies={finalizedTallies.get(p.id) ?? []}
-                className="mt-3"
-              />
-            </Link>
+              proposal={p}
+              tallies={finalizedTallies.get(p.id) ?? []}
+            />
           ))}
         </div>
 
@@ -486,6 +453,14 @@ async function ReferendumHub({
 }) {
   const first = referendum.proposals[0];
   if (!first) return null;
+
+  // Per-question holder-class turnout — same breakdown the single-vote
+  // layout and the detail pages show, one per referendum question.
+  const talliesByQuestion = new Map(
+    await Promise.all(
+      referendum.proposals.map(async (p) => [p.id, await tallyProposalByHolderClass(p.id)] as const),
+    ),
+  );
 
   const votes = referendum.proposals.reduce(
     (acc, p) => ({
@@ -638,6 +613,11 @@ async function ReferendumHub({
               votesAbstain={p.votesAbstain}
               quorumRequired={p.quorumRequired}
               totalPower={totalPower}
+            />
+            {/* Same per-question "Who has voted" breakdown everywhere. */}
+            <ClassBreakdownCard
+              tallies={talliesByQuestion.get(p.id) ?? []}
+              className="mt-4"
             />
           </div>
         </section>

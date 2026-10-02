@@ -4,7 +4,6 @@ import { ArrowRight, BarChart3, ClipboardList, Vote } from "lucide-react";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
-import { PROPOSAL_TYPE_CONFIG } from "@/lib/constants";
 import {
   FGE_VOTING_ENDS_AT,
   FGE_VOTING_STARTS_AT,
@@ -18,9 +17,9 @@ import {
   tallyProposalByHolderClass,
   type ProposalClassTally,
 } from "@/lib/proposal-service";
-import { ProposalClassRow } from "@/components/shared/class-breakdown";
+import { FinalizedProposalRow } from "@/components/results/finalized-proposal-row";
 import { cn } from "@/lib/utils";
-import { ProposalStatus, type Proposal } from "@/types";
+import type { Proposal } from "@/types";
 
 /** Live outcome data — rendered per request, never prerendered at build time. */
 export const dynamic = "force-dynamic";
@@ -256,139 +255,4 @@ export default async function ResultsPage() {
       </section>
     </div>
   );
-}
-
-/* ── Finalized proposal row ─────────────────────────────────────── */
-
-function FinalizedProposalRow({
-  proposal: p,
-  tallies,
-}: {
-  proposal: Proposal;
-  tallies: ProposalClassTally[];
-}) {
-  const typeLabel = PROPOSAL_TYPE_CONFIG[p.type]?.label ?? p.type;
-
-  return (
-    <div
-      data-testid="results-proposal-row"
-      className="rounded-lg border border-border bg-bg-elevated/30 p-4"
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <Link
-          href={`/proposals/${p.id}`}
-          className="text-sm font-semibold text-foreground transition-colors hover:text-gold"
-        >
-          {p.title}
-        </Link>
-        <ProposalStatusBadge status={p.status} />
-      </div>
-
-      <div className="mt-1 text-xs text-text-dim">
-        {typeLabel}
-        {p.votingStartsAt && p.votingEndsAt
-          ? ` · Voted ${formatDay(p.votingStartsAt)} – ${formatDay(p.votingEndsAt)}`
-          : p.votingEndsAt
-            ? ` · Closed ${formatDay(p.votingEndsAt)}`
-            : ""}
-      </div>
-
-      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
-        <div>
-          <div className="font-mono text-sm font-bold text-emerald-300">
-            {p.votesFor.toLocaleString()}
-          </div>
-          <div className="text-xs text-text-dim">For</div>
-        </div>
-        <div>
-          <div className="font-mono text-sm font-bold text-rose-300">
-            {p.votesAgainst.toLocaleString()}
-          </div>
-          <div className="text-xs text-text-dim">Against</div>
-        </div>
-        <div>
-          <div className="font-mono text-sm font-bold text-gold">
-            {p.votesAbstain.toLocaleString()}
-          </div>
-          <div className="text-xs text-text-dim">Abstain</div>
-        </div>
-        <div>
-          <div className="font-mono text-sm font-bold text-gold">
-            {p.quorumAchieved !== null ? `${p.quorumAchieved.toFixed(1)}%` : "—"}
-            <span className="text-xs font-normal text-text-dim">
-              {" "}
-              / {p.quorumRequired}%
-            </span>
-          </div>
-          <div className="text-xs text-text-dim">Quorum</div>
-        </div>
-      </div>
-
-      {/* Plain-language outcome — what the vote MEANT, not just the numbers. */}
-      <div className="mt-3 border-t border-border pt-2 text-xs text-muted-foreground">
-        <OutcomeSentence proposal={p} />
-      </div>
-
-      {/* Who has voted — holder-class turnout, same breakdown as /vote and
-          the proposal detail page. */}
-      {tallies.length > 0 && (
-        <div className="mt-3 space-y-2 border-t border-border pt-3">
-          <p className="text-xs font-semibold uppercase tracking-widest text-text-dim">
-            Who has voted
-          </p>
-          {tallies.map((row) => (
-            <ProposalClassRow key={row.holderClass} row={row} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-const FALLBACK_META = "consensus-fallback";
-
-function OutcomeSentence({ proposal: p }: { proposal: Proposal }) {
-  if (p.status === ProposalStatus.PASSED) {
-    return (
-      <span>
-        <span className="font-medium text-emerald-300">Passed</span> — adopted
-        by the community. Execution is coordinated off-chain and noted on the
-        proposal.
-      </span>
-    );
-  }
-  if (p.status === ProposalStatus.FAILED) {
-    return (
-      <span>
-        <span className="font-medium text-rose-300">Failed</span> — rejected by
-        the community; the current rules stay in force.
-      </span>
-    );
-  }
-  if (p.status === ProposalStatus.EXPIRED) {
-    return (
-      <span>
-        <span className="font-medium text-slate-300">Quorum not met</span> —
-        {(p.quorumAchieved ?? 0).toFixed(2)}% of the {p.quorumRequired}% bar;
-        expired with no change adopted.
-      </span>
-    );
-  }
-  if (p.status === ProposalStatus.EXECUTED) {
-    return p.metadata?.adoptedAs === FALLBACK_META ? (
-      <span>
-        <span className="font-medium text-gold">Adopted as working consensus</span>{" "}
-        — quorum was not met ({(p.quorumAchieved ?? 0).toFixed(2)}% of{" "}
-        {p.quorumRequired}%); the most-voted outcome stands under the fallback
-        rule published before the vote, with re-confirmation planned as turnout
-        grows.
-      </span>
-    ) : (
-      <span>
-        <span className="font-medium text-emerald-300">Executed</span> — the
-        passed outcome was carried out and recorded.
-      </span>
-    );
-  }
-  return <span>Outcome recorded.</span>;
 }

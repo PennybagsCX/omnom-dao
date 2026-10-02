@@ -41,7 +41,7 @@ import { AdminRejectionBanner } from "@/components/proposals/admin-rejection-ban
 import { AdoptConsensusControl } from "@/components/proposals/adopt-consensus-control";
 import { ConsensusFallbackBanner } from "@/components/proposals/consensus-fallback-banner";
 import { ProposalVoteResults } from "@/components/proposals/proposal-vote-actions";
-import { ClassBreakdownCard } from "@/components/shared/class-breakdown";
+import { ProposalClassRow } from "@/components/shared/class-breakdown";
 import { DeleteProposalDialog } from "@/components/proposals/delete-proposal-dialog";
 import { VoteButton } from "@/components/proposals/proposal-vote-actions";
 import {
@@ -339,13 +339,18 @@ export default function ProposalDetailPage() {
               )}
 
               {/* Who has voted — holder-class turnout, same as /vote and
-                  /governance-vote (empty until the first ballot). */}
+                  /governance-vote (rows only; the Vote Breakdown card above
+                  already carries the header). */}
               {hasVotingWindow && (
                 <div className="mt-4 border-t border-border pt-4">
                   <p className="mb-3 flex items-center justify-center gap-2 text-sm font-semibold text-foreground">
                     <Users className="h-4 w-4 text-gold" aria-hidden /> Who has voted
                   </p>
-                  <ClassBreakdownCard tallies={data.classTallies} />
+                  <div className="space-y-2">
+                    {data.classTallies.map((row) => (
+                      <ProposalClassRow key={row.holderClass} row={row} />
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>
