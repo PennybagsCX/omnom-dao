@@ -35,7 +35,7 @@ import { Markdown } from "@/components/shared/markdown";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import { ProposalTypeBadge } from "@/components/shared/proposal-type-badge";
 import { QuorumProgress } from "@/components/shared/quorum-progress";
-import { ShareButtons, versionFromDate } from "@/components/shared/share-buttons";
+import { ShareButtons } from "@/components/shared/share-buttons";
 import { VoteBar } from "@/components/shared/vote-bar";
 import { AdminRejectionBanner } from "@/components/proposals/admin-rejection-banner";
 import { AdoptConsensusControl } from "@/components/proposals/adopt-consensus-control";
@@ -58,6 +58,7 @@ import {
   formatDate,
   formatDateTime,
   shortenAddress,
+  versionFromDate,
 } from "@/lib/utils";
 import { VOTE_CHOICE_CONFIG } from "@/lib/constants";
 import { ConnectCta } from "@/components/wallet/connect-cta";
@@ -511,7 +512,6 @@ interface VotePanelProps {
 
 function VotePanel({
   proposal,
-  votes,
   isActive,
   isClosed,
   userVoted,

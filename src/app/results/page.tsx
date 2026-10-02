@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ArrowRight, BarChart3, ClipboardList, Vote } from "lucide-react";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import {
   FGE_VOTING_ENDS_AT,
   FGE_VOTING_STARTS_AT,
@@ -12,14 +11,9 @@ import {
   type ElectionChoice,
 } from "@/lib/election";
 import { buildResults, loadElection, tally } from "@/lib/election-tally";
-import {
-  listFinalizedProposals,
-  tallyProposalByHolderClass,
-  type ProposalClassTally,
-} from "@/lib/proposal-service";
+import { listFinalizedProposals, tallyProposalByHolderClass } from "@/lib/proposal-service";
 import { FinalizedProposalRow } from "@/components/results/finalized-proposal-row";
 import { cn } from "@/lib/utils";
-import type { Proposal } from "@/types";
 
 /** Live outcome data — rendered per request, never prerendered at build time. */
 export const dynamic = "force-dynamic";

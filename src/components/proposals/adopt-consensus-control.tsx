@@ -47,7 +47,11 @@ export function AdoptConsensusControl({ proposal }: { proposal: Proposal }) {
   const declaredAt = proposal.metadata?.fallbackIntentDeclaredAt ?? null;
   const coolingOffEndsAt =
     declaredAt !== null ? Date.parse(declaredAt) + INTENT_COOLDOWN_MS : null;
-  const coolingOffOver = coolingOffEndsAt !== null && Date.now() >= coolingOffEndsAt;
+  // The clock is read HERE, in the click handler — never during render
+  // (react-hooks/purity: an impure read makes re-renders disagree). The
+  // server re-checks this anyway; this is just the friendlier message.
+  const coolingOffOver = () =>
+    coolingOffEndsAt !== null && Date.now() >= coolingOffEndsAt;
 
   const forAgainst = proposal.votesFor + proposal.votesAgainst;
   const winShare = forAgainst > 0 ? proposal.votesFor / forAgainst : 0;
@@ -152,13 +156,17 @@ export function AdoptConsensusControl({ proposal }: { proposal: Proposal }) {
             </Button>
           </div>
         </>
-      ) : coolingOffOver ? (
+      ) : (
         <>
           <p className="mt-3 text-xs leading-relaxed text-text-dim">
-            Step 2 of 2 — cooling-off over (declared{" "}
-            {new Date(declaredAt).toLocaleString()}). Adoption also prefers the
-            winning side to hold ≥60% of FOR+AGAINST with ≥100 unique voters;
-            this vote currently shows{" "}
+            Step 2 of 2 — intent declared{" "}
+            {new Date(declaredAt).toLocaleString()}; adoption unlocks 24 hours
+            after (≈{" "}
+            {coolingOffEndsAt !== null
+              ? new Date(coolingOffEndsAt).toLocaleString()
+              : ""}
+            ). Adoption also prefers the winning side to hold ≥60% of
+            FOR+AGAINST with ≥100 unique voters; this vote currently shows{" "}
             {(winShare * 100).toFixed(1)}%
             {forAgainst > 0 ? "" : " of a zero FOR+AGAINST base"}. Falling short
             is allowed with an explicitly audited override, since these terms
@@ -195,20 +203,26 @@ export function AdoptConsensusControl({ proposal }: { proposal: Proposal }) {
                 variant="outline"
                 size="sm"
                 className="min-h-11 sm:min-h-9"
-                onClick={() => setConfirming(true)}
+                onClick={() => {
+                  if (!coolingOffOver()) {
+                    setError(
+                      coolingOffEndsAt !== null
+                        ? `Cooling-off is active until ${new Date(
+                            coolingOffEndsAt,
+                          ).toLocaleString()} — adoption unlocks 24 hours after the public declaration.`
+                        : "Cooling-off state unavailable — refresh and try again.",
+                    );
+                    return;
+                  }
+                  setError(null);
+                  setConfirming(true);
+                }}
               >
                 <Scale className="h-4 w-4" aria-hidden /> Adopt as working consensus…
               </Button>
             )}
           </div>
         </>
-      ) : (
-        <p className="mt-3 text-xs leading-relaxed text-text-dim">
-          Intent declared {new Date(declaredAt).toLocaleString()} — adoption
-          unlocks 24 hours after (≈{" "}
-          {coolingOffEndsAt !== null ? new Date(coolingOffEndsAt).toLocaleString() : ""}). Post
-          the announcement on Telegram/X now if you haven&apos;t.
-        </p>
       )}
 
       {error && (

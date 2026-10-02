@@ -120,7 +120,6 @@ export async function POST(
     // correction, and "stop" is already strictly more powerful — the
     // extension-only rule guarded nothing and blocked launch-day fixes.
     // The close must stay in the future and the total window <= 60 days.
-    const currentEndMs = proposal.votingEndsAt ? Date.parse(proposal.votingEndsAt) : NaN;
     let targetEndMs: number;
     if (parsed.data.endsAt !== undefined) {
       targetEndMs = Date.parse(parsed.data.endsAt);

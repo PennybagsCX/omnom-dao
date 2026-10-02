@@ -37,8 +37,8 @@ import {
   tallyProposalByHolderClass,
 } from "@/lib/proposal-service";
 import { loadReferendum, referendumQuestionLabel, type Referendum } from "@/lib/referendum";
-import { ShareButtons, versionFromDate } from "@/components/shared/share-buttons";
-import { cn, formatDateTime } from "@/lib/utils";
+import { ShareButtons } from "@/components/shared/share-buttons";
+import { formatDateTime, versionFromDate } from "@/lib/utils";
 import { totalQuadraticPower } from "@/lib/voting-power";
 import { ProposalStatus, type Proposal } from "@/types";
 
@@ -116,7 +116,6 @@ export default async function VotePage() {
   const classTallies = current
     ? await tallyProposalByHolderClass(current.id)
     : [];
-  const ballotsCast = classTallies.reduce((sum, row) => sum + row.count, 0);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
