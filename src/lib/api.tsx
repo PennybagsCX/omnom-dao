@@ -407,6 +407,17 @@ export function useCreateProposal() {
 }
 
 /** POST /api/v1/proposals/[id]/votes — cast a vote. */
+/**
+ * Fired on every successful ballot cast/change — the referendum hub's
+ * progress toasts listen for it (window event: no refetch timing involved).
+ */
+function dispatchBallotCastEvent(proposalId: string) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent("omnom:ballot-cast", { detail: { proposalId } }),
+  );
+}
+
 export function useCastVote(proposalId: string) {
   const qc = useQueryClient();
   return useMutation<CastVoteData, ApiRequestError, VoteChoice>({
@@ -419,6 +430,7 @@ export function useCastVote(proposalId: string) {
       toast.success(`Vote cast: ${choice}`, {
         description: "Your voting power has been recorded.",
       });
+      dispatchBallotCastEvent(proposalId);
       qc.invalidateQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
       qc.invalidateQueries({ queryKey: queryKeys.dashboard });
     },
@@ -441,6 +453,7 @@ export function useChangeVote(proposalId: string) {
       toast.success(`Vote changed: ${choice}`, {
         description: "Your voting power has been recorded.",
       });
+      dispatchBallotCastEvent(proposalId);
       qc.invalidateQueries({ queryKey: queryKeys.proposalDetail(proposalId) });
       qc.invalidateQueries({ queryKey: queryKeys.dashboard });
     },
