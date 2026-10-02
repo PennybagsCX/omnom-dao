@@ -539,7 +539,7 @@ export function ProposalVoteAdminControls({
         body: { action, ...extra },
       });
       await qc.invalidateQueries({
-        queryKey: queryKeys.proposalDetail(proposalId),
+        queryKey: queryKeys.proposalDetailPrefix(proposalId),
       });
       // The hub's countdown and window line are SERVER-rendered from the
       // proposal row — a successful extend looks like a no-op without this

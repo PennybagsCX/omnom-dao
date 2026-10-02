@@ -63,7 +63,7 @@ export function AdoptConsensusControl({ proposal }: { proposal: Proposal }) {
       body,
     });
     await qc.invalidateQueries({
-      queryKey: queryKeys.proposalDetail(proposal.id),
+      queryKey: queryKeys.proposalDetailPrefix(proposal.id),
     });
   };
 
