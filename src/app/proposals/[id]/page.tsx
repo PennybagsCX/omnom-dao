@@ -18,6 +18,7 @@ import {
   PenLine,
   Rocket,
   Scale,
+  Users,
   XCircle,
 } from "lucide-react";
 
@@ -39,6 +40,8 @@ import { VoteBar } from "@/components/shared/vote-bar";
 import { AdminRejectionBanner } from "@/components/proposals/admin-rejection-banner";
 import { AdoptConsensusControl } from "@/components/proposals/adopt-consensus-control";
 import { ConsensusFallbackBanner } from "@/components/proposals/consensus-fallback-banner";
+import { ProposalVoteResults } from "@/components/proposals/proposal-vote-actions";
+import { ClassBreakdownCard } from "@/components/shared/class-breakdown";
 import { DeleteProposalDialog } from "@/components/proposals/delete-proposal-dialog";
 import { VoteButton } from "@/components/proposals/proposal-vote-actions";
 import {
@@ -138,6 +141,10 @@ export default function ProposalDetailPage() {
     ProposalStatus.EXECUTED,
   ].includes(proposal.status);
   const totalVotes = votes.totalFor + votes.totalAgainst + votes.totalAbstain;
+  // Proposals that opened a voting window get the full results treatment
+  // (power-based results + "Who has voted" breakdown), active or closed —
+  // matching /vote and /governance-vote. Drafts/pending never voted.
+  const hasVotingWindow = proposal.votingStartsAt !== null || totalVotes > 0;
   // Quorum achieved = total voted power / total quadratic power (%) — computed
   // server-side at finalize and recorded on the proposal. We fall back to 0
   // until the proposal's recorded quorum fields are available.
@@ -314,6 +321,32 @@ export default function ProposalDetailPage() {
                 <p className="text-center text-xs text-text-dim">
                   No votes cast yet. Be the first to vote.
                 </p>
+              )}
+
+              {/* Full power-based per-choice results — same component as the
+                  /vote page, so past votes read identically. */}
+              {hasVotingWindow && (
+                <div className="mt-4 border-t border-border pt-4">
+                  <ProposalVoteResults
+                    proposalId={proposalId}
+                    votesFor={votes.totalFor}
+                    votesAgainst={votes.totalAgainst}
+                    votesAbstain={votes.totalAbstain}
+                    quorumRequired={proposal.quorumRequired}
+                    totalPower={data.totalPower}
+                  />
+                </div>
+              )}
+
+              {/* Who has voted — holder-class turnout, same as /vote and
+                  /governance-vote (empty until the first ballot). */}
+              {hasVotingWindow && (
+                <div className="mt-4 border-t border-border pt-4">
+                  <p className="mb-3 flex items-center justify-center gap-2 text-sm font-semibold text-foreground">
+                    <Users className="h-4 w-4 text-gold" aria-hidden /> Who has voted
+                  </p>
+                  <ClassBreakdownCard tallies={data.classTallies} />
+                </div>
               )}
             </CardContent>
           </Card>

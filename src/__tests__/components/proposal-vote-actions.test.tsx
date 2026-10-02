@@ -49,6 +49,8 @@ function detailWith(
     voterCount: 0,
     comments: [],
     myVote: null,
+    classTallies: [],
+    totalPower: 581973790,
   };
 }
 

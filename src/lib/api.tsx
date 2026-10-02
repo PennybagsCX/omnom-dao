@@ -38,6 +38,7 @@ import {
   type ProposalComment,
   type VoteChoice,
 } from "@/types";
+import type { ProposalClassTally } from "@/lib/proposal-service";
 import { emptyEmojiCounts } from "@/lib/emoji-reactions";
 
 // ─────────────────────────────────────────────────────────────
@@ -119,6 +120,10 @@ export interface ProposalDetailData {
     votingPower: number;
     votedAt: string;
   } | null;
+  /** Per-holder-class turnout (empty for proposals without a voting window). */
+  classTallies: ProposalClassTally[];
+  /** Total quadratic power (Σ√balance) — quorum denominator for turnout %. */
+  totalPower: number;
 }
 
 export interface CastVoteData {

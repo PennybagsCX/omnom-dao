@@ -5,7 +5,6 @@ import {
   CalendarClock,
   HelpCircle,
   History,
-  Users,
   Vote as VoteIcon,
 } from "lucide-react";
 
@@ -15,7 +14,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { HolderBadge } from "@/components/shared/holder-badge";
+import { ClassBreakdownCard } from "@/components/shared/class-breakdown";
 import { Markdown } from "@/components/shared/markdown";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import {
@@ -86,6 +85,13 @@ export default async function VotePage() {
   // Past votes = proposals that actually went to a vote; admin-rejected rows
   // (FAILED without a voting window) stay on /results and /proposals.
   const finalized = (await listFinalizedProposals()).filter((p) => p.votingEndsAt);
+  // Per-class turnout for every past vote card (1 indexed query per proposal;
+  // class lookup is in-memory over the cached snapshot).
+  const finalizedTallies = new Map(
+    await Promise.all(
+      finalized.map(async (p) => [p.id, await tallyProposalByHolderClass(p.id)] as const),
+    ),
+  );
 
   // FGE — fall back to the pinned constants when the election row is missing
   // (same graceful degradation as /results; the row exists in prod and mock).
@@ -292,28 +298,9 @@ export default async function VotePage() {
           </section>
 
           {/* Who has voted — FGE's holder-class turnout breakdown, adapted
-              to the FOR/AGAINST/ABSTAIN ballot. */}
+              to the FOR/AGAINST/ABSTAIN ballot (shared component). */}
           <section aria-label="Who has voted" className="mt-10">
-            <Card>
-              <CardHeader className="text-center">
-                <CardTitle className="inline-flex items-center justify-center gap-2 text-base">
-                  <Users className="h-4 w-4" aria-hidden /> Who has voted
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {ballotsCast === 0 ? (
-                  <EmptyState
-                    icon={<VoteIcon className="h-12 w-12" />}
-                    title="No ballots yet"
-                    description="Check back as holders cast their ballots — this breakdown updates with every vote."
-                  />
-                ) : (
-                  classTallies.map((row) => (
-                    <ProposalClassRow key={row.holderClass} row={row} />
-                  ))
-                )}
-              </CardContent>
-            </Card>
+            <ClassBreakdownCard tallies={classTallies} />
           </section>
 
               {/* Discussion — same shared thread surface as the proposal detail
@@ -435,6 +422,12 @@ export default async function VotePage() {
                   </span>
                 )}
               </div>
+              {/* Same "Who has voted" breakdown as the detail page — one card
+                  per past vote, everywhere consistent. */}
+              <ClassBreakdownCard
+                tallies={finalizedTallies.get(p.id) ?? []}
+                className="mt-3"
+              />
             </Link>
           ))}
         </div>
@@ -666,10 +659,6 @@ async function ReferendumHub({
     </>
   );
 }
-
-/* ── Proposal-vote FAQ — mechanics questions for the live ballot, mirroring
-   the FGE page's FAQ scope (weighting, changes, gas, after-close). ── */
-
 const PROPOSAL_VOTE_FAQ: Array<{ q: string; a: string }> = [
   {
     q: "Can I change my vote?",
@@ -705,81 +694,4 @@ const PROPOSAL_VOTE_FAQ: Array<{ q: string; a: string }> = [
 const REFERENDUM_FAQ: { q: string; a: string } = {
   q: "What is the Wave 1 Referendum?",
   a: "One ballot window (Oct 2 → Nov 1, 2026), three rulebook decisions that vote simultaneously: Question 1 sets the global default quorum, Question 2 the pass threshold, Question 3 the per-type quorum schedule. Each question is its own FOR/AGAINST/ABSTAIN ballot and stands on its own — vote on all three below. If the 5% quorum isn't reached, the most-voted outcome on each question is still adopted as the community's working consensus, recorded as quorum-missed and re-confirmed in a later ratification vote.",
-};
-
-/* ── Holder-class breakdown row (clone of the FGE page's HolderClassRow,
-   adapted to the three-choice proposal ballot) ─────────────────────── */
-
-function ProposalClassRow({ row }: { row: ProposalClassTally }) {
-  return (
-    <div
-      className={cn(
-        "rounded-lg border border-border bg-bg-elevated/30 p-3 transition-colors",
-        row.count > 0 && "border-border/80",
-      )}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <HolderBadge holderClass={row.holderClass} size="sm" plain />
-          <span className="truncate text-xs text-text-dim">
-            {row.count.toLocaleString()} of {row.eligibleCount.toLocaleString()}{" "}
-            wallets voted
-          </span>
-        </div>
-        <div className="shrink-0 text-right">
-          <div className="font-mono font-bold text-gold">
-            {row.turnoutPercentage.toFixed(1)}%
-          </div>
-          <div className="text-[10px] uppercase tracking-widest text-text-dim">
-            turnout
-          </div>
-        </div>
-      </div>
-
-      {/* Mini stacked bar: one segment per choice, proportional to the
-          choice's share of this class's ballots. */}
-      <div
-        className="mt-2 flex h-2 w-full overflow-hidden rounded-full bg-bg-elevated"
-        role="img"
-        aria-label={`${row.label} vote breakdown by choice`}
-      >
-        {row.count === 0 ? (
-          <div className="h-full w-full bg-bg-elevated" aria-hidden />
-        ) : (
-          row.byChoice.map((bc) => {
-            const widthPct = (bc.count / row.count) * 100;
-            if (widthPct === 0) return null;
-            return (
-              <div
-                key={bc.choice}
-                className={cn("h-full transition-all duration-500", VOTE_BAR_CLASS[bc.choice])}
-                style={{ width: `${widthPct}%` }}
-                title={`${bc.label}: ${bc.count}`}
-              />
-            );
-          })
-        )}
-      </div>
-
-      {/* Per-choice label strip below the bar — gold counts, dim labels. */}
-      <div className="mt-2 grid grid-cols-3 gap-x-3 gap-y-1 text-xs">
-        {row.byChoice.map((bc) => (
-          <div key={bc.choice} className="flex items-baseline gap-1.5">
-            <span className="font-mono font-bold text-gold tabular-nums">
-              {bc.count}
-            </span>
-            <span className="truncate text-text-dim" title={bc.label}>
-              {bc.label}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-const VOTE_BAR_CLASS: Record<string, string> = {
-  FOR: "bg-emerald-500",
-  AGAINST: "bg-rose-500",
-  ABSTAIN: "bg-slate-500",
 };

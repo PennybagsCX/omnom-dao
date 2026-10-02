@@ -31,6 +31,8 @@ const hoisted = vi.hoisted(() => {
     getProposalById: vi.fn(),
     lookupHolderClasses: vi.fn(),
     finalizeProposal: vi.fn(),
+    tallyProposalByHolderClass: vi.fn(),
+    totalQuadraticPower: vi.fn(),
   };
 });
 
@@ -46,8 +48,14 @@ vi.mock("@/lib/auth", () => ({
     commentPerUser: { limit: 30, windowSeconds: 86400 },
   },
 }));
-vi.mock("@/lib/proposal-service", () => ({ getProposalById: hoisted.getProposalById }));
+vi.mock("@/lib/proposal-service", () => ({
+  getProposalById: hoisted.getProposalById,
+  tallyProposalByHolderClass: hoisted.tallyProposalByHolderClass,
+}));
 vi.mock("@/lib/snapshot", () => ({ lookupHolderClasses: hoisted.lookupHolderClasses }));
+vi.mock("@/lib/voting-power", () => ({
+  totalQuadraticPower: hoisted.totalQuadraticPower,
+}));
 vi.mock("@/lib/proposal-finalize", () => ({ finalizeProposal: hoisted.finalizeProposal }));
 // The key difference: db is a REAL in-memory libsql client, not a vi.fn().
 vi.mock("@/lib/db", async () => {
@@ -97,6 +105,25 @@ beforeEach(async () => {
   );
   hoisted.lookupHolderClasses.mockResolvedValue(new Map());
   hoisted.finalizeProposal.mockResolvedValue(undefined);
+  hoisted.totalQuadraticPower.mockResolvedValue(581973790);
+  // Representative 7-class tally — the route passes it through untouched.
+  hoisted.tallyProposalByHolderClass.mockResolvedValue(
+    (["KRAKEN", "WHALE", "DOLPHIN", "SHARK", "OCTOPUS", "CRAB", "SEAHORSE"] as const).map(
+      (holderClass, i) => ({
+        holderClass,
+        label: holderClass,
+        emoji: "🐟",
+        count: i === 6 ? 1 : 0,
+        eligibleCount: 1000,
+        turnoutPercentage: i === 6 ? 0.1 : 0,
+        byChoice: [
+          { choice: "FOR", label: "For", count: i === 6 ? 1 : 0, percentage: i === 6 ? 100 : 0 },
+          { choice: "AGAINST", label: "Against", count: 0, percentage: 0 },
+          { choice: "ABSTAIN", label: "Abstain", count: 0, percentage: 0 },
+        ],
+      }),
+    ),
+  );
 
   // Seed: two users, the proposal, and one FOR vote from DOLPHIN (power 10).
   await db.execute({
@@ -114,6 +141,41 @@ beforeEach(async () => {
 });
 
 describe("GET /api/v1/proposals/[id] — myVote hydration against the real schema", () => {
+  it("returns classTallies (7 rows) and totalPower for a proposal with a voting window", async () => {
+    hoisted.getSessionAddress.mockResolvedValue(null);
+
+    const { status, body } = await get();
+
+    expect(status).toBe(200);
+    const data = body.data as {
+      classTallies: Array<{ holderClass: string; count: number; byChoice: unknown[] }>;
+      totalPower: number;
+    };
+    expect(data.classTallies).toHaveLength(7);
+    expect(data.classTallies.filter((t) => t.count === 1)).toHaveLength(1);
+    expect(data.totalPower).toBe(581973790);
+    expect(hoisted.tallyProposalByHolderClass).toHaveBeenCalledWith(PROPOSAL_ID);
+  });
+
+  it("returns empty classTallies and skips the tally for a proposal without a voting window", async () => {
+    hoisted.getProposalById.mockResolvedValue(
+      makeProposal({ id: PROPOSAL_ID, votingStartsAt: null, votingEndsAt: null }),
+    );
+    hoisted.getSessionAddress.mockResolvedValue(null);
+    // The skip path requires BOTH no window AND no ballots — the beforeEach
+    // seed includes one vote, which on its own triggers the breakdown.
+    const { db } = await import("@/lib/db");
+    await db.execute("DELETE FROM votes");
+
+    const { status, body } = await get();
+
+    expect(status).toBe(200);
+    const data = body.data as { classTallies: unknown[]; totalPower: number };
+    expect(data.classTallies).toEqual([]);
+    expect(data.totalPower).toBe(0);
+    expect(hoisted.tallyProposalByHolderClass).not.toHaveBeenCalled();
+  });
+
   it("returns the signed-in voter's ballot on the real schema (regression: voted_at)", async () => {
     hoisted.getSessionAddress.mockResolvedValue(ADDR_DOLPHIN);
 

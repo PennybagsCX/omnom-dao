@@ -7,7 +7,9 @@ import { getSessionAddress, requireAuth, UnauthorizedError } from "@/lib/auth";
 import { sanitizeContent } from "@/lib/sanitize";
 import { lookupHolderClasses } from "@/lib/snapshot";
 import { finalizeProposal } from "@/lib/proposal-finalize";
+import { tallyProposalByHolderClass } from "@/lib/proposal-service";
 import { totalQuadraticPower } from "@/lib/voting-power";
+import type { ProposalClassTally } from "@/lib/proposal-service";
 import { z } from "zod";
 import {
   emptyEmojiCounts,
@@ -46,6 +48,12 @@ interface ProposalDetailData {
   voterCount: number;
   comments: ProposalComment[];
   myVote: MyVoteData | null;
+  /** Per-holder-class turnout (7 rows, zeroed when no ballots). Empty for
+   * proposals that never opened a voting window. */
+  classTallies: ProposalClassTally[];
+  /** Total quadratic power (Σ√balance) — the quorum denominator the client
+   * needs to render turnout percentages. */
+  totalPower: number;
 }
 
 /** GET /api/v1/proposals/[id] — public. */
@@ -197,6 +205,23 @@ export async function GET(
 
     const myCommentEmoji = new Map<string, EmojiKey>();
     let myProposalEmoji: EmojiKey | null = null;
+
+    // Per-holder-class turnout for the "Who has voted" breakdown (mirrors the
+    // /vote page). Computed for anything with a voting window — active or
+    // closed — and skipped for drafts/pending to save the query. 1 indexed
+    // SELECT; class lookup is in-memory over the cached snapshot.
+    const wantsClassTallies = proposal.votingStartsAt !== null || voterCount > 0;
+    const classTallies: ProposalClassTally[] = wantsClassTallies
+      ? await tallyProposalByHolderClass(id)
+      : [];
+    let totalPower = 0;
+    if (wantsClassTallies) {
+      try {
+        totalPower = await totalQuadraticPower();
+      } catch (err) {
+        console.error("[api/proposals/[id]] totalQuadraticPower failed:", err);
+      }
+    }
     if (sessionAddrForReactions) {
       const me = sessionAddrForReactions.toLowerCase();
       if (commentIds.length > 0) {
@@ -268,6 +293,8 @@ export async function GET(
       voterCount,
       comments,
       myVote,
+      classTallies,
+      totalPower,
     };
     return apiSuccess<ProposalDetailData>(data);
   } catch (error) {

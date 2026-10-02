@@ -49,6 +49,8 @@ const DETAIL_VOTED_FOR: ProposalDetailData = {
   proposal: {} as ProposalDetailData["proposal"],
   votes: { totalFor: 1, totalAgainst: 0, totalAbstain: 0 },
   voterCount: 1,
+  classTallies: [],
+  totalPower: 581973790,
   comments: [],
   myVote: { choice: VoteChoice.FOR, votingPower: 10, votedAt: "2026-09-22T00:00:00Z" },
 };

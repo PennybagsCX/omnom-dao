@@ -13,7 +13,12 @@ import {
   type ElectionChoice,
 } from "@/lib/election";
 import { buildResults, loadElection, tally } from "@/lib/election-tally";
-import { listFinalizedProposals } from "@/lib/proposal-service";
+import {
+  listFinalizedProposals,
+  tallyProposalByHolderClass,
+  type ProposalClassTally,
+} from "@/lib/proposal-service";
+import { ProposalClassRow } from "@/components/shared/class-breakdown";
 import { cn } from "@/lib/utils";
 import { ProposalStatus, type Proposal } from "@/types";
 
@@ -76,6 +81,13 @@ export default async function ResultsPage() {
   }
 
   const finalized = await listFinalizedProposals();
+  // Per-class turnout for every finalized vote row (1 indexed query each;
+  // class lookup is in-memory over the cached snapshot).
+  const talliesByProposal = new Map(
+    await Promise.all(
+      finalized.map(async (p) => [p.id, await tallyProposalByHolderClass(p.id)] as const),
+    ),
+  );
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
@@ -219,7 +231,11 @@ export default async function ResultsPage() {
         ) : (
           <div className="mt-4 space-y-3">
             {finalized.map((p) => (
-              <FinalizedProposalRow key={p.id} proposal={p} />
+              <FinalizedProposalRow
+                key={p.id}
+                proposal={p}
+                tallies={talliesByProposal.get(p.id) ?? []}
+              />
             ))}
           </div>
         )}
@@ -244,7 +260,13 @@ export default async function ResultsPage() {
 
 /* ── Finalized proposal row ─────────────────────────────────────── */
 
-function FinalizedProposalRow({ proposal: p }: { proposal: Proposal }) {
+function FinalizedProposalRow({
+  proposal: p,
+  tallies,
+}: {
+  proposal: Proposal;
+  tallies: ProposalClassTally[];
+}) {
   const typeLabel = PROPOSAL_TYPE_CONFIG[p.type]?.label ?? p.type;
 
   return (
@@ -306,6 +328,19 @@ function FinalizedProposalRow({ proposal: p }: { proposal: Proposal }) {
       <div className="mt-3 border-t border-border pt-2 text-xs text-muted-foreground">
         <OutcomeSentence proposal={p} />
       </div>
+
+      {/* Who has voted — holder-class turnout, same breakdown as /vote and
+          the proposal detail page. */}
+      {tallies.length > 0 && (
+        <div className="mt-3 space-y-2 border-t border-border pt-3">
+          <p className="text-xs font-semibold uppercase tracking-widest text-text-dim">
+            Who has voted
+          </p>
+          {tallies.map((row) => (
+            <ProposalClassRow key={row.holderClass} row={row} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
