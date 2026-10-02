@@ -1,21 +1,24 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import { ProposalClassRow } from "@/components/shared/class-breakdown";
 import { PROPOSAL_TYPE_CONFIG } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 import { ProposalStatus, type Proposal } from "@/types";
 import type { ProposalClassTally } from "@/lib/proposal-service";
 
 /**
- * One decided vote on /results — expandable, FAQ-style: the row shows
- * outcome, tallies, quorum, and the plain-language sentence; the
- * "Who has voted" holder-class breakdown expands on click (same pattern as
- * the FAQ accordions). Client component so the expand state is local.
+ * One decided vote on /results — expandable exactly like the FAQ accordions
+ * (Radix, smooth height animation): the row shows outcome, tallies, quorum,
+ * and the plain-language sentence; the "Who has voted" holder-class
+ * breakdown expands on click. Client component so the expand state is local.
  */
 export function FinalizedProposalRow({
   proposal: p,
@@ -24,8 +27,6 @@ export function FinalizedProposalRow({
   proposal: Proposal;
   tallies: ProposalClassTally[];
 }) {
-  const [open, setOpen] = useState(false);
-
   const typeLabel = PROPOSAL_TYPE_CONFIG[p.type]?.label ?? p.type;
 
   return (
@@ -88,35 +89,29 @@ export function FinalizedProposalRow({
         <OutcomeSentence proposal={p} />
       </div>
 
-      {/* Expandable holder-class breakdown — FAQ-style disclosure. */}
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        data-testid="results-row-toggle"
-        className={cn(
-          "mt-3 flex w-full items-center justify-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-gold/40 hover:text-gold",
-          open && "border-gold/40 text-gold",
-        )}
-      >
-        Who has voted — class breakdown
-        <ChevronDown
-          className={cn("h-3.5 w-3.5 transition-transform duration-200", open && "rotate-180")}
-          aria-hidden
-        />
-      </button>
-
-      {open && (
-        <div className="mt-3 space-y-2 border-t border-border pt-3">
-          {tallies.length === 0 ? (
-            <p className="text-center text-xs text-text-dim">
-              No class breakdown available for this vote.
-            </p>
-          ) : (
-            tallies.map((row) => <ProposalClassRow key={row.holderClass} row={row} />)
-          )}
-        </div>
-      )}
+      {/* Expandable holder-class breakdown — the same Radix accordion the
+          FAQ uses, so it glides open/closed instead of snapping. */}
+      <Accordion type="single" collapsible className="mt-3">
+        <AccordionItem value="breakdown" className="border-none">
+          <AccordionTrigger
+            data-testid="results-row-toggle"
+            className="justify-center py-2 text-xs font-medium text-muted-foreground hover:no-underline hover:text-gold"
+          >
+            Who has voted — class breakdown
+          </AccordionTrigger>
+          <AccordionContent className="border-t border-border pt-3">
+            <div className="space-y-2">
+              {tallies.length === 0 ? (
+                <p className="text-center text-xs text-text-dim">
+                  No class breakdown available for this vote.
+                </p>
+              ) : (
+                tallies.map((row) => <ProposalClassRow key={row.holderClass} row={row} />)
+              )}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }
