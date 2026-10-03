@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -13,7 +13,6 @@ import {
   FileText,
   HelpCircle,
   Hourglass,
-  Loader2,
   MessageSquare,
   PenLine,
   Rocket,
@@ -40,32 +39,25 @@ import { VoteBar } from "@/components/shared/vote-bar";
 import { AdminRejectionBanner } from "@/components/proposals/admin-rejection-banner";
 import { AdoptConsensusControl } from "@/components/proposals/adopt-consensus-control";
 import { ConsensusFallbackBanner } from "@/components/proposals/consensus-fallback-banner";
-import { ProposalVoteResults } from "@/components/proposals/proposal-vote-actions";
+import { ProposalBallotCards, ProposalVoteResults } from "@/components/proposals/proposal-vote-actions";
 import { ProposalClassRow } from "@/components/shared/class-breakdown";
 import { DeleteProposalDialog } from "@/components/proposals/delete-proposal-dialog";
-import { VoteButton } from "@/components/proposals/proposal-vote-actions";
 import {
   useCreateComment,
   useToggleReaction,
   useToggleCommentEmojiReaction,
   useCurrentUser,
   useProposalDetail,
-  type ProposalDetailData,
 } from "@/lib/api";
-import { useProposalVote } from "@/lib/use-proposal-vote";
 import {
-  formatCompact,
   formatDate,
   formatDateTime,
   shortenAddress,
   versionFromDate,
 } from "@/lib/utils";
-import { VOTE_CHOICE_CONFIG } from "@/lib/constants";
-import { ConnectCta } from "@/components/wallet/connect-cta";
 import {
   ErrorCode,
   ProposalStatus,
-  VoteChoice,
   type Proposal,
   type ProposalComment,
 } from "@/types";
@@ -75,10 +67,11 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 /**
  * Proposal detail page (DESIGN.md §7.6).
  *
- * Public read; voting/commenting requires auth. Sticky vote panel on desktop
- * (right sidebar, CSS sticky), sticky bottom bar on mobile. Renders the
- * markdown body, vote breakdown + quorum, lifecycle timeline, and threaded
- * comments.
+ * Public read; voting/commenting requires auth. Single-column layout (same
+ * width as the other pages): the live ballot is the SAME selectable-card
+ * component the /vote hub uses (ProposalBallotCards), so voting and changing
+ * a vote work identically on every screen size. Renders the markdown body,
+ * vote breakdown + quorum, lifecycle timeline, and threaded comments.
  */
 export default function ProposalDetailPage() {
   const params = useParams<{ id: string }>();
@@ -86,10 +79,6 @@ export default function ProposalDetailPage() {
 
   const { data, isLoading, isError, error } = useProposalDetail(proposalId);
   const { data: me } = useCurrentUser({ retry: false });
-  // Cast/change-vote state machine — extracted verbatim into a shared hook so
-  // the /vote hub's live cards run the same code path (same query key, same
-  // optimistic myVote handling). VotePanel/MobileVoteBar markup is unchanged.
-  const vote = useProposalVote(proposalId);
   const createComment = useCreateComment(proposalId);
   const toggleReaction = useToggleReaction(proposalId);
   const toggleCommentEmoji = useToggleCommentEmojiReaction(proposalId);
@@ -150,10 +139,9 @@ export default function ProposalDetailPage() {
   // server-side at finalize and recorded on the proposal. We fall back to 0
   // until the proposal's recorded quorum fields are available.
   const quorumAchieved = proposal.quorumAchieved ?? 0;
-  const userVoted = vote.myVote !== null;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Back link */}
       <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 text-muted-foreground">
         <Link href="/proposals">
@@ -165,9 +153,11 @@ export default function ProposalDetailPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: EASE }}
-        className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]"
+        className="space-y-6"
       >
-        {/* ── Main column ─────────────────────────────────────── */}
+        {/* ── Single column — same width as the other pages. Voting lives
+                inline (ballot cards below), not in a sidebar, so every screen
+                size gets the same ballot. ────────────────────────────── */}
         <div className="min-w-0 space-y-6">
           {/* Header */}
           <Card>
@@ -179,6 +169,16 @@ export default function ProposalDetailPage() {
               <h1 className="mt-3 text-2xl font-bold leading-tight text-foreground sm:text-3xl">
                 {proposal.title}
               </h1>
+              {/* Outcome of record for decided votes — the line the old
+                  sidebar carried (status-driven, never tally-derived). */}
+              {isClosed && (
+                <div className="mt-3 flex justify-center">
+                  <FinalResultLabel
+                    status={proposal.status}
+                    adoptedAs={proposal.metadata?.adoptedAs}
+                  />
+                </div>
+              )}
               <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1.5">
                   <PenLine className="h-3.5 w-3.5" aria-hidden />
@@ -285,6 +285,38 @@ export default function ProposalDetailPage() {
             </CardContent>
           </Card>
 
+          {/* Cast your ballot — the SAME selectable cards the /vote hub uses
+              (one component, one code path): tap For/Against/Abstain to vote
+              or change your vote at any time while the window is open. Works
+              on every screen size — this replaced the desktop-only sidebar
+              panel + mobile bottom bar, which left small screens with no way
+              to vote at all. */}
+          {isActive && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="inline-flex items-center justify-center gap-2 text-base">
+                  <Scale className="h-4 w-4" aria-hidden /> Cast your ballot
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {proposal.votingEndsAt && (
+                  <div className="mb-4 flex items-center justify-between text-sm">
+                    <span className="font-medium text-muted-foreground">Time remaining</span>
+                    <CountdownTimer endsAt={proposal.votingEndsAt} />
+                  </div>
+                )}
+                <ProposalBallotCards
+                  proposalId={proposalId}
+                  isActive={isActive}
+                  votingStartsAt={proposal.votingStartsAt}
+                  votesFor={proposal.votesFor}
+                  votesAgainst={proposal.votesAgainst}
+                  votesAbstain={proposal.votesAbstain}
+                />
+              </CardContent>
+            </Card>
+          )}
+
           {/* Vote breakdown */}
           <Card>
             <CardHeader>
@@ -384,40 +416,7 @@ export default function ProposalDetailPage() {
           />
         </div>
 
-        {/* ── Sticky vote panel (desktop sidebar) ─────────────── */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-6 space-y-4">
-            <VotePanel
-              proposal={proposal}
-              votes={votes}
-              isActive={isActive}
-              isClosed={isClosed}
-              userVoted={userVoted}
-              myVote={vote.myVote}
-              isAuthenticated={Boolean(me)}
-              votingPower={me?.votingPower}
-              onVote={vote.onVote}
-              isVoting={vote.isVoting}
-              onChangeVote={vote.onChangeVote}
-              isChangingVote={vote.isChangingVote}
-            />
-          </div>
-        </aside>
       </motion.div>
-
-      {/* ── Mobile sticky bottom vote bar ─────────────────────── */}
-      {(isActive || isClosed) && (
-        <MobileVoteBar
-          isActive={isActive}
-          userVoted={userVoted}
-          myVote={vote.myVote}
-          isAuthenticated={Boolean(me)}
-          onVote={vote.onVote}
-          isVoting={vote.isVoting}
-          onChangeVote={vote.onChangeVote}
-          isChangingVote={vote.isChangingVote}
-        />
-      )}
     </div>
   );
 }
@@ -493,235 +492,6 @@ function FinalResultLabel({
     );
   }
   return <span className="text-muted-foreground">Outcome pending</span>;
-}
-
-interface VotePanelProps {
-  proposal: Proposal;
-  votes: ProposalDetailData["votes"];
-  isActive: boolean;
-  isClosed: boolean;
-  userVoted: boolean;
-  myVote: VoteChoice | null;
-  isAuthenticated: boolean;
-  votingPower?: number;
-  onVote: (choice: VoteChoice) => void;
-  isVoting: boolean;
-  onChangeVote: (choice: VoteChoice) => void;
-  isChangingVote: boolean;
-}
-
-function VotePanel({
-  proposal,
-  isActive,
-  isClosed,
-  userVoted,
-  myVote,
-  isAuthenticated,
-  votingPower,
-  onVote,
-  isVoting,
-  onChangeVote,
-  isChangingVote,
-}: VotePanelProps) {
-  const [isChanging, setIsChanging] = useState(false);
-
-  const handleVoteChange = async (choice: VoteChoice) => {
-    await onChangeVote(choice);
-    setIsChanging(false);
-  };
-  return (
-    <Card>
-      <CardContent className="space-y-4 p-5">
-        {/* Countdown */}
-        {isActive && proposal.votingEndsAt && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">Time remaining</span>
-            <CountdownTimer endsAt={proposal.votingEndsAt} />
-          </div>
-        )}
-
-        {/* Voting actions */}
-        {isActive && !userVoted && (
-          <>
-            {!isAuthenticated ? (
-              <div className="space-y-3 text-center">
-                <p className="text-sm text-muted-foreground">
-                  Connect your wallet to vote on this proposal.
-                </p>
-                <ConnectCta className="w-full">Connect to Vote</ConnectCta>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-foreground">Cast your vote</p>
-                <div className="grid grid-cols-1 gap-2">
-                  <VoteButton
-                    choice={VoteChoice.FOR}
-                    onVote={onVote}
-                    disabled={isVoting}
-                  />
-                  <VoteButton
-                    choice={VoteChoice.AGAINST}
-                    onVote={onVote}
-                    disabled={isVoting}
-                  />
-                  <VoteButton
-                    choice={VoteChoice.ABSTAIN}
-                    onVote={onVote}
-                    disabled={isVoting}
-                  />
-                </div>
-                {votingPower != null && (
-                  <p
-                    className="pt-1 text-center text-xs text-text-dim"
-                    title="Quadratic voting (community-chosen): your power is the square root of your snapshot balance."
-                  >
-                    Your voting power (√ balance):{" "}
-                    <span className="font-mono text-muted-foreground">
-                      {formatCompact(votingPower)}
-                    </span>
-                  </p>
-                )}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Already voted / changing vote */}
-        {isActive && userVoted && myVote && !isChanging && (
-          <div className="space-y-2 rounded-lg border border-emerald-600/30 bg-emerald-500/10 p-3 text-center">
-            <p className="text-sm font-medium text-foreground">
-              You voted:{" "}
-              <span className={`inline-flex items-center gap-1 ${VOTE_CHOICE_CONFIG[myVote].accentClass}`}>
-                <DynamicIcon name={VOTE_CHOICE_CONFIG[myVote].iconName} className="h-3.5 w-3.5" aria-hidden />
-                {VOTE_CHOICE_CONFIG[myVote].label}
-              </span>
-            </p>
-            <p className="text-xs text-text-dim">Your vote has been recorded.</p>
-            <Button variant="outline" size="sm" className="w-full" onClick={() => setIsChanging(true)}>
-              Change Vote
-            </Button>
-          </div>
-        )}
-
-        {/* Changing vote */}
-        {isActive && userVoted && isChanging && (
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-foreground">Change your vote</p>
-            <div className="grid grid-cols-1 gap-2">
-              <VoteButton
-                choice={VoteChoice.FOR}
-                onVote={handleVoteChange}
-                disabled={isChangingVote}
-              />
-              <VoteButton
-                choice={VoteChoice.AGAINST}
-                onVote={handleVoteChange}
-                disabled={isChangingVote}
-              />
-              <VoteButton
-                choice={VoteChoice.ABSTAIN}
-                onVote={handleVoteChange}
-                disabled={isChangingVote}
-              />
-            </div>
-            <Button variant="ghost" size="sm" className="w-full" onClick={() => setIsChanging(false)} disabled={isChangingVote}>
-              Cancel
-            </Button>
-          </div>
-        )}
-
-        {/* Closed / not active */}
-        {!isActive && (
-          <div className="space-y-2">
-            <p className="text-center text-sm text-muted-foreground">
-              {isClosed ? "Voting has ended" : "Voting is not open yet"}
-            </p>
-            {isClosed && (
-              <div className="rounded-lg border border-border bg-bg-elevated/50 p-3 text-center">
-                <p className="text-xs text-text-dim">Final result</p>
-                <p className="mt-1 text-sm font-semibold text-foreground">
-                  <FinalResultLabel status={proposal.status} adoptedAs={proposal.metadata?.adoptedAs} />
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {isVoting && (
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Casting vote…
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function MobileVoteBar({
-  isActive,
-  userVoted,
-  isAuthenticated,
-  onVote,
-  isVoting,
-  onChangeVote,
-  isChangingVote,
-  myVote,
-}: Pick<
-  VotePanelProps,
-  "isActive" | "userVoted" | "isAuthenticated" | "onVote" | "isVoting" | "onChangeVote" | "isChangingVote"
-> & {
-  myVote: VoteChoice | null;
-}) {
-  // Compact three-button row fixed to the bottom on mobile.
-  const [isChanging, setIsChanging] = useState(false);
-
-  const handleVoteChange = async (choice: VoteChoice) => {
-    await onChangeVote(choice);
-    setIsChanging(false);
-  };
-
-  if (isActive && userVoted && myVote && !isChanging) {
-    return (
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg-surface/95 px-4 py-3 backdrop-blur lg:hidden">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex flex-1 items-center gap-2">
-            <span className="text-sm text-text-dim">You voted:</span>
-            <span className={`inline-flex items-center gap-1 text-sm font-medium ${VOTE_CHOICE_CONFIG[myVote].accentClass}`}>
-              <DynamicIcon name={VOTE_CHOICE_CONFIG[myVote].iconName} className="h-3.5 w-3.5" aria-hidden />
-              {VOTE_CHOICE_CONFIG[myVote].label}
-            </span>
-          </div>
-          <Button variant="outline" size="sm" onClick={() => setIsChanging(true)} disabled={isChangingVote}>
-            Change
-          </Button>
-        </div>
-      </div>
-    );
-  }
-  return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg-surface/95 px-4 py-3 backdrop-blur lg:hidden">
-      {isActive && !isAuthenticated ? (
-        <ConnectCta className="w-full">Connect to Vote</ConnectCta>
-      ) : isActive && isChanging ? (
-        <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-2">
-            {([VoteChoice.FOR, VoteChoice.AGAINST, VoteChoice.ABSTAIN] as VoteChoice[]).map((c) => (
-              <VoteButton key={c} choice={c} onVote={handleVoteChange} disabled={isChangingVote} />
-            ))}
-          </div>
-          <Button variant="ghost" size="sm" className="w-full" onClick={() => setIsChanging(false)} disabled={isChangingVote}>
-            Cancel
-          </Button>
-        </div>
-      ) : isActive ? (
-        <div className="grid grid-cols-3 gap-2">
-          {([VoteChoice.FOR, VoteChoice.AGAINST, VoteChoice.ABSTAIN] as VoteChoice[]).map((c) => (
-            <VoteButton key={c} choice={c} onVote={onVote} disabled={isVoting} />
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
 }
 
 /* ── Execution outcome banner ─────────────────────────────────── */

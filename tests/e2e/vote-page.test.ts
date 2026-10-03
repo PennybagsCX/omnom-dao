@@ -228,10 +228,14 @@ if (RUN_E2E) {
         targetCard.getByRole("button", { name: /^selected$/i }),
       ).toBeVisible({ timeout: 15_000 });
 
-      // …and the same ballot shows on the detail page (shared code path).
+      // …and the same ballot shows on the detail page (shared code path):
+      // the detail ballot is the same component, so the badge must sit on
+      // the choice that was just cast on /vote.
       await page.goto("/proposals/prop-active-quorum-default");
       await expect(
-        page.getByText(/your vote has been recorded|you voted:/i).first(),
+        page
+          .getByTestId(`ballot-card-${target}`)
+          .getByText(/current ballot/i),
       ).toBeVisible({ timeout: 30_000 });
     });
 

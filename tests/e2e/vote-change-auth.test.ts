@@ -1,4 +1,5 @@
 import { test, expect } from "./auth.fixture";
+import type { Page } from "@playwright/test";
 import {
   dismissWalletDialog,
   hideDevAuthPanel,
@@ -8,312 +9,140 @@ import {
 const RUN_E2E = !process.env.VITEST;
 
 /**
- * E2E tests for authenticated voting flows.
+ * E2E — changing a vote on the proposal detail page.
  *
- * Tests vote-change functionality with pre-authenticated state.
- * Requires dev server running with seeded proposals.
+ * The detail page's ballot is the SAME selectable-card component the /vote
+ * hub uses (ProposalBallotCards): the current choice carries the "Current
+ * ballot" badge + Selected button, and clicking another card changes the
+ * vote in one click — no modal, identical at every viewport.
  *
- * Run with: npm run test:e2e
+ * State note: the mock DB persists across tests, so each test tolerates
+ * arriving with any ballot already cast (or none).
  */
 
+type Choice = "for" | "against" | "abstain";
+const CHOICES: Choice[] = ["for", "against", "abstain"];
+
+/** Which card currently holds the "Current ballot" badge (null = not voted). */
+async function currentChoice(page: Page): Promise<Choice | null> {
+  for (const choice of CHOICES) {
+    const card = page.getByTestId(`ballot-card-${choice}`);
+    if ((await card.count()) > 0 && (await card.innerText()).includes("Current ballot")) {
+      return choice;
+    }
+  }
+  return null;
+}
+
+/** Cast a ballot by clicking the card's Select button (or the card itself). */
+async function select(page: Page, choice: Choice): Promise<void> {
+  const card = page.getByTestId(`ballot-card-${choice}`);
+  const button = card.getByRole("button", { name: /^select$/i });
+  if ((await button.count()) > 0) {
+    await button.click();
+  } else {
+    await card.click();
+  }
+  await expect(card).toContainText("Current ballot", { timeout: 15_000 });
+}
+
 if (RUN_E2E) {
-test.describe("Vote change (authenticated)", () => {
-  test.beforeEach(async ({ page, authenticated: _authenticated }) => {
-    await registerWalletDialogAutoDismiss(page);
-    await page.goto("/proposals");
-    await page.waitForLoadState("networkidle");
+  test.describe("Vote change (authenticated)", () => {
+    test.beforeEach(async ({ page, authenticated: _authenticated }) => {
+      await registerWalletDialogAutoDismiss(page);
+      await page.goto("/proposals/prop-active-tokenomics-burn");
+      await page.waitForLoadState("domcontentloaded");
+      await dismissWalletDialog(page);
+      await hideDevAuthPanel(page);
 
-    await dismissWalletDialog(page);
-    await hideDevAuthPanel(page);
-
-    // Active proposal cards on /proposals now link to /vote (owner directive:
-    // live votes vote there), so navigate straight to the detail page.
-    await page.goto("/proposals/prop-active-tokenomics-burn");
-    await page.waitForLoadState("domcontentloaded");
-
-    await dismissWalletDialog(page);
-    await hideDevAuthPanel(page);
-
-    // Wait for the proposal content to prove the page loaded.
-    await page.waitForSelector("h1", { timeout: 30_000 });
-  });
-
-  test("authenticated user can cast an initial vote", async ({ page }) => {
-    // Check if user has already voted
-    const hasExistingVote = await page.getByRole("button", { name: /change.*vote/i }).count() > 0;
-
-    if (hasExistingVote) {
-      test.skip(true, "user has already voted on this proposal — skipping initial vote test");
-      return;
-    }
-
-    // Wait for page to load
-    await page.waitForSelector("button", { timeout: 30_000 });
-
-    // Should see voting buttons
-    const forButton = page.getByRole("button", { name: /^For$/i });
-    const againstButton = page.getByRole("button", { name: /^Against$/i });
-    const abstainButton = page.getByRole("button", { name: /^Abstain$/i });
-
-    expect(await forButton.count()).toBeGreaterThan(0);
-    expect(await againstButton.count()).toBeGreaterThan(0);
-    expect(await abstainButton.count()).toBeGreaterThan(0);
-
-    // Cast a vote — wait for the auth-gated enabled state first: clicking
-    // in the window where the me-query is still settling dispatches on a
-    // re-rendering tree and the onClick guard silently drops the vote.
-    await expect(forButton.first()).toBeEnabled({ timeout: 30_000 });
-    await forButton.first().click();
-
-    // Should show voted state — retry-wait instead of a fixed sleep: under
-    // full-suite load the vote POST can take longer than any hard-coded wait.
-    // The panel renders several matching texts ("You voted: For", "Your vote
-    // has been recorded.", …) — strict mode would reject the multi-match.
-    await expect(
-      page.getByText(/your vote has been recorded|you voted/i).first(),
-    ).toBeVisible({ timeout: 10_000 });
-  });
-
-  test("vote-change button appears after voting", async ({ page }) => {
-    // Check if user has already voted
-    let changeVoteButton = page.getByRole("button", { name: /change.*vote/i });
-    const hasExistingVote = await changeVoteButton.count() > 0;
-
-    // If not already voted, cast an initial vote first
-    if (!hasExistingVote) {
-      const forButton = page.getByRole("button", { name: /^For$/i });
-      await forButton.first().click();
-      await page.waitForTimeout(2000);
-    }
-
-    // Should see "Change Vote" button
-    changeVoteButton = page.getByRole("button", { name: /change.*vote/i });
-    await expect(changeVoteButton.first()).toBeVisible({ timeout: 5000 });
-  });
-
-  test("user can change their vote", async ({ page }) => {
-    // Check if user has already voted
-    let changeVoteButton = page.getByRole("button", { name: /change.*vote/i });
-    const hasExistingVote = await changeVoteButton.count() > 0;
-
-    // If not already voted, cast an initial vote FOR
-    if (!hasExistingVote) {
-      const forButton = page.getByRole("button", { name: /^For$/i });
-      await forButton.first().click();
-      await page.waitForTimeout(2000);
-    }
-
-    // Click Change Vote
-    changeVoteButton = page.getByRole("button", { name: /change.*vote/i });
-    await changeVoteButton.first().click();
-    await page.waitForTimeout(500);
-
-    // Should see voting buttons again
-    const againstButton = page.getByRole("button", { name: /^Against$/i });
-    await expect(againstButton.first()).toBeVisible();
-
-    // Change vote to AGAINST
-    await againstButton.first().click();
-    await page.waitForTimeout(2000);
-
-    // Should show updated voted state
-    const votedMessage = page.getByText(/against/i);
-    expect(await votedMessage.count()).toBeGreaterThan(0);
-
-    // Change Vote button should still be available
-    await expect(changeVoteButton.first()).toBeVisible();
-  });
-
-  test("vote-change can be cancelled", async ({ page }) => {
-    // Check if user has already voted
-    let changeVoteButton = page.getByRole("button", { name: /change.*vote/i });
-    const hasExistingVote = await changeVoteButton.count() > 0;
-
-    // If not already voted, cast an initial vote
-    if (!hasExistingVote) {
-      const forButton = page.getByRole("button", { name: /^For$/i });
-      await forButton.first().click();
-      await page.waitForTimeout(2000);
-    }
-
-    // Click Change Vote
-    changeVoteButton = page.getByRole("button", { name: /change.*vote/i });
-    await changeVoteButton.first().click();
-    await page.waitForTimeout(500);
-
-    // Should see Cancel button
-    const cancelButton = page.getByRole("button", { name: /^cancel$/i });
-    await expect(cancelButton.first()).toBeVisible();
-
-    // Click Cancel
-    await cancelButton.first().click();
-    await page.waitForTimeout(500);
-
-    // Should return to voted state (not changing mode)
-    const votedMessage = page.getByText(/your vote has been recorded|you voted/i);
-    expect(await votedMessage.count()).toBeGreaterThan(0);
-
-    // Voting buttons should be hidden
-    const againstButton = page.getByRole("button", { name: /^Against$/i });
-    await expect(againstButton.first()).not.toBeVisible();
-  });
-
-  test("multiple vote-changes work correctly", async ({ page }) => {
-    // Check if user has already voted
-    let changeVoteButton = page.getByRole("button", { name: /change.*vote/i });
-    const hasExistingVote = await changeVoteButton.count() > 0;
-
-    // If not already voted, cast initial vote FOR
-    if (!hasExistingVote) {
-      await page.getByRole("button", { name: /^For$/i }).first().click();
-      await page.waitForTimeout(2000);
-    }
-
-    // Change to AGAINST
-    changeVoteButton = page.getByRole("button", { name: /change.*vote/i });
-    await changeVoteButton.first().click();
-    await page.waitForTimeout(500);
-    await page.getByRole("button", { name: /^Against$/i }).first().click();
-    await page.waitForTimeout(2000);
-
-    // Change to ABSTAIN
-    await page.getByRole("button", { name: /change.*vote/i }).first().click();
-    await page.waitForTimeout(500);
-    await page.getByRole("button", { name: /^Abstain$/i }).first().click();
-    await page.waitForTimeout(2000);
-
-    // Should show latest vote (ABSTAIN)
-    const votedMessage = page.getByText(/abstain/i);
-    expect(await votedMessage.count()).toBeGreaterThan(0);
-  });
-
-  test("vote-change persists after page refresh", async ({ page }) => {
-    // Check if user has already voted
-    let changeVoteButton = page.getByRole("button", { name: /change.*vote/i });
-    const hasExistingVote = await changeVoteButton.count() > 0;
-
-    // If not already voted, cast vote FOR and change to AGAINST
-    if (!hasExistingVote) {
-      await page.getByRole("button", { name: /^For$/i }).first().click();
-      await page.waitForTimeout(2000);
-
-      // Change to AGAINST
-      await page.getByRole("button", { name: /change.*vote/i }).first().click();
-      await page.waitForTimeout(500);
-      await page.getByRole("button", { name: /^Against$/i }).first().click();
-      await page.waitForTimeout(2000);
-    }
-
-    // Refresh page — no waitForLoadState("networkidle"): the app polls
-    // periodically and networkidle can simply never settle on slow runners,
-    // blowing the test timeout. Wait for the hydrated state directly.
-    await page.reload();
-
-    // Re-dismiss dialogs that reappear after reload
-    await dismissWalletDialog(page);
-    await hideDevAuthPanel(page);
-
-    // Should still show vote
-    const votedMessage = page.getByText(/against|for|abstain/i);
-    await expect(votedMessage.first()).toBeVisible({ timeout: 30_000 });
-
-    // Change Vote button should still be available
-    changeVoteButton = page.getByRole("button", { name: /change.*vote/i });
-    await expect(changeVoteButton.first()).toBeVisible({ timeout: 30_000 });
-  });
-});
-
-test.describe("Vote change mobile (authenticated)", () => {
-  test.beforeEach(async ({ page, authenticated: _authenticated }) => {
-    // Set mobile viewport
-    await page.setViewportSize({ width: 375, height: 667 });
-
-    await page.goto("/proposals");
-    await page.waitForLoadState("networkidle");
-
-    await dismissWalletDialog(page);
-    await hideDevAuthPanel(page);
-
-    // Active proposal cards on /proposals now link to /vote (owner directive),
-    // so navigate straight to the detail page.
-    await page.goto("/proposals/prop-active-tokenomics-burn");
-    await page.waitForLoadState("domcontentloaded");
-
-    await dismissWalletDialog(page);
-    await hideDevAuthPanel(page);
-  });
-
-  test("mobile vote-change UI works correctly", async ({ page }) => {
-    // Check if user has already voted
-    const hasExistingVote = await page.getByRole("button", { name: /change.*vote/i }).count() > 0;
-
-    // If not already voted, cast initial vote
-    if (!hasExistingVote) {
-      // On mobile, voting buttons might be in a collapsible section
-      // Look for them with a broader selector
-      const forButton = page.getByRole("button", { name: /^For$/i });
-      const buttonCount = await forButton.count();
-
-      if (buttonCount === 0) {
-        // Mobile might have voting buttons in a drawer - try clicking a "Vote" button first
-        const voteActionBtn = page.getByRole("button", { name: /^vote$/i });
-        if (await voteActionBtn.count() > 0) {
-          await voteActionBtn.first().click();
-          await page.waitForTimeout(500);
-        }
-      }
-
-      // Try to find and click the For button again
-      await page.waitForTimeout(500);
-      const forButtonRetry = page.getByRole("button", { name: /^For$/i });
-      const forButtonCount = await forButtonRetry.count();
-
-      if (forButtonCount > 0) {
-        await forButtonRetry.first().click();
-        await page.waitForTimeout(2000);
-      } else {
-        test.skip(true, "mobile voting UI not accessible - skipping mobile test");
-      }
-    }
-
-    // Mobile should show compact voted bar with Change button
-    // Look for any element containing "you voted" or "change"
-    const mobileVoteBar = page.locator("*").filter({
-      hasText: /you voted|change/i,
+      // The ballot is the interaction under test — wait for its cards.
+      await expect(page.getByTestId("ballot-card-for")).toBeVisible({ timeout: 30_000 });
     });
 
-    await expect(mobileVoteBar.first()).toBeVisible({ timeout: 5000 });
+    test("authenticated user can cast an initial vote", async ({ page }) => {
+      if ((await currentChoice(page)) !== null) {
+        test.skip(true, "wallet already voted on this proposal — cast test re-armed after a ballot reset");
+      }
+      await select(page, "for");
+    });
 
-    // Click Change button (might be standalone or in a bar)
-    const changeButton = page.getByRole("button", { name: /^change( vote)?$/i });
-    const changeCount = await changeButton.count();
+    test("the current ballot is badged as Selected after voting", async ({ page }) => {
+      if ((await currentChoice(page)) === null) await select(page, "for");
+      const card = page.getByTestId("ballot-card-for");
+      await expect(card.getByRole("button", { name: /^selected$/i })).toBeVisible();
+      await expect(card.getByText("Current ballot")).toBeVisible();
+    });
 
-    if (changeCount === 0) {
-      // Try clicking the entire bar to expand voting options
-      await mobileVoteBar.first().click();
-      await page.waitForTimeout(500);
-    } else {
-      await changeButton.first().click();
-      await page.waitForTimeout(500);
-    }
+    test("user can change their vote with one click", async ({ page }) => {
+      const existing = await currentChoice(page);
+      if (existing === null) await select(page, "for");
+      const target: Choice = existing === "against" ? "abstain" : "against";
+      await select(page, target);
+      await expect(page.getByTestId(`ballot-card-${target}`)).toContainText("Current ballot");
+      // The old choice is no longer badged.
+      const previous: Choice = existing ?? "for";
+      if (previous !== target) {
+        await expect(page.getByTestId(`ballot-card-${previous}`)).not.toContainText(
+          "Current ballot",
+        );
+      }
+    });
 
-    // Should show voting buttons
-    const againstButton = page.getByRole("button", { name: /^Against$/i });
-    const againstCount = await againstButton.count();
+    test("re-selecting the current choice is a safe no-op", async ({ page }) => {
+      if ((await currentChoice(page)) === null) await select(page, "for");
+      // The same-choice click early-returns in handleChoice — no error, no
+      // state change, badge stays put.
+      await select(page, "for");
+      await expect(page.getByTestId("ballot-card-for")).toContainText("Current ballot");
+    });
 
-    if (againstCount > 0) {
-      await expect(againstButton.first()).toBeVisible();
+    test("multiple vote-changes work correctly", async ({ page }) => {
+      const existing = await currentChoice(page);
+      if (existing === null) await select(page, "for");
+      // Cycle to the next two choices — the badge must follow each time.
+      const order: Choice[] = ["for", "against", "abstain"];
+      const startIdx = order.indexOf((await currentChoice(page)) ?? "for");
+      for (const step of [1, 2]) {
+        const next = order[(startIdx + step) % order.length] ?? "for";
+        await select(page, next);
+      }
+    });
 
-      // Change vote
-      await againstButton.first().click();
-      await page.waitForTimeout(2000);
+    test("vote-choice persists after page refresh", async ({ page }) => {
+      const existing = await currentChoice(page);
+      if (existing === null) await select(page, "for");
+      const before = await currentChoice(page);
 
-      // Should show updated vote
-      const votedMessage = page.getByText(/against/i);
-      expect(await votedMessage.count()).toBeGreaterThan(0);
-    } else {
-      test.skip(true, "mobile vote-change UI not fully accessible - skipping");
-    }
+      // No waitForLoadState("networkidle"): the app polls periodically and
+      // networkidle can never settle on slow runners.
+      await page.reload();
+      await dismissWalletDialog(page);
+      await hideDevAuthPanel(page);
+      await expect(page.getByTestId("ballot-card-for")).toBeVisible({ timeout: 30_000 });
+
+      expect(await currentChoice(page)).toBe(before);
+    });
   });
-});
+
+  test.describe("Vote change mobile (authenticated)", () => {
+    test.beforeEach(async ({ page, authenticated: _authenticated }) => {
+      await page.setViewportSize({ width: 375, height: 667 });
+      await registerWalletDialogAutoDismiss(page);
+      await page.goto("/proposals/prop-active-tokenomics-burn");
+      await page.waitForLoadState("domcontentloaded");
+      await dismissWalletDialog(page);
+      await hideDevAuthPanel(page);
+      await expect(page.getByTestId("ballot-card-for")).toBeVisible({ timeout: 30_000 });
+    });
+
+    test("the ballot cards are the mobile voting UI — no separate bar needed", async ({
+      page,
+    }) => {
+      // The old design shipped a second mobile-only vote bar; the ballot
+      // cards now serve every viewport. Badge + select work at phone width.
+      if ((await currentChoice(page)) === null) await select(page, "for");
+      await select(page, "against");
+      await expect(page.getByTestId("ballot-card-against")).toContainText("Current ballot");
+    });
+  });
 }
