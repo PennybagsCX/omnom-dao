@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 
 import { Providers } from "@/components/providers";
+import { BinaryMatrixBackground } from "@/components/layout/binary-matrix-background";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { BottomNav } from "@/components/layout/bottom-nav";
@@ -109,8 +110,17 @@ export default function RootLayout({
     <html lang="en" className={`dark ${inter.variable} ${jetbrainsMono.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <JsonLd data={[organizationJsonLd(siteUrl), websiteJsonLd(siteUrl)]} />
+        {/* Glass is the site's permanent presentation — set before first
+            paint so surfaces never flash. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `document.documentElement.dataset.glass="on";`,
+          }}
+        />
       </head>
-      <body className="min-h-screen bg-bg-deep font-sans text-foreground antialiased">{process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_RETICLE_DEV !== 'none' ? <ReticleDev /> : null}
+      <body className="min-h-screen bg-bg-deep font-sans text-foreground antialiased">
+        <BinaryMatrixBackground />
+        {process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_RETICLE_DEV !== 'none' ? <ReticleDev /> : null}
         <Providers>
           <a href="#main-content" className="skip-link">
             Skip to content

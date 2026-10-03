@@ -451,7 +451,7 @@ export default function GovernanceVotePage() {
                       {result.percentage.toFixed(1)}%
                     </span>
                   </div>
-                  <div className="h-2 rounded-full bg-bg-elevated overflow-hidden">
+                  <div className="h-2 rounded-full border border-border bg-bg-elevated overflow-hidden">
                     <div
                       className={cn(
                         "h-full transition-all duration-500",
@@ -606,7 +606,7 @@ function HolderClassRow({ row }: { row: HolderClassRow }) {
       {/* Mini stacked bar: one segment per choice, widths proportional to
           the choice's share of this class's ballots. */}
       <div
-        className="mt-2 flex h-2 w-full overflow-hidden rounded-full bg-bg-elevated"
+        className="mt-2 flex h-2 w-full overflow-hidden rounded-full border border-border bg-bg-elevated"
         role="img"
         aria-label={`${row.label} vote breakdown by method`}
       >

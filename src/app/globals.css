@@ -445,3 +445,75 @@ textarea:focus-visible {
   outline: none !important;
   box-shadow: none !important;
 }
+
+/* ── Glass mode ────────────────────────────────────────────────
+ * Glass is the site's permanent presentation: the inline script in
+ * src/app/layout.tsx sets [data-glass="on"] on <html> before first paint.
+ *
+ * ONE recipe for EVERY surface, so nothing reads mixed: cards, panels,
+ * popovers, elevated chips, inputs — including opacity-modifier variants
+ * (bg-bg-elevated/40 etc.), which are matched via [class*=] since Tailwind
+ * compiles them to separate class names.
+ *
+ * The recipe is the site's own translucent tile style (per Reticle feedback
+ * m1, "use this style for all of the glass"): bg-bg-elevated at 40% with the
+ * standard border — the same treatment as the referendum stats strip on
+ * /vote. Solid mode (toggle off) is untouched and keeps the standard Card
+ * design (per feedback m2).
+ */
+[data-glass="on"] .bg-card,
+[data-glass="on"] .bg-bg-surface,
+[data-glass="on"] .bg-bg-elevated,
+[data-glass="on"] .bg-popover,
+[data-glass="on"] [class*="bg-card/"],
+[data-glass="on"] [class*="bg-bg-surface/"],
+[data-glass="on"] [class*="bg-bg-elevated/"],
+[data-glass="on"] [class*="bg-popover/"],
+/* Inset tiles on glass surfaces (countdown digits, admin/create strips).
+   Navbar scrims (bg-bg-deep/90, /95) and the page background (plain
+   bg-bg-deep) are deliberately excluded. */
+[data-glass="on"] [class*="bg-bg-deep/40"],
+[data-glass="on"] [class*="bg-bg-deep/60"] {
+  /* Values are runtime-tunable via the GlassTuner dev panel, which sets
+     --glass-* custom properties on <html>; the fallbacks are the tuned
+     defaults (user-approved combo: zero fill — pure blur + outline glass,
+     light 4px blur, neutral saturation, bright 20% outline). */
+  background-color: color-mix(
+    in srgb,
+    var(--color-bg-elevated) var(--glass-fill, 0%),
+    transparent
+  );
+  border-color: color-mix(
+    in srgb,
+    white var(--glass-border-glow, 20%),
+    var(--color-border)
+  );
+  -webkit-backdrop-filter: blur(var(--glass-blur, 4px)) saturate(var(--glass-sat, 100%));
+  backdrop-filter: blur(var(--glass-blur, 4px)) saturate(var(--glass-sat, 100%));
+}
+
+/* Winning-choice banner (/results): same glass treatments as every other
+   tile (blur, saturation, outline brightness) but with its own fixed
+   semi-transparent YELLOW wash — intentionally NOT tied to --glass-fill,
+   which the tuned combo keeps at 0% (a transparent yellow would erase the
+   tile's identity entirely). */
+[data-glass="on"] [class*="border-gold/40"][class*="bg-gold/5"] {
+  background-color: color-mix(in srgb, var(--color-gold) 12%, transparent);
+  border-color: color-mix(
+    in srgb,
+    white var(--glass-border-glow, 20%),
+    var(--color-gold)
+  );
+  -webkit-backdrop-filter: blur(var(--glass-blur, 4px)) saturate(var(--glass-sat, 100%));
+  backdrop-filter: blur(var(--glass-blur, 4px)) saturate(var(--glass-sat, 100%));
+}
+
+/* Floating menus (select/dropdown popovers) get their own readability floor:
+   they hover over arbitrary page content — not the dim doge — so the shared
+   tile fill (0–25%) would leave menu text sitting on uncontrolled content.
+   45% keeps the glass look (blur + outline still apply) while staying
+   readable on every surface. */
+[data-glass="on"] .bg-popover,
+[data-glass="on"] [class*="bg-popover/"] {
+  background-color: color-mix(in srgb, var(--color-bg-elevated) 45%, transparent);
+}

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BarChart3, ClipboardList, Vote } from "lucide-react";
 
+import { Card } from "@/components/ui/card";
+
 import { EmptyState } from "@/components/shared/empty-state";
 import {
   FGE_VOTING_ENDS_AT,
@@ -158,7 +160,7 @@ export default async function ResultsPage() {
         </div>
 
         {/* Per-choice tallies */}
-        <div className="mt-6 space-y-3">
+        <Card className="mt-6 space-y-3 p-5">
           {results.map((result) => (
             <div key={result.choice} className="space-y-2">
               <div className="flex items-center justify-between text-sm">
@@ -167,7 +169,7 @@ export default async function ResultsPage() {
                   {result.percentage.toFixed(1)}%
                 </span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-bg-elevated">
+              <div className="h-2 overflow-hidden rounded-full border border-border bg-bg-elevated">
                 <div
                   className={cn("h-full", CHOICE_COLORS[result.choice])}
                   style={{ width: `${result.percentage}%` }}
@@ -178,7 +180,7 @@ export default async function ResultsPage() {
               </div>
             </div>
           ))}
-        </div>
+        </Card>
 
         <div className="mt-4 text-center">
           <Link

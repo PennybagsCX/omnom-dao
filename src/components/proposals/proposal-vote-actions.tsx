@@ -382,7 +382,7 @@ export function ProposalVoteResults({
               </span>
               <span className="font-mono font-bold text-gold">{share.toFixed(1)}%</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-bg-elevated">
+            <div className="h-2 overflow-hidden rounded-full border border-border bg-bg-elevated">
               <div
                 className={cn("h-full transition-all duration-500", VOTE_CHOICE_CONFIG[choice].barClass)}
                 style={{ width: `${share}%` }}

@@ -526,7 +526,7 @@ export default function CreateProposalPage() {
             <div
               key={i}
               className={cn(
-                "h-1.5 flex-1 rounded-full transition-colors",
+                "h-1.5 flex-1 rounded-full border border-border transition-colors",
                 i + 1 <= step ? "bg-gold" : "bg-bg-elevated",
               )}
             />

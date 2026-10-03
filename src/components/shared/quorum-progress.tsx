@@ -32,7 +32,7 @@ export function QuorumProgress({ achieved, required, className }: QuorumProgress
         </span>
       </div>
       <div
-        className="relative h-2.5 w-full overflow-hidden rounded-full bg-bg-elevated"
+        className="relative h-2.5 w-full overflow-hidden rounded-full border border-border bg-bg-elevated"
         role="progressbar"
         aria-valuenow={achieved}
         aria-valuemin={0}

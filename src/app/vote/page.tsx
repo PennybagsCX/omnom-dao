@@ -26,12 +26,14 @@ import {
   ProposalVoteReactions,
   ProposalVoteResults,
 } from "@/components/proposals/proposal-vote-actions";
+import { YourBallotsCast } from "@/components/vote/your-ballots-cast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CountdownTimer } from "@/components/shared/countdown-timer";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PROPOSAL_TYPE_CONFIG } from "@/lib/constants";
 import { FGE_VOTING_ENDS_AT, FGE_VOTING_STARTS_AT } from "@/lib/election";
 import { buildResults, loadElection, tally } from "@/lib/election-tally";
+import { FAQ_SECTIONS } from "@/lib/faq-data";
 import {
   listFinalizedProposals,
   tallyProposalByHolderClass,
@@ -44,6 +46,15 @@ import { ProposalStatus, type Proposal } from "@/types";
 
 /** Live voting data — rendered per request, never prerendered at build time. */
 export const dynamic = "force-dynamic";
+
+// Bottom-of-page FAQ tile: the most useful voting questions + a path to the
+// full FAQ (data shared with /faq via src/lib/faq-data.ts).
+const votingFaq =
+  FAQ_SECTIONS.find((s) => s.id === "voting")?.items.slice(0, 4) ?? [];
+const totalFaqQuestions = FAQ_SECTIONS.reduce(
+  (n, section) => n + section.items.length,
+  0
+);
 
 export const metadata: Metadata = {
   title: "Vote",
@@ -422,12 +433,18 @@ export default async function VotePage() {
           </h2>
         </div>
 
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible className="space-y-3">
           {(referendum ? [REFERENDUM_FAQ, ...PROPOSAL_VOTE_FAQ] : PROPOSAL_VOTE_FAQ).map(
             (faq, idx) => (
-            <AccordionItem key={idx} value={`faq-${idx}`}>
-              <AccordionTrigger className="text-left">{faq.q}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
+            <AccordionItem
+              key={idx}
+              value={`faq-${idx}`}
+              className="overflow-hidden rounded-lg border border-border bg-bg-surface/40"
+            >
+              <AccordionTrigger className="px-5 py-4 text-left text-sm font-semibold text-foreground hover:no-underline hover:text-gold [&[data-state=open]]:text-gold">
+                {faq.q}
+              </AccordionTrigger>
+              <AccordionContent className="whitespace-pre-line px-5 pb-4 pt-0 text-sm leading-relaxed text-muted-foreground">
                 {faq.a}
               </AccordionContent>
             </AccordionItem>
@@ -531,12 +548,7 @@ async function ReferendumHub({
           </div>
           <div className="text-xs text-text-dim">Turnout · {first.quorumRequired}% quorum</div>
         </div>
-        <div>
-          <div className="font-mono text-lg font-bold text-gold">
-            {referendum.proposals.length}
-          </div>
-          <div className="text-xs text-text-dim">Questions on your ballot</div>
-        </div>
+        <YourBallotsCast proposalIds={referendum.proposals.map((p) => p.id)} />
       </div>
 
       {windowLabel && (
@@ -610,17 +622,19 @@ async function ReferendumHub({
           </div>
 
           <div className="mt-8">
-            <h3 className="mb-4 text-center text-base font-bold text-foreground">
-              Current results — Question {i + 1}
-            </h3>
-            <ProposalVoteResults
-              proposalId={p.id}
-              votesFor={p.votesFor}
-              votesAgainst={p.votesAgainst}
-              votesAbstain={p.votesAbstain}
-              quorumRequired={p.quorumRequired}
-              totalPower={totalPower}
-            />
+            <Card className="p-5 sm:p-6">
+              <h3 className="mb-4 text-center text-base font-bold text-foreground">
+                Current results — Question {i + 1}
+              </h3>
+              <ProposalVoteResults
+                proposalId={p.id}
+                votesFor={p.votesFor}
+                votesAgainst={p.votesAgainst}
+                votesAbstain={p.votesAbstain}
+                quorumRequired={p.quorumRequired}
+                totalPower={totalPower}
+              />
+            </Card>
             {/* Same per-question "Who has voted" breakdown everywhere. */}
             <ClassBreakdownCard
               tallies={talliesByQuestion.get(p.id) ?? []}
@@ -655,6 +669,42 @@ async function ReferendumHub({
             browse all live proposals
           </Link>
         </p>
+      )}
+
+      {/* FAQ — the voting questions people ask most, drawn from the FAQ page's
+          "Voting & Proposals" section (full set lives on /faq). */}
+      {votingFaq.length > 0 && (
+        <Card className="mt-12 p-5 sm:p-6">
+          <h3 className="mb-4 flex items-center justify-center gap-2 text-center text-base font-bold text-foreground">
+            <HelpCircle className="h-4 w-4 text-gold" aria-hidden />
+            Questions about voting?
+          </h3>
+          <Accordion type="single" collapsible className="space-y-3">
+            {votingFaq.map((item, idx) => (
+              <AccordionItem
+                key={item.q}
+                value={`voting-${idx}`}
+                className="overflow-hidden rounded-lg border border-border bg-bg-surface/40"
+              >
+                <AccordionTrigger className="px-5 py-4 text-left text-sm font-semibold text-foreground hover:no-underline hover:text-gold [&[data-state=open]]:text-gold">
+                  {item.q}
+                </AccordionTrigger>
+                <AccordionContent className="whitespace-pre-line px-5 pb-4 pt-0 text-sm leading-relaxed text-muted-foreground">
+                  {item.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+          <div className="mt-3 text-center">
+            <Link
+              href="/faq"
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-gold"
+            >
+              All {totalFaqQuestions} questions answered{" "}
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+            </Link>
+          </div>
+        </Card>
       )}
     </>
   );

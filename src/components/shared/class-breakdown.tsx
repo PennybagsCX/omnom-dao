@@ -51,7 +51,7 @@ export function ProposalClassRow({ row }: { row: ProposalClassTally }) {
       {/* Mini stacked bar: one segment per choice, proportional to the
           choice's share of this class's ballots. */}
       <div
-        className="mt-2 flex h-2 w-full overflow-hidden rounded-full bg-bg-elevated"
+        className="mt-2 flex h-2 w-full overflow-hidden rounded-full border border-border bg-bg-elevated"
         role="img"
         aria-label={`${row.label} vote breakdown by choice`}
       >

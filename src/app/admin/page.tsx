@@ -312,7 +312,7 @@ export default function AdminPage() {
                         {r.count.toLocaleString()} · {r.percentage.toFixed(1)}%
                       </span>
                     </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-bg-elevated">
+                    <div className="h-2 overflow-hidden rounded-full border border-border bg-bg-elevated">
                       <div
                         className="h-full rounded-full bg-gold"
                         style={{ width: `${(r.count / maxCount) * 100}%` }}
@@ -422,7 +422,7 @@ export default function AdminPage() {
                         <span className="font-medium text-foreground">{c.channel}</span>
                         <span className="font-mono text-text-dim">{c.count.toLocaleString()}</span>
                       </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-bg-elevated">
+                      <div className="h-2 overflow-hidden rounded-full border border-border bg-bg-elevated">
                         <div
                           className="h-full rounded-full bg-gold"
                           style={{ width: `${(c.count / maxChannelCount) * 100}%` }}

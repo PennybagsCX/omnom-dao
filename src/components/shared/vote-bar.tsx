@@ -41,7 +41,7 @@ export function VoteBar({
   return (
     <div className={cn("w-full", className)}>
       <div
-        className="flex h-2.5 w-full overflow-hidden rounded-full bg-bg-elevated"
+        className="flex h-2.5 w-full overflow-hidden rounded-full border border-border bg-bg-elevated"
         role="img"
         aria-label={`For ${forPct.toFixed(1)}%, Against ${againstPct.toFixed(1)}%, Abstain ${abstainPct.toFixed(1)}%`}
       >

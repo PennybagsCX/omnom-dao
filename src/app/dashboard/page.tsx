@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -24,13 +24,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DynamicIcon } from "@/components/shared/dynamic-icon";
 import { HolderBadge } from "@/components/shared/holder-badge";
+import { ProposalCard } from "@/components/shared/proposal-card";
 import { StatCard } from "@/components/shared/stat-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { CopyAddress } from "@/components/shared/copy-address";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
 import { ConnectCta } from "@/components/wallet/connect-cta";
-import { useDashboard, fetchApi, queryKeys, ApiRequestError } from "@/lib/api";
+import {
+  getBookmarkedIds,
+  subscribeToBookmarks,
+} from "@/lib/bookmarks";
+import { useDashboard, fetchApi, queryKeys, useProposals, ApiRequestError } from "@/lib/api";
 import { formatCompact, formatDate, timeAgo } from "@/lib/utils";
 import { HOLDER_CLASS_CONFIG, SNAPSHOT } from "@/lib/constants";
 import { ErrorCode, ProposalStatus, VoteChoice } from "@/types";
@@ -272,26 +277,15 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* ── Bookmarks (v1 empty state) ───────────────────── */}
+        {/* ── Bookmarked proposals (client-side, per browser) ────────── */}
         <div className="mt-6">
           <h2 className="mb-3 block w-full text-center !text-center sm:!text-left text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             <span className="inline-flex items-center justify-center gap-2 sm:justify-start">
-              <Bookmark className="h-4 w-4 flex-shrink-0" aria-hidden /> 
+              <Bookmark className="h-4 w-4 flex-shrink-0" aria-hidden />
               Bookmarked Proposals
             </span>
           </h2>
-          <EmptyState
-            icon={<Bookmark className="h-12 w-12" />}
-            title="No bookmarks yet"
-            description="Bookmark proposals to quickly return to them later."
-            action={
-              <Button asChild size="sm" variant="outline">
-                <Link href="/proposals">
-                  Explore Proposals <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                </Link>
-              </Button>
-            }
-          />
+          <BookmarkedProposals />
         </div>
       </motion.div>
     </div>
@@ -403,5 +397,52 @@ function DeleteDraftButton({ proposalId }: { proposalId: string }) {
         Cancel
       </Button>
     </span>
+  );
+}
+
+/**
+ * Bookmarked proposals (client-side, per browser — src/lib/bookmarks.ts).
+ * Loads the proposal list once and filters to the bookmarked ids; full
+ * ProposalCards so bookmarks look exactly like they do on /proposals.
+ */
+function BookmarkedProposals() {
+  const bookmarkedIds = useSyncExternalStore(
+    subscribeToBookmarks,
+    getBookmarkedIds,
+    () => []
+  );
+  const { data, isLoading } = useProposals({ pageSize: 100 });
+
+  const bookmarked = useMemo(
+    () => (data?.proposals ?? []).filter((p) => bookmarkedIds.includes(p.id)),
+    [data, bookmarkedIds]
+  );
+
+  // While the list loads, render nothing — no flash of the empty state.
+  if (isLoading) return null;
+
+  if (bookmarked.length === 0) {
+    return (
+      <EmptyState
+        icon={<Bookmark className="h-12 w-12" />}
+        title="No bookmarks yet"
+        description="Bookmark proposals to quickly return to them later — use the bookmark button on any proposal tile."
+        action={
+          <Button asChild size="sm" variant="outline">
+            <Link href="/proposals">
+              Explore Proposals <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+            </Link>
+          </Button>
+        }
+      />
+    );
+  }
+
+  return (
+    <div className="grid gap-5 sm:grid-cols-2">
+      {bookmarked.map((p) => (
+        <ProposalCard key={p.id} proposal={p} className="h-full" />
+      ))}
+    </div>
   );
 }

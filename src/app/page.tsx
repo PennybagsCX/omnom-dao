@@ -109,11 +109,8 @@ export default function HomePage() {
 
   return (
     <div className="relative">
-      {/* Ambient background glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] bg-gradient-to-b from-bg-elevated via-bg-deep to-bg-deep"
-      />
+      {/* Ambient gold glow (the old darkening top gradient was removed — it
+          muddied the binary-matrix background across the top third) */}
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-24 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-gold/10 blur-[120px]"

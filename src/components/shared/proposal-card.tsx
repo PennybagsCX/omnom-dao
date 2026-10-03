@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Clock, MessageSquare, PenLine } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { BookmarkButton } from "@/components/shared/bookmark-button";
 import { CountdownTimer } from "@/components/shared/countdown-timer";
 import { HolderBadge } from "@/components/shared/holder-badge";
 import { ProposalStatusBadge } from "@/components/shared/proposal-status-badge";
@@ -56,10 +57,11 @@ export const ProposalCard = memo(function ProposalCard({
     >
       <Card
         className={
-          "h-full transition-all duration-200 hover:border-gold/40 hover:shadow-lg hover:shadow-gold/5 group-focus-visible:ring-2 group-focus-visible:ring-ring " +
+          "relative h-full transition-all duration-200 hover:border-gold/40 hover:shadow-lg hover:shadow-gold/5 group-focus-visible:ring-2 group-focus-visible:ring-ring " +
           (className ?? "")
         }
       >
+        <BookmarkButton proposalId={proposal.id} className="absolute right-3 top-3" />
         <CardContent className="flex h-full flex-col gap-3 p-5">
           <div className="flex flex-wrap items-center justify-center gap-2">
             <ProposalStatusBadge status={proposal.status} pulse={isActive} />
