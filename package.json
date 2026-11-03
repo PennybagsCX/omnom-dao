@@ -52,7 +52,7 @@
     "@x402/core": "^2.23.0",
     "@x402/evm": "^2.23.0",
     "@x402/extensions": "^2.23.0",
-    "@x402/svm": "^2.23.0",
+    "@x402/svm": "2.23.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "dompurify": "^3.1.0",

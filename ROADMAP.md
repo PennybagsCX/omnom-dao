@@ -1,7 +1,7 @@
 # $OMNOM DAO — Implementation Roadmap
 
 > Phased development plan for the $OMNOM DAO Governance Platform.
-> Target: Open-source, low-cost, community-driven governance for 25,431 token holders.
+> Target: Open-source, low-cost, community-driven governance for 25,686 token holders.
 
 ---
 
@@ -19,7 +19,7 @@
 
 **Deliberately pending (owner decisions, strategy discussions planned):**
 
-- ✅ **Wave 1 Referendum LIVE** — the three voting-rule questions run 2026-10-02 → 2026-11-01 ([DOCS/REFERENDUM-WAVE1.md](DOCS/REFERENDUM-WAVE1.md)); results + fallback rules apply at close.
+- ✅ **Wave 1 Referendum CLOSED 2026-11-01** — the three voting-rule questions ran 2026-10-02 → 2026-11-01 ([DOCS/REFERENDUM-WAVE1.md](DOCS/REFERENDUM-WAVE1.md)); outcome recording (record/adopt-consensus per the disclosed fallback rules) + results publication are the pending owner steps.
 - ⏸ **Governance-next agenda** — the post-referendum rulebook (standing fallback rule, ratchet quorum + voter floor, electorate reset at migration, Octopus-class activation, **DogeOS as preferred Chain Selection candidate**) lives in [DOCS/GOVERNANCE-NEXT.md](DOCS/GOVERNANCE-NEXT.md).
 - ⏸ **FGE result announcements** — posted 2026-09-21; referendum posts ready in [DOCS/announcements/](DOCS/announcements/referendum-wave1.md), gated on `verify:referendum`.
 - Long arc after Wave 1: Chain Selection vote → 6-round tokenomics framework ([TOKENOMICS-OPTIONS.md](TOKENOMICS-OPTIONS.md) §9). **DogeOS** (ZK-EVM Dogecoin rollup, public testnet 2026-09-30, DOGE gas, EVM-compatible — matches this stack) is the owner's preferred candidate with an early/first-mover posture; see [DOCS/GOVERNANCE-NEXT.md §5](DOCS/GOVERNANCE-NEXT.md).
@@ -58,7 +58,7 @@ P4:   ░░░░░░░░░░░░░░░░░░░░░░░░�
 
 **Week 1: Setup & Data**
 - Initialize Next.js 15 project with TypeScript, Tailwind CSS, shadcn/ui
-- Configure RainbowKit + wagmi v3 + viem
+- Configure RainbowKit + wagmi v2 + viem
 - Process snapshot CSV → optimized JSON:
   - Convert to sorted array for binary search
   - Generate SHA-256 hash for immutability proof
