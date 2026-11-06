@@ -2,6 +2,18 @@
 
 **Status:** APPROVED by the project owner, 2026-10-01. Launch-critical record for the referendum replacing the weekly Wave 1 cadence.
 
+## Outcome (verified 2026-11-03 — read-only public API + `/results`)
+
+The window closed **2026-11-01 00:00 UTC** as pinned; the cron finalizer closed all three questions **EXPIRED — quorum not met** (none reached the 5% floor):
+
+| Q | Final status | Quorum achieved (required: 5.0%) |
+|---|---|---|
+| 1 — Global default quorum | EXPIRED | **1.90%** |
+| 2 — Pass threshold | EXPIRED | **1.68%** |
+| 3 — Per-type quorum schedule | EXPIRED | **1.68%** |
+
+The two superseded Week-1 rows were **already rejected** (public API: both FAILED with `rejectedAt`/`rejectedBy`/`rejectionReason` metadata). Per the disclosed fallback terms, each question's most-voted outcome is adoptable as the community's working consensus (`adoptedAs: "consensus-fallback"`); as of this verification `adoptedAs` is still **null** on all three — record-outcome vs adopt-consensus per question, plus the results publication, remain the owner steps (see [STATUS.md](STATUS.md) and [NEXT-STEPS-2026-11.md](NEXT-STEPS-2026-11.md)).
+
 ## What happened before this decision
 
 - **Foundational Governance Election (FGE)** — `foundational-2026`, 2026-08-29 → 2026-09-12. One wallet = one ballot, plurality, no quorum requirement. Result: **Quadratic voting elected, 65.7% of 35 ballots**. Turnout: 0.14% of the 25,686-wallet electorate = 15,865,230 power = **2.73%** of total quadratic power. Full record: [`ELECTION-RESULTS.md`](ELECTION-RESULTS.md).
@@ -52,3 +64,30 @@ Follow-up governance should ratify these thresholds as the standing rule and con
 ## Announcement plan
 
 Copy pack: [`announcements/referendum-wave1.md`](announcements/referendum-wave1.md). Cadence: launch (T-0) → T+7 → T+14 → T+21 → last-48h → results (two variants: quorum reached / consensus fallback). All links carry `utm_campaign=wave1-referendum`.
+
+## Execution update — 2026-11-06 (Option A, card t_fcd1f74f)
+
+Operator ruling (Option A): all three questions treated uniformly under the published
+denominator (581,973,790 — pinned in the announcements and ballot bodies) and the
+disclosed fallback.
+
+- **2026-11-06T19:32Z** — `fallbackIntentDeclaredAt` written on all three rows
+  (Q1 `6cb00f18`, Q2 `c60735e4`, Q3 `28f865c5`) + `FALLBACK_INTENT_DECLARED` audit rows.
+  24h cooling-off started; adoption unlocks 2026-11-07T19:32Z.
+- **2026-11-07T19:40Z** — scheduled adoption run (`scripts/adopt_wave1.cjs`):
+  Q1 → FOR (11,050,399 power, 100%), Q2 → FOR (9,756,510, 100%),
+  Q3 → AGAINST (7,218,732 vs 2,537,778 = 74% — graded schedule NOT adopted).
+  Each adoption records `adoptedAs: "consensus-fallback"`, `adoptedOutcome`,
+  guardrail disclosure (`forced: true`, real participation), public participation
+  note, and a `PROPOSAL_ADOPTED_AS_CONSENSUS` audit row.
+- **Stale-widget bug documented:** the Oct-20 live widget reported Q1 at 5.1%
+  ("hit quorum") because the deployed artifact at that moment totalled ~215M
+  quadratic power — a stale/incomplete build. The published rule and the current
+  artifact both pin 581,973,790 (Q1 = 1.90%). The quorum-hit signal was an
+  artifact-staleness artifact; the adoption notes record this publicly.
+
+**Guardrail fix shipped:** the quorum denominator is now PINNED per voting window
+(`proposals.snapshot_hash` + `proposals.total_quadratic_power`, written by the
+approve route at vote open; `finalizeProposal` uses the pinned values and never
+re-reads the artifact). Regression test: `proposal-finalize.test.ts` — "uses the
+PINNED total power from vote open" (fails on the pre-fix code, passes after).
