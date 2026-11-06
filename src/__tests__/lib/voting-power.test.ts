@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { pinnedOrLiveDenominator } from "@/lib/voting-power";
 
 /**
  * Quadratic voting power (v2) — unit tests.
@@ -45,5 +46,19 @@ describe("quadraticPower", () => {
     const big = quadraticPower(wei(1_000_000)); // √ = 1,000
     const small = quadraticPower(wei(100)); // √ = 10
     expect(big / small).toBe(100);
+  });
+});
+
+describe("pinnedOrLiveDenominator — per-ballot widget denominator (t_bb3060e5)", () => {
+  it("prefers the PINNED per-proposal total over the live artifact", () => {
+    expect(
+      pinnedOrLiveDenominator({ totalQuadraticPower: 215_000_000 }, 581_973_790),
+    ).toBe(215_000_000);
+  });
+  it("falls back to the live artifact for legacy unpinned rows", () => {
+    expect(pinnedOrLiveDenominator({ totalQuadraticPower: null }, 581_973_790)).toBe(581_973_790);
+  });
+  it("treats a zero/negative pin as absent", () => {
+    expect(pinnedOrLiveDenominator({ totalQuadraticPower: 0 }, 581_973_790)).toBe(581_973_790);
   });
 });

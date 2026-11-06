@@ -291,6 +291,10 @@ export interface Proposal {
   quorumRequired: number;
   /** Actual participation % achieved (computed on close) */
   quorumAchieved: number | null;
+  /** Pinned quorum denominator at vote open — SHA-256 of the holders artifact */
+  snapshotHash: string | null;
+  /** Pinned quorum denominator at vote open — total quadratic power */
+  totalQuadraticPower: number | null;
   /** Aggregate vote counts (denormalized for fast reads, recomputed on write) */
   votesFor: number;
   votesAgainst: number;

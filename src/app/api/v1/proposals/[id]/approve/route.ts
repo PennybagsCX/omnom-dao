@@ -6,6 +6,7 @@ import { getProposalById } from "@/lib/proposal-service";
 import { requireAuth, UnauthorizedError } from "@/lib/auth";
 import { isAdminAddress } from "@/lib/constants";
 import { recordAuditEvent } from "@/lib/audit-log";
+import { totalQuadraticPower } from "@/lib/voting-power";
 import { notifyVotingStarted } from "@/lib/notifications";
 import {
   DEFAULT_DURATION_BY_TYPE,
@@ -57,9 +58,27 @@ export async function POST(
   const endsAtMs = now.getTime() + durationHours * 60 * 60 * 1000;
   const endsAtIso = new Date(endsAtMs).toISOString();
 
+  // ── PIN THE QUORUM DENOMINATOR (card t_fcd1f74f) ─────────────────────
+  // Store the artifact hash + total quadratic power AS OF VOTE OPEN. The
+  // finalizer must use these pinned values; an artifact regeneration
+  // mid-window must never retroactively move this vote's quorum bar (the
+  // Wave 1 incident: ~215M at open vs 582M at finalize).
+  let snapshotHash: string | null = null;
+  let pinnedTotalPower: number | null = null;
+  try {
+    const { readFile } = await import("node:fs/promises");
+    const { createHash } = await import("node:crypto");
+    const path = await import("node:path");
+    const fileBuf = await readFile(path.join(process.cwd(), "data", "holders.json"));
+    snapshotHash = createHash("sha256").update(fileBuf).digest("hex");
+    pinnedTotalPower = await totalQuadraticPower();
+  } catch (err) {
+    console.error("[approve] denominator pin failed (vote opens unpinned):", err);
+  }
+
   await db.execute({
-    sql: "UPDATE proposals SET status = ?, voting_starts_at = ?, voting_ends_at = ?, updated_at = datetime('now') WHERE id = ?",
-    args: [ProposalStatus.ACTIVE, startsAtIso, endsAtIso, id],
+    sql: "UPDATE proposals SET status = ?, voting_starts_at = ?, voting_ends_at = ?, snapshot_hash = ?, total_quadratic_power = ?, updated_at = datetime('now') WHERE id = ?",
+    args: [ProposalStatus.ACTIVE, startsAtIso, endsAtIso, snapshotHash, pinnedTotalPower, id],
   });
 
   const updated = await getProposalById(id);

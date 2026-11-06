@@ -264,6 +264,8 @@ export async function POST(request: NextRequest) {
     votingEndsAt: (row.voting_ends_at as string | null) ?? null,
     quorumRequired: row.quorum_required as number,
     quorumAchieved: (row.quorum_achieved as number | null) ?? null,
+    snapshotHash: (row.snapshot_hash as string | null) ?? null,
+    totalQuadraticPower: (row.total_quadratic_power as number | null) ?? null,
     votesFor: row.votes_for as number,
     votesAgainst: row.votes_against as number,
     votesAbstain: row.votes_abstain as number,

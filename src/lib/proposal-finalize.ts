@@ -91,11 +91,27 @@ export async function finalizeProposal(
   const totalVotedPower = votesFor + votesAgainst + votesAbstain;
   // Quadratic voting (v2): quorum is the share of total quadratic power that
   // voted, not of raw token supply.
+  //
+  // DENOMINATOR PINNING (card t_fcd1f74f): the denominator is whatever the
+  // artifact was AT VOTE OPEN, stored on the row by the approve route. An
+  // artifact regeneration mid-window must never retroactively move this
+  // vote's quorum bar (the Wave 1 incident: ~215M at open, 582M at finalize
+  // turned a 5.14% pass into a 1.90% miss). Only unpinned legacy rows fall
+  // back to the live artifact.
   let totalPower = 0;
-  try {
-    totalPower = await totalQuadraticPower();
-  } catch {
-    totalPower = 0;
+  const pinnedTotalPower =
+    typeof proposal.totalQuadraticPower === "number" &&
+    proposal.totalQuadraticPower > 0
+      ? proposal.totalQuadraticPower
+      : null;
+  if (pinnedTotalPower !== null) {
+    totalPower = pinnedTotalPower;
+  } else {
+    try {
+      totalPower = await totalQuadraticPower();
+    } catch {
+      totalPower = 0;
+    }
   }
   const quorumAchieved = totalPower > 0
     ? (totalVotedPower / totalPower) * 100

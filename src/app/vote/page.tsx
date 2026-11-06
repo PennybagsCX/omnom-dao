@@ -41,7 +41,7 @@ import {
 import { loadReferendum, referendumQuestionLabel, type Referendum } from "@/lib/referendum";
 import { ShareButtons } from "@/components/shared/share-buttons";
 import { formatDateTime, versionFromDate } from "@/lib/utils";
-import { totalQuadraticPower } from "@/lib/voting-power";
+import { pinnedOrLiveDenominator, totalQuadraticPower } from "@/lib/voting-power";
 import { ProposalStatus, type Proposal } from "@/types";
 
 /** Live voting data — rendered per request, never prerendered at build time. */
@@ -121,6 +121,13 @@ export default async function VotePage() {
   } catch {
     // Stats read as zero turnout; the page still renders.
   }
+  // Per-ballot quorum denominator: each proposal's PINNED value from vote
+  // open (card t_bb3060e5); the live artifact total is only the legacy
+  // fallback. An artifact regeneration mid-window must not change what a
+  // ballot's turnout percentage means.
+  const denominatorFor = (p: {
+    totalQuadraticPower: number | null;
+  }): number => pinnedOrLiveDenominator(p, totalPower);
 
   // Per-holder-class breakdown of the current vote (FGE "Who has voted"
   // analogue). Empty when nothing is live.
@@ -179,8 +186,8 @@ export default async function VotePage() {
             </div>
             <div>
               <div className="font-mono text-lg font-bold text-gold">
-                {totalPower > 0
-                  ? (((current.votesFor + current.votesAgainst + current.votesAbstain) / totalPower) * 100).toFixed(1)
+                {denominatorFor(current) > 0
+                  ? (((current.votesFor + current.votesAgainst + current.votesAbstain) / denominatorFor(current)) * 100).toFixed(1)
                   : "0.0"}
                 %
               </div>
@@ -544,7 +551,7 @@ async function ReferendumHub({
         </div>
         <div>
           <div className="font-mono text-lg font-bold text-gold">
-            {totalPower > 0 ? ((powerVoted / totalPower) * 100).toFixed(1) : "0.0"}%
+            {pinnedOrLiveDenominator(first, totalPower) > 0 ? ((powerVoted / pinnedOrLiveDenominator(first, totalPower)) * 100).toFixed(1) : "0.0"}%
           </div>
           <div className="text-xs text-text-dim">Turnout · {first.quorumRequired}% quorum</div>
         </div>
@@ -632,7 +639,7 @@ async function ReferendumHub({
                 votesAgainst={p.votesAgainst}
                 votesAbstain={p.votesAbstain}
                 quorumRequired={p.quorumRequired}
-                totalPower={totalPower}
+                totalPower={pinnedOrLiveDenominator(p, totalPower)}
               />
             </Card>
             {/* Same per-question "Who has voted" breakdown everywhere. */}

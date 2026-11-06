@@ -106,6 +106,8 @@ export async function GET() {
     votingEndsAt: (r.voting_ends_at as string | null) ?? null,
     quorumRequired: r.quorum_required as number,
     quorumAchieved: (r.quorum_achieved as number | null) ?? null,
+    snapshotHash: (r.snapshot_hash as string | null) ?? null,
+    totalQuadraticPower: (r.total_quadratic_power as number | null) ?? null,
     votesFor: r.votes_for as number,
     votesAgainst: r.votes_against as number,
     votesAbstain: r.votes_abstain as number,

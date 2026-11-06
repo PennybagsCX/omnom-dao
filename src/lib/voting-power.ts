@@ -54,3 +54,18 @@ export function totalQuadraticPower(): Promise<number> {
     });
   return totalPowerCache;
 }
+
+/**
+ * Per-proposal quorum denominator for display widgets (card t_bb3060e5):
+ * prefer the value PINNED at vote open (`proposals.total_quadratic_power`,
+ * card t_fcd1f74f), fall back to the live artifact total for legacy rows.
+ * Never let a mid-window artifact regeneration retroactively change what a
+ * ballot's turnout percentage means.
+ */
+export function pinnedOrLiveDenominator(
+  proposal: { totalQuadraticPower: number | null },
+  liveTotal: number,
+): number {
+  const pinned = proposal.totalQuadraticPower;
+  return typeof pinned === "number" && pinned > 0 ? pinned : liveTotal;
+}

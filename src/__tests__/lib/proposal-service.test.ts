@@ -56,6 +56,8 @@ describe("proposal-service", () => {
         votingEndsAt: "2026-08-10T00:00:00.000Z",
         quorumRequired: 5,
         quorumAchieved: 2.5,
+        snapshotHash: null,
+        totalQuadraticPower: null,
         votesFor: 100,
         votesAgainst: 40,
         votesAbstain: 10,

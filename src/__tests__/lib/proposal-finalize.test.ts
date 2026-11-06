@@ -110,3 +110,38 @@ describe("finalizeProposal — quadratic quorum denominator", () => {
     expect(result!.newStatus).toBe("EXPIRED");
   });
 });
+
+describe("finalizeProposal — pinned quorum denominator (card t_fcd1f74f)", () => {
+  it("uses the PINNED total power from vote open, never the live artifact", async () => {
+    // The Wave 1 incident shape: the vote opened against a ~215M artifact,
+    // the artifact was regenerated to 582M mid-window. Finalizing against the
+    // LIVE value retroactively moved the quorum bar and turned a 5.14% pass
+    // into a 1.90% miss. With the pin, finalize must use 215M.
+    hoisted.getProposalById.mockResolvedValue(
+      activeProposal({ quorumRequired: 5, totalQuadraticPower: 215_000_000 }),
+    );
+    hoisted.totalQuadraticPower.mockResolvedValue(581_973_790); // live artifact
+    stubTallies(11_050_399, 0, 0); // 5.14% of 215M, 1.90% of 582M
+
+    const { finalizeProposal } = await import("@/lib/proposal-finalize");
+    const result = await finalizeProposal("prop-f1");
+
+    expect(result).not.toBeNull();
+    expect(result!.quorumAchieved).toBeCloseTo(5.14, 1);
+    expect(result!.newStatus).toBe("PASSED"); // quorum met under the pin
+    // The live artifact must NOT be consulted at all when a pin exists.
+    expect(hoisted.totalQuadraticPower).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the live artifact for legacy unpinned rows", async () => {
+    hoisted.getProposalById.mockResolvedValue(activeProposal()); // no pin
+    hoisted.totalQuadraticPower.mockResolvedValue(1000);
+    stubTallies(200, 0, 0); // 20% of 1000 ≥ 10%
+
+    const { finalizeProposal } = await import("@/lib/proposal-finalize");
+    const result = await finalizeProposal("prop-f1");
+
+    expect(result!.quorumAchieved).toBe(20);
+    expect(hoisted.totalQuadraticPower).toHaveBeenCalled();
+  });
+});

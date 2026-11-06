@@ -247,6 +247,8 @@ export function makeProposal(overrides: Partial<Proposal> = {}): Proposal {
     votingEndsAt: "2026-07-01T00:00:00.000Z",
     quorumRequired: 10,
     quorumAchieved: null,
+    snapshotHash: null,
+    totalQuadraticPower: null,
     votesFor: 0,
     votesAgainst: 0,
     votesAbstain: 0,
