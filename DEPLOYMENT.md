@@ -96,7 +96,7 @@ production environment:
 TURSO_DATABASE_URL=... TURSO_AUTH_TOKEN=... npm run db:migrate
 ```
 
-This creates the current 11-table schema, including:
+This creates the current 21-table schema (see `scripts/migrations.ts`), including:
 
 - `governance_election`
 - `governance_election_ballots`
@@ -145,9 +145,13 @@ size limit is larger than this file.
 
 ## Scheduled jobs
 
-The `vercel.json` at repo root schedules `POST /api/v1/cron/finalize` every 15
-minutes. The handler sweeps ACTIVE proposals whose `voting_ends_at` has passed
-and transitions them to PASSED / FAILED / EXPIRED based on the final tally.
+The `vercel.json` at repo root schedules `POST /api/v1/cron/finalize` **daily at
+00:05 UTC** (`5 0 * * *` — the Vercel Hobby tier caps the native cron at daily).
+In production the **GitHub Actions pinger** (`cron-finalize.yml`, every 30
+minutes, secret `CRON_SECRET`) drives finalize + ending-soon reminders; the
+daily Vercel cron is the fallback. The handler sweeps ACTIVE proposals whose
+`voting_ends_at` has passed and transitions them to PASSED / FAILED / EXPIRED
+based on the final tally.
 
 For Vercel Hobby tier this is included automatically. Confirm the schedule is
 visible at **Project → Settings → Cron Jobs** after the first deploy.
@@ -175,6 +179,8 @@ Without `CRON_SECRET`, the handler returns 401 and the cron job silently fails.
 | `DBOT-DC/omnom-token` | Snapshot corpus | Required | Public data repository |
 
 ## Remaining user actions
+
+> **Historical (2026-08).** This checklist drove the original deployment; `dao.omnom.dog` has been live since. Kept for reference — current operational state lives in [`DOCS/STATUS.md`](DOCS/STATUS.md).
 
 1. Push this project to GitHub.
 2. Import it into Vercel.

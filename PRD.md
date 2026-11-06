@@ -36,7 +36,7 @@
 
 ## 1. Executive Summary
 
-The $OMNOM DAO Governance Platform is a **snapshot-based, off-chain governance interface** that empowers $OMNOM token holders to collectively decide the future of their community after the Dogechain sunset. With the chain no longer operational as of June 7, 2026, the platform operates entirely on a point-in-time snapshot (Block 59,922,100) capturing **25,431 holder addresses** and their balances — providing a trustless, verifiable anchor of legitimacy without requiring a live blockchain.
+The $OMNOM DAO Governance Platform is a **snapshot-based, off-chain governance interface** that empowers $OMNOM token holders to collectively decide the future of their community after the Dogechain sunset. With the chain no longer operational as of June 7, 2026, the platform operates entirely on a point-in-time snapshot (Block 59,922,100) capturing **25,686 holder addresses** and their balances — providing a trustless, verifiable anchor of legitimacy without requiring a live blockchain.
 
 This platform is the critical next step for the $OMNOM community. Vitalik Buterin's public burn of **68.9% of total supply** elevated the project's visibility and meme-cultural significance, but it also concentrated the remaining supply among a small group of holders. The platform must balance the reality of that distribution (a single 🦑 Kraken holding 68.9%; the top 4 wallets — 1 kraken + 3 🐋 Whales — holding ~87.2% of circulating supply) with a governance system that feels fair, transparent, and inviting to every holder — from the largest to the smallest. All verification is **read-only**; no private keys are stored, no transactions are initiated, and no gas fees are required.
 
@@ -82,7 +82,7 @@ This platform is the critical next step for the $OMNOM community. Vitalik Buteri
 
 ### Dogechain Sunset
 
-On June 7, 2026, Dogechain (chain ID 2000) announced its sunset. All $OMNOM tokens (DRC-20, contract `0xe3fcA919883950c5cD468156392a6477Ff5d18de`, 18 decimals) became effectively frozen — holders still *own* their tokens, but the chain they live on is shutting down. This leaves 25,431 holders with a valuable community asset and no infrastructure to govern its future.
+On June 7, 2026, Dogechain (chain ID 2000) announced its sunset. All $OMNOM tokens (DRC-20, contract `0xe3fcA919883950c5cD468156392a6477Ff5d18de`, 18 decimals) became effectively frozen — holders still *own* their tokens, but the chain they live on is shutting down. This leaves 25,686 holders with a valuable community asset and no infrastructure to govern its future.
 
 ### No Governance Mechanism
 
@@ -307,7 +307,7 @@ Any voting system must acknowledge this reality. Pure token-weighted voting mean
 
 ### FR-2: Snapshot Verification
 
-- **FR-2.1** The snapshot data source is a **CSV file** containing all 25,431 holder addresses and their balances at Block 59,922,100 (June 7, 2026 23:59:58 UTC).
+- **FR-2.1** The snapshot data source is a **CSV file** containing all 25,686 holder addresses and their balances at Block 59,922,100 (June 7, 2026 23:59:58 UTC).
 - **FR-2.2** The CSV must be **hash-verified** on platform startup against a known SHA-256 checksum published in the platform's repository and on-chain (Dogechain transaction reference).
 - **FR-2.3** Verification flow: backend receives a signed message, extracts the Ethereum address, performs a **case-insensitive lookup** against the snapshot CSV.
 - **FR-2.4** Three possible outcomes:
@@ -465,7 +465,7 @@ STEP 7: Three possible outcomes:
          │
          ├── ✅ VERIFIED HOLDER
          │   ├── Show balance from snapshot
-         │   ├── Show rank (#N of 25,431)
+         │   ├── Show rank (#N of 25,686)
          │   ├── Show class badge (🐋/🐬/🐟)
          │   ├── Calculate and display voting power
          │   ├── Redirect to Holder Dashboard
@@ -704,7 +704,7 @@ Each proposal type has a pre-structured template:
 
 | Requirement | Specification |
 |---|---|
-| **Snapshot Data** | 25,431 addresses indexed in a relational database (PostgreSQL) with full-text search capability. |
+| **Snapshot Data** | 25,686 addresses indexed in a relational database (PostgreSQL) with full-text search capability. |
 | **Proposal Storage** | Designed for 1,000+ proposals per year without performance degradation. |
 | **Comment Threads** | Support 10,000+ comments per proposal without pagination issues. |
 | **User Growth** | Architecture supports scaling to 100,000+ verified users without major refactoring. |
@@ -719,7 +719,7 @@ Each proposal type has a pre-structured template:
 
 | Metric | Target (60 days) | Target (6 months) | Target (12 months) | Measurement Method |
 |---|---|---|---|---|
-| **Holder Verification Rate** | 15% (3,815 holders) | 30% (7,629 holders) | 50% (12,716 holders) | Unique addresses verified / 25,431 total |
+| **Holder Verification Rate** | 15% (3,815 holders) | 30% (7,629 holders) | 50% (12,716 holders) | Unique addresses verified / 25,686 total |
 | **Proposal Participation Rate** | 10% of verified holders vote on first proposal | 15% sustained across proposals | 20% sustained | Votes cast / Verified holders, per proposal |
 | **Voter Turnout (Quorum)** | Meet 20% quorum on first major proposal | Meet quorum on 80%+ of proposals | Meet quorum on 90%+ of proposals | Total voting power participation / Required quorum |
 | **DAU During Active Votes** | 500 | 2,000 | 5,000 | Unique authenticated daily visitors during active voting |

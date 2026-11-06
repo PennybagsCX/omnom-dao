@@ -16,12 +16,12 @@ audience: "New developers and contributors to the OMNOM DAO platform"
 | **Date** | June 2026 |
 | **Status** | ![Status: Draft](https://img.shields.io/badge/status-Draft%20%E2%80%94%20Pending%20Review-yellow) |
 | **Document Type** | Contributor Onboarding (How-To + Tutorial) |
-| **Stack** | Next.js 15 · React 19 · TypeScript · Turso · Vercel |
+| **Stack** | Next.js 16 · React 19 · TypeScript · Turso · Vercel |
 | **Related Docs** | [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md), [`GOVERNANCE_MECHANICS.md`](GOVERNANCE_MECHANICS.md), [`TECHNICAL_ARCHITECTURE.md`](TECHNICAL_ARCHITECTURE.md) |
 
 > **TL;DR** — This guide takes you from zero to a running local development environment for OMNOM DAO, the snapshot-based, off-chain governance platform for $OMNOM token holders. In roughly **30–45 minutes** you will clone the repo, install dependencies, wire up environment variables, provision a free Turso database and Vercel KV store, build the holder snapshot, and be ready to ship your first pull request.
 
-Welcome aboard! 👋 Whether you're a seasoned Web3 engineer or a Web2 developer curious about decentralized governance, your contributions directly shape the future of **25,431 $OMNOM holders** left without a chain after the Dogechain sunset. This platform is their voice — and your code is how they speak. Read on, follow the steps, and don't hesitate to reach out in the community channels listed at the end.
+Welcome aboard! 👋 Whether you're a seasoned Web3 engineer or a Web2 developer curious about decentralized governance, your contributions directly shape the future of **25,686 $OMNOM holders** left without a chain after the Dogechain sunset. This platform is their voice — and your code is how they speak. Read on, follow the steps, and don't hesitate to reach out in the community channels listed at the end.
 
 ---
 
@@ -48,7 +48,7 @@ Welcome aboard! 👋 Whether you're a seasoned Web3 engineer or a Web2 developer
 
 ## 1. Welcome & Project Introduction
 
-**OMNOM DAO** is a **snapshot-based, off-chain governance platform** built with **Next.js 15 + React 19 + TypeScript**. It gives every verified $OMNOM token holder a transparent, stake-weighted voice in their community's future — no smart contracts, no gas fees, no live blockchain required. Identity is proven via **SIWE (EIP-4361) message signing**, and voting power is anchored to a single immutable token-holding snapshot captured at **Block 59,922,100**.
+**OMNOM DAO** is a **snapshot-based, off-chain governance platform** built with **Next.js 16 + React 19 + TypeScript**. It gives every verified $OMNOM token holder a transparent, stake-weighted voice in their community's future — no smart contracts, no gas fees, no live blockchain required. Identity is proven via **SIWE (EIP-4361) message signing**, and voting power is anchored to a single immutable token-holding snapshot captured at **Block 59,922,100**.
 
 **Why contributors matter.** This is a community-driven, open-source project (MIT-licensed). The core team is small; the roadmap is ambitious (six phases spanning sixteen weeks). Every contribution — whether a bug fix, a UI polish, a new test, or a governance feature — directly improves the democratic tooling that holders rely on.
 
@@ -262,7 +262,7 @@ pnpm snapshot:build
 
 **What the pipeline does** (CSV → JSON → hash):
 
-1. **Parse & validate** the CSV — checks for valid EVM addresses, removes duplicates, enforces the expected holder count (**25,431 holders**).
+1. **Parse & validate** the CSV — checks for valid EVM addresses, removes duplicates, enforces the expected holder count (**25,686 holders**).
 2. **Sort** holders by address.
 3. **Build a binary-search index** for O(log n) runtime lookups against `holders.json` (~3.5 MB).
 4. **Classify holders** into 7 tiers: 🦑 **Kraken** (1), 🐋 **Whale** (3), 🐬 **Dolphin** (30), 🦈 **Shark** (326), 🐙 **Octopus** (1,078), 🦀 **Crab** (1,701), 🦄 **Seahorse** (22,547).
@@ -654,7 +654,7 @@ Before opening a PR that touches auth or governance, verify each of these by han
 
 ## 8. Authentication & Wallet Testing
 
-The SIWE (Sign-In with Ethereum) flow is the heart of identity in OMNOM DAO. Here's how to test it locally — **without** the full 25,431-holder snapshot.
+The SIWE (Sign-In with Ethereum) flow is the heart of identity in OMNOM DAO. Here's how to test it locally — **without** the full 25,686-holder snapshot.
 
 ### 8.1 Add Your Wallet to a Local Snapshot
 
@@ -924,7 +924,7 @@ Be respectful, inclusive, and constructive. We follow standard open-source commu
 - **Bugs:** open a GitHub Issue with reproduction steps, environment details, and screenshots.
 - **Security vulnerabilities:** **DO NOT open a public issue.** Report privately to the core team via the repository's **security advisory** feature (GitHub → Security → Report a vulnerability) or DM a core maintainer in Telegram. See the security reporting process for coordinated disclosure timelines.
 
-> ⚠️ **Public disclosure of a security flaw before a fix is deployed can harm all 25,431 holders. Always report privately first.**
+> ⚠️ **Public disclosure of a security flaw before a fix is deployed can harm all 25,686 holders. Always report privately first.**
 
 ---
 
@@ -1000,4 +1000,4 @@ Be respectful, inclusive, and constructive. We follow standard open-source commu
 
 ---
 
-> 🐋 **You're ready.** Clone, build, and ship. The 25,431 holders of $OMNOM are counting on what you build next. Welcome to OMNOM DAO.
+> 🐋 **You're ready.** Clone, build, and ship. The 25,686 holders of $OMNOM are counting on what you build next. Welcome to OMNOM DAO.

@@ -18,7 +18,7 @@ audience: "All contributors, community members, and observers"
 | **Document Type** | High-Level Project Overview (Explanation) |
 | **Implementation Truth** | [`DESIGN.md`](../DESIGN.md) / [`DATA-MODEL.md`](../DATA-MODEL.md) |
 
-> **TL;DR** — OMNOM DAO is a snapshot-based, off-chain governance platform that gives the **25,431 holders** of $OMNOM (a DRC-20 token frozen after the Dogechain sunset on June 7, 2026) a transparent, stake-weighted voice in their project's future. After Vitalik Buterin publicly burned **68.9%** of total supply, the remaining holders were left with no live chain and no governance mechanism. This platform anchors legitimacy in a single immutable snapshot taken at **Block 59,922,100** — no smart contracts, no gas fees, no transactions — just verified identity and collective decision-making. All governance is **advisory** in v1; proposals that pass express community will rather than auto-executing on-chain.
+> **TL;DR** — OMNOM DAO is a snapshot-based, off-chain governance platform that gives the **25,686 holders** of $OMNOM (a DRC-20 token frozen after the Dogechain sunset on June 7, 2026) a transparent, stake-weighted voice in their project's future. After Vitalik Buterin publicly burned **68.9%** of total supply, the remaining holders were left with no live chain and no governance mechanism. This platform anchors legitimacy in a single immutable snapshot taken at **Block 59,922,100** — no smart contracts, no gas fees, no transactions — just verified identity and collective decision-making. All governance is **advisory** in v1; proposals that pass express community will rather than auto-executing on-chain.
 
 ---
 
@@ -53,7 +53,7 @@ audience: "All contributors, community members, and observers"
 
 ### The Dogechain Sunset
 
-$OMNOM is a **DRC-20** token originally deployed on **Dogechain (chain ID 2000)**. On **June 7, 2026**, Dogechain announced its sunset; the blockchain is now **no longer live**. Holders still *own* their tokens, but the chain they live on has shut down — leaving 25,431 holders with a valuable community asset and no infrastructure to govern its future.
+$OMNOM is a **DRC-20** token originally deployed on **Dogechain (chain ID 2000)**. On **June 7, 2026**, Dogechain announced its sunset; the blockchain is now **no longer live**. Holders still *own* their tokens, but the chain they live on has shut down — leaving 25,686 holders with a valuable community asset and no infrastructure to govern its future.
 
 ### The Snapshot
 
@@ -63,7 +63,7 @@ Before the chain went dark, a cryptographic, timestamped snapshot was captured a
 |---|---|
 | **Block Number** | `59,922,100` |
 | **Timestamp** | June 7, 2026 — 23:59:58 UTC |
-| **Unique Holder Addresses** | `25,431` |
+| **Unique Holder Addresses** | `25,686` |
 | **Contract** | `0xe3fcA919883950c5cD468156392a6477Ff5d18de` |
 | **Decimals** | 18 |
 
@@ -166,7 +166,7 @@ After the burn, supply distribution is heavily skewed. Every holder is assigned 
 | **Decimals** | 18 |
 | **Vitalik Burn** | 68.9% of total supply (publicly burned) |
 | **Remaining Circulating Supply** | ≈ 31.1% of total (post-burn) |
-| **Holder Addresses (snapshot)** | 25,431 |
+| **Holder Addresses (snapshot)** | 25,686 |
 
 ### Utility
 

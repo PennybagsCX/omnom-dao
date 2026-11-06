@@ -24,7 +24,7 @@ audience: "OMNOM DAO development team (backend, frontend, web3 engineers)"
 
 ## TL;DR
 
-OMNOM DAO v1 is a **Next.js 15 (App Router) monolith** that performs **fully off-chain, advisory governance** against a **frozen token-holding snapshot** (block 59,922,100, captured 2026-06-07). Because Dogechain (chain ID 2000) is sunset, **there are no live smart contracts and no on-chain interactions** — identity is proven via **SIWE (EIP-4361)** off-chain message signing, verified server-side with `ecrecover`, then cross-referenced against the immutable snapshot via **O(log n) binary search**. State (proposals, votes, comments, sessions) lives in **Turso (libSQL/SQLite)**; session cache and rate limiting use **Vercel KV**; the app is deployed on **Vercel (Hobby Plan)** as static/ISR pages plus serverless Node.js API routes. The only contract referenced in v1 is the frozen DRC-20 token `0xe3fcA919883950c5cD468156392a6477Ff5d18de`. All future contracts (claim, burn, staking, DEX LP, on-chain voting via Tally) are **post-migration hypotheticals**, contingent on a community chain-selection vote and explicitly **not part of v1**.
+OMNOM DAO v1 is a **Next.js 16 (App Router) monolith** that performs **fully off-chain, advisory governance** against a **frozen token-holding snapshot** (block 59,922,100, captured 2026-06-07). Because Dogechain (chain ID 2000) is sunset, **there are no live smart contracts and no on-chain interactions** — identity is proven via **SIWE (EIP-4361)** off-chain message signing, verified server-side with `ecrecover`, then cross-referenced against the immutable snapshot via **O(log n) binary search**. State (proposals, votes, comments, sessions) lives in **Turso (libSQL/SQLite)**; session cache and rate limiting use **Vercel KV**; the app is deployed on **Vercel (Hobby Plan)** as static/ISR pages plus serverless Node.js API routes. The only contract referenced in v1 is the frozen DRC-20 token `0xe3fcA919883950c5cD468156392a6477Ff5d18de`. All future contracts (claim, burn, staking, DEX LP, on-chain voting via Tally) are **post-migration hypotheticals**, contingent on a community chain-selection vote and explicitly **not part of v1**.
 
 ---
 
@@ -54,7 +54,7 @@ OMNOM DAO v1 is a **Next.js 15 (App Router) monolith** that performs **fully off
 
 ### 1.1 Approach: Next.js App Router Monolith
 
-OMNOM DAO v1 is built as a **single Next.js 15 application** using the **App Router** paradigm. The app serves two distinct runtime surfaces from one codebase:
+OMNOM DAO v1 is built as a **single Next.js 16 application** using the **App Router** paradigm. The app serves two distinct runtime surfaces from one codebase:
 
 - **Edge/CDN layer** — statically generated and ISR pages (home, proposal list, closed proposals) plus immutable static assets (snapshot JSON, hash files).
 - **Serverless Node.js functions** — sensitive operations only: SIWE signature recovery, JWT issuance, vote/proposal writes, nonce generation, admin moderation, notifications.
@@ -134,7 +134,7 @@ graph TB
 
 | Concern | Technology |
 |---|---|
-| Framework | Next.js 15 (App Router) |
+| Framework | Next.js 16 (App Router) |
 | UI runtime | React 19 |
 | Language | TypeScript (strict mode) |
 | Styling | Tailwind CSS v4 |
@@ -317,7 +317,7 @@ flowchart LR
     C -->|miss| E[null → NOT_IN_SNAPSHOT]
 ```
 
-- **n = 25,431** holders → ~15 comparisons worst-case.
+- **n = 25,686** holders → ~15 comparisons worst-case.
 - On-disk JSON lookup: **~0.01 ms**; with in-memory `Map` after first load: **<10 ms** end-to-end including parse.
 - Addresses are stored **checksummed** and sorted lexicographically to guarantee deterministic binary-search behavior.
 
@@ -510,7 +510,7 @@ CSV (canonical) ──┐
                   ├─► parse/validate (papaparse)
                   │     • valid EVM addresses (checksum)
                   │     • no duplicates
-                  │     • 25,431 holders total
+                  │     • 25,686 holders total
                   ├─► sort by address (lexicographic)
                   ├─► build binary-search index
                   └─► emit artifacts:
@@ -521,7 +521,7 @@ CSV (canonical) ──┐
 
 ### 8.2 Runtime Lookup
 
-- **Algorithm:** binary search over the sorted address index → **O(log n)**, ~15 comparisons for n = 25,431.
+- **Algorithm:** binary search over the sorted address index → **O(log n)**, ~15 comparisons for n = 25,686.
 - **Performance:** on-disk ~**0.01 ms** per lookup; with the array loaded into an in-memory `Map`, **<10 ms** end-to-end (incl. parse + checksum).
 - Worst-case target: **<500 ms** cold; **<10 ms** warm.
 
@@ -646,7 +646,7 @@ Everything in v1 — identity (SIWE), voting power (snapshot), vote recording (T
 | Contract address | `0xe3fcA919883950c5cD468156392a6477Ff5d18de` |
 | Decimals | 18 |
 | Snapshot block | 59,922,100 (2026-06-07 23:59:58 UTC) |
-| Total holders | 25,431 |
+| Total holders | 25,686 |
 | Vitalik burn | 68.9% of supply |
 
 This contract is **frozen and unreadable** — the snapshot was the final read. No `balanceOf()`, no `transfer()`, no events are queryable. The address appears in `SnapshotMetadata.contractAddress` purely for provenance/audit.

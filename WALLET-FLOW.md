@@ -484,7 +484,7 @@ From these two inputs alone, the server can mathematically determine which priva
 ### Implementation (ethers.js / viem)
 
 ```typescript
-// Using viem (recommended for Next.js 15)
+// Using viem (recommended for Next.js 16)
 import { verifyMessage } from "viem";
 
 async function verifySIWE(message: string, signature: string): {

@@ -8,7 +8,7 @@
 
 ---
 
-> **OMNOM DAO** is a community-driven governance platform built for $OMNOM token holders following the Dogechain sunset. Using a trustless snapshot of holdings taken at block **59,922,100**, the platform enables transparent, off-chain advisory governance where every token captured at snapshot equals one vote. Built with **Next.js 15 + React 19 + TypeScript**, deployed on Vercel with a Turso (libSQL) database, OMNOM DAO preserves holder voice and coordinates the community's next chapter.
+> **OMNOM DAO** is a community-driven governance platform built for $OMNOM token holders following the Dogechain sunset. Using a trustless snapshot of holdings taken at block **59,922,100**, the platform enables transparent, off-chain advisory governance where voting power is **quadratic** — `floor(√ of snapshot balance)` — per the model elected by the Foundational Governance Election (2026-09-12). Built with **Next.js 16 + React 19 + TypeScript**, deployed on Vercel with a Turso (libSQL) database, OMNOM DAO preserves holder voice and coordinates the community's next chapter.
 
 <div align="center">
 
