@@ -88,7 +88,12 @@ function safeParseMetadata(raw: string | null): Proposal["metadata"] {
 const SELECT_COLS =
   "id, title, description, type, status, author_address, created_at, updated_at, " +
   "voting_starts_at, voting_ends_at, quorum_required, quorum_achieved, " +
-  "votes_for, votes_against, votes_abstain, metadata";
+  "votes_for, votes_against, votes_abstain, metadata, " +
+  // Pinned quorum denominator (card t_4c441085): without these the mapper
+  // reads undefined → null and EVERY consumer (finalize via getProposalById,
+  // the /vote turnout widget) silently falls back to the live artifact —
+  // resurrecting the Wave 1 stale-denominator bug the pin exists to prevent.
+  "snapshot_hash, total_quadratic_power";
 
 /**
  * Attach snapshot holder classes to proposals in place: each author gets

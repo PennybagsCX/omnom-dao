@@ -45,6 +45,10 @@ export interface MockProposalRow {
   votes_against: number;
   votes_abstain: number;
   metadata: string;
+  /** Pinned quorum denominator at vote open (card t_fcd1f74f). Optional: rows
+   *  without it fall back to the live artifact total — same as legacy DB rows. */
+  snapshot_hash?: string | null;
+  total_quadratic_power?: number | null;
 }
 
 export interface MockVoteRow {
@@ -502,9 +506,20 @@ function buildSeed(): MockStore {
       voting_ends_at: quorumEnd.toISOString(),
       quorum_required: 5.0,
       quorum_achieved: null,
-      votes_for: 0,
+      // Pinned-denominator regression fixture (card t_4c441085): the Oct-20
+      // Wave-1 incident shape. The ballot pins 215M at vote open; the artifact
+      // later regenerates to 582M. Turnout must render against the PIN
+      // (11,050,399 / 215,000,000 = 5.1%) — the pre-fix page computed against
+      // the live artifact total (1.9%) and contradicted finalize.
+      //
+      // The tally is BACKED by a votes row (below) because the vote-cast route
+      // recomputes proposal tallies from the votes table — a row-level tally
+      // alone would be wiped by the first e2e vote cast on this proposal.
+      votes_for: 11_050_399,
       votes_against: 0,
       votes_abstain: 0,
+      snapshot_hash: null,
+      total_quadratic_power: 215_000_000,
       metadata: JSON.stringify({ type: "base", links: [], tags: ["governance", "voting-rules"] }),
     },
     {
@@ -750,6 +765,12 @@ function buildSeed(): MockStore {
 
     // Proposal 8 — expired technical
     { id: "vote-8a", proposal_id: P.expiredTechnical, voter_address: MOCK_HOLDERS.fish1.address, choice: "FOR", voting_power: MOCK_HOLDERS.fish1.votingPower, created_at: "2026-05-22T09:00:00.000Z", tx_hash: null },
+    // Pinned-denominator fixture (card t_4c441085): backs the 11,050,399
+    // tally on prop-active-quorum-default — vote-cast recomputes proposal
+    // tallies from votes rows, so the power must live HERE to survive any
+    // e2e vote cast on this proposal. Placeholder voter address: no test
+    // identity collides with it (unknown holder → SEAHORSE bucket).
+    { id: "vote-quorum-pin-1", proposal_id: P.activeQuorum, voter_address: "0x1111111111111111111111111111111111111111", choice: "FOR", voting_power: 11_050_399, created_at: new Date(quorumStart.getTime() + 60 * 60 * 1000).toISOString(), tx_hash: null },
   ];
 
   const comments: MockCommentRow[] = [

@@ -49,6 +49,11 @@ export const MIGRATION_STATEMENTS: Array<{ sql: string }> = [
       votes_against     INTEGER NOT NULL DEFAULT 0,
       votes_abstain     INTEGER NOT NULL DEFAULT 0,
       metadata          TEXT NOT NULL DEFAULT '{}',
+      -- Pinned quorum denominator (card t_fcd1f74f): set by the approve route
+      -- AT VOTE OPEN. finalizeProposal() and the /vote turnout widget read the
+      -- pinned value; NULL (legacy rows) falls back to the live artifact.
+      snapshot_hash     TEXT,
+      total_quadratic_power REAL,
       FOREIGN KEY (author_address) REFERENCES users (wallet_address)
     )`,
   },

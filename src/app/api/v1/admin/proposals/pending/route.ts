@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     sql:
       "SELECT id, title, description, type, status, author_address, created_at, updated_at, " +
       "voting_starts_at, voting_ends_at, quorum_required, quorum_achieved, " +
-      "votes_for, votes_against, votes_abstain, metadata FROM proposals " +
+      "votes_for, votes_against, votes_abstain, metadata, snapshot_hash, total_quadratic_power FROM proposals " +
       "WHERE status = 'PENDING_REVIEW' ORDER BY created_at ASC LIMIT ? OFFSET ?",
     args: [limit, offset],
   });

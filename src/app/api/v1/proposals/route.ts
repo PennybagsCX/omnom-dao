@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
 
   // Fetch the full row for a consistent response.
   const fetchRes = await db.execute({
-    sql: "SELECT id, title, description, type, status, author_address, created_at, updated_at, voting_starts_at, voting_ends_at, quorum_required, quorum_achieved, votes_for, votes_against, votes_abstain, metadata FROM proposals WHERE id = ?",
+    sql: "SELECT id, title, description, type, status, author_address, created_at, updated_at, voting_starts_at, voting_ends_at, quorum_required, quorum_achieved, votes_for, votes_against, votes_abstain, metadata, snapshot_hash, total_quadratic_power FROM proposals WHERE id = ?",
     args: [proposalId],
   });
   const row = fetchRes.rows[0]!;

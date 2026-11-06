@@ -1,8 +1,8 @@
 /**
  * OMNOM DAO — Database Migration Script
  *
- * Creates all 7 Turso/SQLite tables per DATA-MODEL.md §6 plus their indexes.
- * Idempotent (uses CREATE TABLE IF NOT EXISTS). Safe to re-run.
+ * Creates the full Turso/SQLite schema (21 tables per scripts/migrations.ts)
+ * plus their indexes. Idempotent (uses CREATE TABLE IF NOT EXISTS). Safe to re-run.
  *
  * Run: `npm run db:migrate`
  *
@@ -48,7 +48,7 @@ async function main() {
     }
   }
 
-  console.log(`✅ Applied ${applied} migration statements (12 tables + indexes).`);
+  console.log(`✅ Applied ${applied} migration statements (21 tables + indexes).`);
 }
 
 main().catch((err) => {
