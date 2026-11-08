@@ -90,6 +90,12 @@ export default async function VotePage() {
   // Past votes = proposals that actually went to a vote; admin-rejected rows
   // (FAILED without a voting window) stay on /results and /proposals.
   const finalized = (await listFinalizedProposals()).filter((p) => p.votingEndsAt);
+  // Order by close date, no fixed pin (t_d43570af): the FGE card yields to any
+  // finalized vote whose window closed later (Wave 1 executed Nov 7 leads).
+  const newestFinalizedEnds = finalized.reduce((max, p) => {
+    const t = p.votingEndsAt ? new Date(p.votingEndsAt).getTime() : 0;
+    return Number.isFinite(t) && t > max ? t : max;
+  }, 0);
   // Per-class turnout for every past vote card (1 indexed query per proposal;
   // class lookup is in-memory over the cached snapshot).
   const finalizedTallies = new Map(
@@ -111,6 +117,37 @@ export default async function VotePage() {
       (best, r) => (r.count > 0 && (best === null || r.count > best.count) ? r : best),
       null,
     ) ?? null;
+  const finalizedLead = newestFinalizedEnds > new Date(fgeEndsAt).getTime();
+  const fgeCard = (
+    <Link
+      href="/governance-vote"
+      data-testid="past-vote-fge"
+      className="block rounded-lg border border-border bg-bg-elevated/30 p-4 transition-colors hover:border-gold/40"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
+          Foundational Governance Election
+        </span>
+        <span className="inline-flex shrink-0 items-center gap-1 text-xs text-gold">
+          View election <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+        </span>
+      </div>
+      <div className="mt-1 text-xs text-text-dim">
+        {formatDay(fgeStartsAt)} – {formatDay(fgeEndsAt)} (UTC)
+      </div>
+      <div className="mt-2 text-sm">
+        {winner ? (
+          <span className="text-muted-foreground">
+            Outcome: <span className="font-medium text-gold">{winner.label}</span>{" "}
+            elected · {winner.percentage.toFixed(1)}% of{" "}
+            {totalBallots.toLocaleString()} ballots
+          </span>
+        ) : (
+          <span className="text-muted-foreground">No ballots recorded</span>
+        )}
+      </div>
+    </Link>
+  );
 
   // Quorum denominator (cached per process) — powers the live turnout stat.
   // Degrade to 0 on artifact failure (same defense as the votes route and
@@ -375,47 +412,22 @@ export default async function VotePage() {
           </p>
         </div>
 
-        <div className="space-y-3">
-          {/* FGE — dedicated page: /governance-vote */}
-          <Link
-            href="/governance-vote"
-            data-testid="past-vote-fge"
-            className="block rounded-lg border border-border bg-bg-elevated/30 p-4 transition-colors hover:border-gold/40"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
-                Foundational Governance Election
-              </span>
-              <span className="inline-flex shrink-0 items-center gap-1 text-xs text-gold">
-                View election <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-              </span>
-            </div>
-            <div className="mt-1 text-xs text-text-dim">
-              {formatDay(fgeStartsAt)} – {formatDay(fgeEndsAt)} (UTC)
-            </div>
-            <div className="mt-2 text-sm">
-              {winner ? (
-                <span className="text-muted-foreground">
-                  Outcome: <span className="font-medium text-gold">{winner.label}</span>{" "}
-                  elected · {winner.percentage.toFixed(1)}% of{" "}
-                  {totalBallots.toLocaleString()} ballots
-                </span>
-              ) : (
-                <span className="text-muted-foreground">No ballots recorded</span>
-              )}
-            </div>
-          </Link>
-
-          {/* Finalized proposals — same expandable row as /results: outcome,
-              tallies, quorum, and the Who-has-voted breakdown collapsed by
-              default (dedicated pages: /proposals/[id]). */}
-          {finalized.map((p) => (
-            <FinalizedProposalRow
-              key={p.id}
-              proposal={p}
-              tallies={finalizedTallies.get(p.id) ?? []}
-            />
-          ))}
+        {/* Order by close date, no fixed pin (t_d43570af): the FGE card
+            yields to any finalized vote whose window closed later —
+            Wave 1 (executed Nov 7) leads; the FGE card drops below it. */}
+        <div className={finalizedLead ? "flex flex-col gap-3" : "space-y-3"}>
+        {!finalizedLead && fgeCard}
+        {/* Finalized proposals — same expandable row as /results: outcome,
+            tallies, quorum, and the Who-has-voted breakdown collapsed by
+            default (dedicated pages: /proposals/[id]). */}
+        {finalized.map((p) => (
+          <FinalizedProposalRow
+            key={p.id}
+            proposal={p}
+            tallies={finalizedTallies.get(p.id) ?? []}
+          />
+        ))}
+        {finalizedLead && fgeCard}
         </div>
 
         <div className="mt-4 text-center">
