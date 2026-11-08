@@ -76,6 +76,15 @@ export default async function ResultsPage() {
   }
 
   const finalized = await listFinalizedProposals();
+  // Results ordering (t_d43570af): no fixed pin — the newest-decided vote leads.
+  // The Foundational Election section yields to any finalized proposal whose
+  // voting window closed later (e.g. Wave 1 executing right after it).
+  const electionEndsMs = new Date(endsAt).getTime();
+  const newestFinalizedMs = finalized.reduce((max, p) => {
+    const t = p.votingEndsAt ? new Date(p.votingEndsAt).getTime() : 0;
+    return Number.isFinite(t) && t > max ? t : max;
+  }, 0);
+  const proposalsLead = newestFinalizedMs > electionEndsMs;
   // Per-class turnout for every finalized vote row (1 indexed query each;
   // class lookup is in-memory over the cached snapshot).
   const talliesByProposal = new Map(
@@ -99,9 +108,14 @@ export default async function ResultsPage() {
         </p>
       </header>
 
+      {/* ── Results ordering: newest-decided vote leads (t_d43570af) — the
+          Foundational Election is no longer pinned above newer results;
+          a flex-col wrapper + order classes swap the two sections when a
+          finalized proposal closed after the election. ─────────────────── */}
+      <div className="flex flex-col">
       {/* ── Section 1: Foundational Governance Election (the flagship
           completed result) ─────────────────────────────────────────── */}
-      <section aria-labelledby="election-results-heading" className="mt-10">
+      <section aria-labelledby="election-results-heading" className={`mt-10 ${proposalsLead ? "order-2" : "order-1"}`}>
         <div className="flex flex-col items-center justify-center gap-2 text-center">
           <h2
             id="election-results-heading"
@@ -194,7 +208,7 @@ export default async function ResultsPage() {
 
       {/* ── Section 2: Proposal outcomes (the running ledger — newest
           first; every future vote lands here on finalize) ───────────── */}
-      <section aria-labelledby="proposal-outcomes-heading" className="mt-12">
+      <section aria-labelledby="proposal-outcomes-heading" className={`mt-12 ${proposalsLead ? "order-1" : "order-2"}`}>
         <h2
           id="proposal-outcomes-heading"
           className="flex flex-col items-center justify-center gap-2 text-center text-xl font-bold text-foreground"
@@ -235,6 +249,7 @@ export default async function ResultsPage() {
           </div>
         )}
       </section>
+      </div>
 
       {/* ── Durability note ─────────────────────────────────────────── */}
       <section className="mt-12 rounded-xl border border-border bg-bg-elevated/40 p-6">
