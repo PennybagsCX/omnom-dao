@@ -96,6 +96,16 @@ export default async function VotePage() {
     const t = p.votingEndsAt ? new Date(p.votingEndsAt).getTime() : 0;
     return Number.isFinite(t) && t > max ? t : max;
   }, 0);
+  // The newest-decided EXECUTED vote gets the hero/breakdown treatment above
+  // the fold (t_d43570af design change) — same treatment the Foundational
+  // Election hero had. Older finalized votes stay below as expandable history.
+  const executedHero = finalized.filter(
+    (p) =>
+      p.status === "EXECUTED" &&
+      p.votingEndsAt &&
+      new Date(p.votingEndsAt).getTime() === newestFinalizedEnds,
+  );
+  const historyRows = finalized.filter((p) => !executedHero.includes(p));
   // Per-class turnout for every past vote card (1 indexed query per proposal;
   // class lookup is in-memory over the cached snapshot).
   const finalizedTallies = new Map(
@@ -397,6 +407,63 @@ export default async function VotePage() {
         </>
       )}
 
+      {/* Hero — newest-decided vote gets the FGE treatment above the fold
+          (t_d43570af design change): per-question outcome banners + quorum. */}
+      {executedHero.length > 0 && executedHero[0] && (() => {
+        const hero = executedHero[0];
+        const campaign = hero.title.split("·")[0]?.trim() ?? hero.title;
+        return (
+        <section aria-labelledby="latest-results-heading" className="mt-10">
+          <div className="flex flex-col items-center justify-center gap-2 text-center">
+            <h2
+              id="latest-results-heading"
+              className="flex items-center justify-center gap-2 text-xl font-bold text-foreground"
+            >
+              <VoteIcon className="h-5 w-5 text-gold" aria-hidden />
+              <span>
+                {campaign} — results
+              </span>
+            </h2>
+            <span className="text-xs text-text-dim">
+              Voting closed {formatDay(hero.votingEndsAt ?? "")} (UTC) · executed{" "}
+              {formatDay(hero.votingEndsAt ?? "")}
+            </span>
+          </div>
+          <p className="mt-1 text-center text-sm text-muted-foreground">
+            Voting closed — results are final. Outcomes adopted under the disclosed
+            consensus fallback; re-confirmation vote planned as turnout grows.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-1 lg:grid-cols-3">
+            {executedHero.map((p) => {
+              const adopted = p.votesFor > p.votesAgainst ? "FOR" : "AGAINST";
+              const power = (p.votesFor ?? 0) + (p.votesAgainst ?? 0) + (p.votesAbstain ?? 0);
+              const q = p.quorumAchieved;
+              return (
+                <div
+                  key={p.id}
+                  className="rounded-xl border border-gold/40 bg-gold/5 p-4 text-center"
+                >
+                  <div className="text-xs uppercase tracking-widest text-text-dim">
+                    {(p.title.split("·")[1] ?? p.title).trim()}
+                  </div>
+                  <div className="mt-2 text-lg font-bold text-gold">
+                    {adopted} adopted
+                  </div>
+                  <div className="mt-1 font-mono text-sm text-foreground">
+                    {(power).toLocaleString()} participating power
+                  </div>
+                  <div className="mt-1 text-xs text-text-dim">
+                    quorum {q != null ? `${q.toFixed(2)}% of ${p.quorumRequired}%` : "n/a"} ·
+                    {" "}consensus fallback
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+        );
+      })()}
+
       {/* Past votes — every decided vote, linked to its dedicated page */}
       <section aria-labelledby="past-votes-heading" className="mt-12">
         <div className="mb-4 text-center">
@@ -417,10 +484,9 @@ export default async function VotePage() {
             Wave 1 (executed Nov 7) leads; the FGE card drops below it. */}
         <div className={finalizedLead ? "flex flex-col gap-3" : "space-y-3"}>
         {!finalizedLead && fgeCard}
-        {/* Finalized proposals — same expandable row as /results: outcome,
-            tallies, quorum, and the Who-has-voted breakdown collapsed by
-            default (dedicated pages: /proposals/[id]). */}
-        {finalized.map((p) => (
+        {/* Finalized history — every decided vote EXCEPT the hero group
+            (t_d43570af: the newest-decided vote's breakdown lives above). */}
+        {historyRows.map((p) => (
           <FinalizedProposalRow
             key={p.id}
             proposal={p}

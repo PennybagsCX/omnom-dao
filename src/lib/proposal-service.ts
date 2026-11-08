@@ -249,6 +249,17 @@ const FINALIZED_STATUSES: ProposalStatus[] = [
 ];
 
 /**
+ * Statuses the RESULTS pages render (t_d43570af operator directive): FAILED and
+ * EXPIRED proposals are early drafts that expired — admin-rejected Wave 1
+ * precursors and quorum-missed Week 1 rows. They must not render on /results or
+ * /vote at all; their outcome content lives on in the adopted successor votes.
+ */
+const RESULTS_STATUSES: ProposalStatus[] = [
+  ProposalStatus.PASSED,
+  ProposalStatus.EXECUTED,
+];
+
+/**
  * Statuses that are not public governance content. DRAFT is pre-submission
  * author workspace: seed/staging drafts must not be publicly browsable.
  * PENDING_REVIEW stays PUBLIC by design — submitted proposals are meaningful
@@ -259,16 +270,17 @@ const FINALIZED_STATUSES: ProposalStatus[] = [
 const NON_PUBLIC_STATUSES: ProposalStatus[] = [ProposalStatus.DRAFT];
 
 /**
- * All finalized proposals, newest voting window first. Backs the public
- * /results page; returns the same {@link Proposal} shape as
+ * All finalized proposals the RESULTS pages render, newest voting window first
+ * (t_d43570af: FAILED/EXPIRED early drafts are excluded entirely). Backs the
+ * public /results and /vote pages; returns the same {@link Proposal} shape as
  * {@link listProposals}.
  */
 export async function listFinalizedProposals(): Promise<Proposal[]> {
   const res = await db.execute({
     sql: `SELECT ${SELECT_COLS} FROM proposals
-          WHERE status IN (${FINALIZED_STATUSES.map(() => "?").join(", ")})
+          WHERE status IN (${RESULTS_STATUSES.map(() => "?").join(", ")})
           ORDER BY voting_ends_at DESC`,
-    args: [...FINALIZED_STATUSES],
+    args: [...RESULTS_STATUSES],
   });
 
   const proposals = res.rows.map((r) =>

@@ -101,14 +101,16 @@ describe("listProposals — non-public statuses", () => {
     expect(listStmt.args).toContain(ProposalStatus.ACTIVE);
   });
 
-  it("still serves every finalized status on /results (listFinalizedProposals untouched)", async () => {
+  it("serves only PASSED/EXECUTED on /results — FAILED/EXPIRED drafts excluded entirely (t_d43570af)", async () => {
     const { listFinalizedProposals } = await import("@/lib/proposal-service");
     hoisted.execute.mockImplementation(async (stmt: { sql: string }) => {
       if (stmt.sql.includes("FROM proposals")) {
         return {
           rows: [
+            proposalRow({ id: "p1", status: "PASSED" }),
             proposalRow({ id: "p2", status: "EXECUTED" }),
             proposalRow({ id: "p3", status: "FAILED" }),
+            proposalRow({ id: "p4", status: "EXPIRED" }),
           ],
           columns: [],
           rowsAffected: 0,
@@ -118,16 +120,19 @@ describe("listProposals — non-public statuses", () => {
       return { rows: [], columns: [], rowsAffected: 0, lastInsertRowid: undefined };
     });
     const finalized = await listFinalizedProposals();
-    expect(finalized.map((p) => p.status)).toEqual(["EXECUTED", "FAILED"]);
     const stmt = hoisted.execute.mock.calls.find(
       (c) => (c[0] as { sql: string }).sql.includes("FROM proposals"),
-    )![0] as { args: unknown[] };
+    )![0] as { sql: string; args: unknown[] };
+    // The mock passes rows straight through (it does not apply the WHERE
+    // clause), so the CONTRACT lives in the query: only PASSED + EXECUTED are
+    // bound — FAILED/EXPIRED never reach the results pages (t_d43570af).
     expect(stmt.args).toEqual([
       ProposalStatus.PASSED,
-      ProposalStatus.FAILED,
-      ProposalStatus.EXPIRED,
       ProposalStatus.EXECUTED,
     ]);
+    expect(stmt.sql).toContain("status IN");
+    expect(stmt.sql).not.toContain("FAILED");
+    expect(stmt.sql).not.toContain("EXPIRED");
   });
 
   it("attaches emoji reaction tallies to list results", async () => {
